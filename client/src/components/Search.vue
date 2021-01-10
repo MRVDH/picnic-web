@@ -24,7 +24,7 @@
             </b-list-group-item>
 
             <div
-                v-if="!selectedTopCategory"
+                v-if="!selectedTopCategory && !searchText"
                 class="other-items"
                 >
                 <b-list-group-item
@@ -45,7 +45,7 @@
                 </b-list-group-item>
             </div>
             <div
-                v-if="selectedTopCategory && !selectedSubCategory"
+                v-if="selectedTopCategory && !selectedSubCategory && !searchText"
                 class="other-items"
                 >
                 <b-list-group-item
@@ -65,7 +65,31 @@
                         />
                 </b-list-group-item>
             </div>
+
+            <div
+                v-if="searchText && !searchResults.length"
+                class="other-items"
+                >
+                <b-list-group-item
+                    v-for="suggestion in suggestions"
+                    :key="suggestion.id"
+                    button
+                    @click="selectSuggestion(suggestion.suggestion)"
+                    >
+                    {{ suggestion.suggestion }}
+
+                    <b-icon
+                        class="float-right"
+                        icon="chevron-right"
+                        font-scale="0.8"
+                        />
+                </b-list-group-item>
+            </div>
         </b-list-group>
+
+        <div v-if="searchResults.length">
+            <CustomCategoriesAndProducts :categories="searchResults" />
+        </div>
 
         <div v-if="selectedSubCategory">
             <CustomCategoriesAndProducts :categories="finalCategories" />
@@ -89,7 +113,9 @@ export default {
             allCategories: [],
             selectedTopCategory: null,
             selectedSubCategory: null,
-            finalCategories: []
+            finalCategories: [],
+            suggestions: [],
+            searchResults: []
         }
     },
     computed: {
@@ -104,11 +130,15 @@ export default {
             }
         },
         searchText (text) {
+            this.searchResults = [];
+
             if (text.length < 2) {
                 return;
             }
 
-            // search suggestions
+            ApiService.getSuggestions(text).then(res => {
+                this.suggestions = res.data;
+            });
         }
     },
     mounted () {
@@ -135,6 +165,13 @@ export default {
 
                 this.finalCategories = this.selectedSubCategory.items.filter(x => x.type === "CATEGORY");
             })
+        },
+        selectSuggestion (suggestion) {
+            this.searchText = suggestion;
+
+            ApiService.search(suggestion).then(res => {
+                this.searchResults = res.data;
+            });
         },
         goBack () {
             if (this.selectedSubCategory) {

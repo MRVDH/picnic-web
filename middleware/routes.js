@@ -33,6 +33,18 @@ export default {
 
             res.send((await picnicClient.getCategories(req.params.depth || 0)).catalog);
         });
+        
+        app.post("/api/suggestions", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            res.send(await picnicClient.getSuggestions(req.body.query));
+        });
+        
+        app.post("/api/search", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            res.send(await picnicClient.search(req.body.query));
+        });
 
         // app.post("/api/osm/oauth/request", osmController.getRequestToken);
         // app.get("/api/osm/oauth/callback", osmController.doRequestTokenCallback);
