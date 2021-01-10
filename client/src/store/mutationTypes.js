@@ -1,0 +1,1 @@
+export const SET_AUTH_KEY = 'set-auth-key';
