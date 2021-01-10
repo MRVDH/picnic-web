@@ -28,7 +28,7 @@ export default {
     populateList (list) {
         return httpInstance.post(`/api/lists/populate`, { list });
     },
-    getCategories (depth) {
+    getCategories (depth = 0) {
         return httpInstance.get(`/api/categories/${depth}`);
     }
 }

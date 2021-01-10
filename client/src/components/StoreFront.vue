@@ -50,7 +50,7 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomProductCard from '@/components/ProductCard'
+import CustomProductCard from '@/components/ProductCard';
 
 export default {
     name: 'StoreFront',

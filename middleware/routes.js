@@ -31,7 +31,7 @@ export default {
         app.get("/api/categories/:depth", async (req, res) => {
             let picnicClient = buildPicnicClient(req);
 
-            res.send((await picnicClient.getCategories(req.params.depth || 0)));
+            res.send((await picnicClient.getCategories(req.params.depth || 0)).catalog);
         });
 
         // app.post("/api/osm/oauth/request", osmController.getRequestToken);
