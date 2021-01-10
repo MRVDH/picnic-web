@@ -30,5 +30,11 @@ export default {
     },
     getCategories (depth = 0) {
         return httpInstance.get(`/api/categories/${depth}`);
+    },
+    getSuggestions (query) {
+        return httpInstance.post(`/api/suggestions`, { query });
+    },
+    search (query) {
+        return httpInstance.post(`/api/search`, { query });
     }
 }

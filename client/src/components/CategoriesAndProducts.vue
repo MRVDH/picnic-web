@@ -12,14 +12,11 @@
             </b-row>
             <b-row>
                 <b-col
-                    v-for="product in category.items"
+                    v-for="product in getProductsOnly(category.items)"
                     :key="product.id"
                     cols="3"
                     >
-                    <CustomProductCard
-                        v-if="product.type === 'SINGLE_ARTICLE'"
-                        :product="product"
-                        />
+                    <CustomProductCard :product="product" />
                 </b-col>
             </b-row>
         </div>
@@ -36,6 +33,11 @@ export default {
     },
     props: {
         categories: Array
+    },
+    methods: {
+        getProductsOnly (items) {
+            return items.filter(x => x.type === "SINGLE_ARTICLE");
+        }
     }
 }
 </script>
