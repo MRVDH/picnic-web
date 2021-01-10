@@ -126,7 +126,7 @@ export default {
     watch: {
         loggedIn () {
             if (this.loggedIn) {
-                this.getCategories(3);
+                this.getCategories();
             }
         },
         searchText (text) {
