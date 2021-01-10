@@ -2,7 +2,7 @@
     <div>
         <b-list-group>
             <b-list-group-item>
-                <b-input-group v-if="!selectedCategory">
+                <b-input-group v-if="!selectedTopCategory && !selectedSubCategory">
                     <b-input-group-prepend is-text>
                         <b-icon icon="search" />
                     </b-input-group-prepend>
@@ -17,21 +17,21 @@
                     <b-icon
                         icon="arrow-left-short"
                         font-scale="1.5"
-                        @click="selectParent(selectedCategory.id)"
+                        @click="goBack()"
                         />
-                    {{ selectedCategory.name }}
+                    {{ selectedSubCategory ? selectedSubCategory.name : selectedTopCategory.name }}
                 </div>
             </b-list-group-item>
 
             <div
-                v-if="!selectedCategory"
+                v-if="!selectedTopCategory"
                 class="other-items"
                 >
                 <b-list-group-item
                     v-for="category in allCategories"
                     :key="category.id"
                     button
-                    @click="selectCategory(category)"
+                    @click="selectTopCategory(category)"
                     >
                     <!-- future image placeholder -->
                     <!-- <img src="../assets/img/placeholder-small.png"> -->
@@ -44,12 +44,15 @@
                         />
                 </b-list-group-item>
             </div>
-            <div v-if="selectedCategory && !showItems">
+            <div
+                v-if="selectedTopCategory && !selectedSubCategory"
+                class="other-items"
+                >
                 <b-list-group-item
-                    v-for="category in selectedCategory.items"
+                    v-for="category in selectedTopCategory.items"
                     :key="category.id"
                     button
-                    @click="selectCategory(category)"
+                    @click="selectSubCategory(category)"
                     >
                     <!-- future image placeholder -->
                     <!-- <img src="../assets/img/placeholder-small.png"> -->
@@ -64,30 +67,8 @@
             </div>
         </b-list-group>
 
-        <div v-if="showItems">
-            <div
-                v-for="category in selectCategoriesFromFinalCategory(selectedCategory.items)"
-                :key="category.id"
-                class="categories"
-                >
-                <b-row>
-                    <b-col cols="12">
-                        <span class="category-name">{{ category.name }}</span>
-                    </b-col>
-                </b-row>
-                <b-row>
-                    <b-col
-                        v-for="product in category.items"
-                        :key="product.id"
-                        cols="3"
-                        >
-                        <CustomProductCard
-                            v-if="product.type === 'SINGLE_ARTICLE'"
-                            :product="product"
-                            />
-                    </b-col>
-                </b-row>
-            </div>
+        <div v-if="selectedSubCategory">
+            <CustomCategoriesAndProducts :categories="finalCategories" />
         </div>
     </div>
 </template>
@@ -95,19 +76,20 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomProductCard from '@/components/ProductCard';
+import CustomCategoriesAndProducts from '@/components/CategoriesAndProducts';
 
 export default {
     name: 'Search',
     components: {
-        CustomProductCard
+        CustomCategoriesAndProducts
     },
     data () {
         return {
             searchText: "",
             allCategories: [],
-            selectedCategory: null,
-            showItems: false
+            selectedTopCategory: null,
+            selectedSubCategory: null,
+            finalCategories: []
         }
     },
     computed: {
@@ -140,50 +122,36 @@ export default {
                 this.allCategories = res.data.filter(x => x.is_included_in_category_tree);
             });
         },
-        selectCategory (category) {
-            this.selectedCategory = category;
+        selectTopCategory (category) {
+            this.selectedTopCategory = category;
+        },
+        selectSubCategory (category) {
+            this.selectedSubCategory = category;
 
-            this.showItems = category.items.length && category.items.find(x => x.type === "SINGLE_ARTICLE");
-
-            if (category.items.length) {
-                return;
-            }
+            this.finalCategories = [];
 
             ApiService.getList(category.id, null, 1).then((res) => {
-                this.selectedCategory.items = res.data;
+                this.selectedSubCategory.items = res.data;
 
-                this.showItems = this.selectedCategory.items.length && this.selectedCategory.items.find(x => x.type === "SINGLE_ARTICLE");
+                this.finalCategories = this.selectedSubCategory.items.filter(x => x.type === "CATEGORY");
             })
         },
-        selectParent (parentId) {
-            for (let category of this.allCategories) {
-                for (let subCategory of category.items) {
-                    if (subCategory.id === parentId) {
-                        this.selectedCategory = category;
-                        return;
-                    }
-
-                    if (subCategory.items && subCategory.items.length) {
-                        for (let subSubCategory of subCategory.items) {
-                            if (subSubCategory.id === parentId) {
-                                this.selectedCategory = subCategory;
-                                return;
-                            }
-                        }
-                    }
-                }
+        goBack () {
+            if (this.selectedSubCategory) {
+                this.selectedSubCategory = null;
+            } else {
+                this.selectedTopCategory = null;
             }
-
-            this.selectedCategory = null;
-        },
-        selectCategoriesFromFinalCategory (items) {
-            return items.filter(x => x.type === "CATEGORY");
         }
     }
 }
 </script>
 
 <style scoped>
+.list-group {
+    margin-bottom: 20px;
+}
+
 .other-items .list-group-item:first-child {
     border-top: none;
 }
@@ -216,13 +184,5 @@ img {
     cursor: pointer;
     vertical-align: -0.25em;
     margin-left: -6px;
-}
-
-.categories .row {
-    margin-bottom: 15px;
-}
-
-.category-name {
-    font-weight: 500;
 }
 </style>

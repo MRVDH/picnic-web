@@ -20,29 +20,7 @@
         </b-row>
 
         <div v-if="selectedTopMenuItem">
-            <div
-                v-for="category in selectedTopMenuItem.items"
-                :key="category.id"
-                class="categories"
-                >
-                <b-row>
-                    <b-col cols="12">
-                        <span class="category-name">{{ category.name }}</span>
-                    </b-col>
-                </b-row>
-                <b-row>
-                    <b-col
-                        v-for="product in category.items"
-                        :key="product.id"
-                        cols="3"
-                        >
-                        <CustomProductCard
-                            v-if="product.type === 'SINGLE_ARTICLE'"
-                            :product="product"
-                            />
-                    </b-col>
-                </b-row>
-            </div>
+            <CustomCategoriesAndProducts :categories="selectedTopMenuItem.items" />
         </div>
     </div>
 </template>
@@ -50,12 +28,12 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomProductCard from '@/components/ProductCard';
+import CustomCategoriesAndProducts from '@/components/CategoriesAndProducts';
 
 export default {
     name: 'StoreFront',
     components: {
-        CustomProductCard
+        CustomCategoriesAndProducts
     },
     data () {
         return {
@@ -128,13 +106,5 @@ export default {
 
 .top-menu-items {
     margin-bottom: 20px;
-}
-
-.categories .row {
-    margin-bottom: 15px;
-}
-
-.category-name {
-    font-weight: 500;
 }
 </style>
