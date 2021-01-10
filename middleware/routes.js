@@ -45,5 +45,11 @@ export default {
 
             res.send(await picnicClient.search(req.body.query));
         });
+        
+        app.get("/api/cart", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            res.send(await picnicClient.getShoppingCart());
+        });
     }
 }

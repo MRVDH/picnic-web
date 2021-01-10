@@ -36,5 +36,8 @@ export default {
     },
     search (query) {
         return httpInstance.post(`/api/search`, { query });
+    },
+    getShoppingCart () {
+        return httpInstance.get(`/api/cart`);
     }
 }
