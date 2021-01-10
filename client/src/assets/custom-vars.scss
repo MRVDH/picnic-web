@@ -1,0 +1,37 @@
+// own vars here
+// like $enable-shadows: true;
+$primary: #E1171E;
+$btn-border-radius: 4px;
+$grid-gutter-width: 6px !default;
+
+@import '~bootstrap/scss/bootstrap.scss';
+@import '~bootstrap-vue/src/index.scss';
+
+@font-face {
+    font-family: 'Apertura';
+    src: url(./fonts/Apertura-Black.eot), url(./fonts/Apertura-Black.woff) format("woff"), url(./fonts/Apertura-Black.ttf) format("truetype"), url(./fonts/Apertura-Black.svg) format("svg");
+    font-style: normal;
+    font-weight: 400
+}
+
+body, html{
+    font-weight: 400;
+    font-family: "Roboto", sans-serif;
+    font-size: 16px;
+    color:#333;
+    background-color:#f8f8f8
+}
+
+h1, h2 {
+    text-transform: uppercase;
+    font-family: "Apertura",sans-serif;
+}
+
+.btn:focus, .btn.focus {
+    outline: 0;
+    box-shadow: none;
+}
+
+.btn {
+    font-weight: 500;
+}
