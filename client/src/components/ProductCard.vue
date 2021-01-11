@@ -76,7 +76,7 @@ export default {
             return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "PRICE");
         },
         getLabel (product) {
-            return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "LABEL").text;
+            return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "LABEL") ? product.decorators.find(x => x.type === "LABEL").text : null;
         }
     }
 }
