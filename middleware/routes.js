@@ -51,5 +51,17 @@ export default {
 
             res.send(await picnicClient.getShoppingCart());
         });
+        
+        app.post("/api/cart/add", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            res.send(await picnicClient.addProductToShoppingCart(req.body.productId, 1));
+        });
+        
+        app.post("/api/cart/remove", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            res.send(await picnicClient.removeProductFromShoppingCart(req.body.productId, 1));
+        });
     }
 }
