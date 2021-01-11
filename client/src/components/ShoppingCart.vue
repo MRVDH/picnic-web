@@ -39,14 +39,21 @@
                     v-if="!item._hidePrice"
                     class="price"
                     >
+                    <b-badge
+                        v-if="item._labelText"
+                        variant="warning"
+                        >
+                        {{ item._labelText }}
+                    </b-badge>
+
                     <span
                         v-if="item._discountPrice"
                         class="original"
                         >
-                        <span class="price-euros">{{ getPriceEuros(item.price) }}</span>.<sup>{{ getPriceCents(item.price) }}</sup>
+                        <span class="price-euros">{{ getPriceEuros(item._totalPrice) }}</span>.<sup>{{ getPriceCents(item._totalPrice) }}</sup>
                     </span>
                     <span :class="{ 'text-primary': item._discountPrice }">
-                        <span class="price-euros">{{ getPriceEuros(item._discountPrice ? item._discountPrice : item.price) }}</span>.<sup>{{ getPriceCents(item._discountPrice ? item._discountPrice : item.price) }}</sup>
+                        <span class="price-euros">{{ getPriceEuros(item._discountPrice ? item._discountPrice : item._totalPrice) }}</span>.<sup>{{ getPriceCents(item._discountPrice ? item._discountPrice : item._totalPrice) }}</sup>
                     </span>
                 </span>
             </b-list-group-item>
@@ -179,8 +186,14 @@ export default {
                         subItem._totalPrice = item.price;
                         subItem._hidePrice = item.items.length > 1 && i !== item.items.length - 1;
 
-                        if (item.decorators && item.decorators.length && item.decorators.find(x => x.type === "PRICE")) {
-                            subItem._discountPrice = item.decorators.find(x => x.type === "PRICE").display_price;
+                        if (item.decorators && item.decorators.length) {
+                            if (item.decorators.find(x => x.type === "PRICE")) {
+                                subItem._discountPrice = item.decorators.find(x => x.type === "PRICE").display_price;
+                            }
+
+                            if (item.decorators.find(x => x.type === "LABEL")) {
+                                subItem._labelText = item.decorators.find(x => x.type === "LABEL").text.toLowerCase();
+                            }
                         }
 
                         this.items.push(subItem);
@@ -287,20 +300,28 @@ export default {
         right: 1.25rem;
         font-weight: 600;
         font-size: 15px;
-    }
 
-    .price .price-euros {
-        font-size: 19px;
-    }
+        .price-euros {
+            font-size: 19px;
+        }
 
-    .price .original {
-        color: #CCC;
-        font-weight: 400;
-        padding-right: 10px;
-    }
+        .original {
+            color: #CCC;
+            font-weight: 400;
+            padding-right: 10px;
+        }
 
-    .price sup {
-        left: -0.3em;
+        sup {
+            left: -0.3em;
+        }
+
+        .badge {
+            display: inline;
+            margin-right: 15px;
+            font-weight: 600;
+            padding: 0.25em 0.4em;
+            font-size: 12px;
+        }
     }
 }
 
