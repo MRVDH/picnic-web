@@ -1,5 +1,5 @@
 {
-  "name": "picnic-web",
+  "name": "picnic-web-client",
   "version": "1.0.0",
   "private": true,
   "scripts": {
