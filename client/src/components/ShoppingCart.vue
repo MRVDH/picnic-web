@@ -129,6 +129,7 @@ export default {
             this.slot = this.cart.delivery_slots.find(x => x.slot_id === this.cart.selected_slot.slot_id);
 
             this.items = [];
+            this.unavailableItems = [];
 
             if (!this.cart.items || !this.cart.items.length) {
                 return;
