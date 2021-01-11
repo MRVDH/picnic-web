@@ -22,11 +22,47 @@
 import CustomHeader from '@/components/Header';
 import CustomLoginModal from '@/components/LoginModal';
 
+import ApiService from '@/services/ApiService';
+
+import { SET_CART } from '@/store/mutationTypes';
+
 export default {
     name: 'App',
     components: {
         CustomHeader,
         CustomLoginModal
+    },
+    computed: {
+        loggedIn () {
+            return this.$store.state.authKey;
+        },
+        cart: {
+            get () {
+                return this.$store.state.cart;
+            },
+            set (cart) {
+                this.$store.commit(SET_CART, cart);
+            }
+        }
+    },
+    watch: {
+        loggedIn () {
+            if (this.loggedIn) {
+                this.getCartContents();
+            }
+        }
+    },
+    mounted () {
+        if (this.loggedIn) {
+            this.getCartContents();
+        }
+    },
+    methods: {
+        getCartContents () {
+            ApiService.getShoppingCart().then(res => {
+                this.cart = res.data;
+            });
+        }
     }
 }
 </script>

@@ -119,11 +119,12 @@
 <script>
 import ApiService from '@/services/ApiService';
 
+import { SET_CART } from '@/store/mutationTypes';
+
 export default {
     name: 'ShoppingCart',
     data () {
         return {
-            cart: null,
             slot: null,
             items: [],
             unavailableItems: []
@@ -132,6 +133,14 @@ export default {
     computed: {
         loggedIn () {
             return this.$store.state.authKey;
+        },
+        cart: {
+            get () {
+                return this.$store.state.cart;
+            },
+            set (cart) {
+                this.$store.commit(SET_CART, cart);
+            }
         },
         timeString () {
             if (!this.slot) {
