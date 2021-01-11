@@ -7,16 +7,23 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
-        authKey: null
+        authKey: null,
+        cart: null
     },
     mutations: {
         [mt.SET_AUTH_KEY] (state, authKey) {
             state.authKey = authKey;
+        },
+        [mt.SET_CART] (state, cart) {
+            state.cart = cart;
         }
     },
     actions: {
         [mt.SET_AUTH_KEY] ({ commit }, authKey) {
             commit(mt.SET_AUTH_KEY, authKey);
+        },
+        [mt.SET_CART] ({ commit }, cart) {
+            commit(mt.SET_CART, cart);
         }
     },
     plugins: [ new VuexPersistence({
