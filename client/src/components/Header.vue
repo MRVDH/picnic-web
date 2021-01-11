@@ -58,7 +58,7 @@ export default {
             return this.$store.state.cart;
         },
         totalCartValue () {
-            return (this.cart.total_price / 100).toLocaleString('en-EN')
+            return (this.cart.total_price / 100).toLocaleString('en-EN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         }
     }
 }
