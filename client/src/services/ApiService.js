@@ -39,5 +39,11 @@ export default {
     },
     getShoppingCart () {
         return httpInstance.get(`/api/cart`);
+    },
+    addProductToCart (productId) {
+        return httpInstance.post(`/api/cart/add`, { productId });
+    },
+    removeProductFromCart (productId) {
+        return httpInstance.post(`/api/cart/remove`, { productId });
     }
 }

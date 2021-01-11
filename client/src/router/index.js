@@ -20,6 +20,11 @@ const routes = [
         component: () => import(/* webpackChunkName: "cart" */ '../components/ShoppingCart.vue')
     },
     {
+        path: '/product/:productId',
+        name: 'Product',
+        component: () => import(/* webpackChunkName: "product-details" */ '../components/ProductDetails.vue')
+    },
+    {
         path: '/user',
         name: 'User',
     }

@@ -8,55 +8,12 @@
         </b-list-group-item>
 
         <div v-if="items.length">
-            <b-list-group-item
+            <CustomShoppingCartItem
                 v-for="item in items"
                 :key="item.id"
-                class="product-item"
-                :class="{ 'no-border-bottom': item._hidePrice }"
-                >
-                <b-badge class="quantity">{{ item._quantity }}</b-badge>
-
-                <img src="../assets/img/placeholder-small.png">
-
-                <div class="product-info">
-                    <span class="product-name">{{ item.name }}</span>
-                    <br>
-                    <span
-                        v-if="item.unit_quantity"
-                        class="product-quantity"
-                        >
-                        {{ item.unit_quantity }}
-                    </span>
-                    <span
-                        v-if="item.unit_quantity_sub"
-                        class="product-quantity"
-                        >
-                        {{ item.unit_quantity_sub }}
-                    </span>
-                </div>
-
-                <span
-                    v-if="!item._hidePrice"
-                    class="price"
-                    >
-                    <b-badge
-                        v-if="item._labelText"
-                        variant="warning"
-                        >
-                        {{ item._labelText }}
-                    </b-badge>
-
-                    <span
-                        v-if="item._discountPrice"
-                        class="original"
-                        >
-                        <span class="price-euros">{{ getPriceEuros(item._totalPrice) }}</span>.<sup>{{ getPriceCents(item._totalPrice) }}</sup>
-                    </span>
-                    <span :class="{ 'text-primary': item._discountPrice }">
-                        <span class="price-euros">{{ getPriceEuros(item._discountPrice ? item._discountPrice : item._totalPrice) }}</span>.<sup>{{ getPriceCents(item._discountPrice ? item._discountPrice : item._totalPrice) }}</sup>
-                    </span>
-                </span>
-            </b-list-group-item>
+                :product="item"
+                :unavailable="false"
+                />
         </div>
 
         <div v-if="unavailableItems.length">
@@ -64,32 +21,12 @@
                 De onderstaande items zijn niet leverbaar.
             </b-list-group-item>
 
-            <b-list-group-item
+            <CustomShoppingCartItem
                 v-for="item in unavailableItems"
                 :key="item.id"
-                class="product-item"
-                >
-                <b-badge>{{ getItemQuantity(item) }}</b-badge>
-
-                <img src="../assets/img/placeholder-small.png">
-
-                <div class="product-info">
-                    <span class="product-name unavailable">{{ item.items[0].name }}</span>
-                    <br>
-                    <span
-                        v-if="item.items[0].unit_quantity"
-                        class="product-quantity"
-                        >
-                        {{ item.items[0].unit_quantity }}
-                    </span>
-                    <span
-                        v-if="item.items[0].unit_quantity_sub"
-                        class="product-quantity"
-                        >
-                        {{ item.items[0].unit_quantity_sub }}
-                    </span>
-                </div>
-            </b-list-group-item>
+                :product="item"
+                :unavailable="true"
+                />
         </div>
 
         <b-list-group-item
@@ -121,8 +58,13 @@ import ApiService from '@/services/ApiService';
 
 import { SET_CART } from '@/store/mutationTypes';
 
+import CustomShoppingCartItem from '@/components/ShoppingCartItem';
+
 export default {
     name: 'ShoppingCart',
+    components: {
+        CustomShoppingCartItem
+    },
     data () {
         return {
             slot: null,
@@ -164,6 +106,11 @@ export default {
             if (this.loggedIn) {
                 this.getCartContents();
             }
+        },
+        cart () {
+            if (this.cart) {
+                this.processCartContents();
+            }
         }
     },
     mounted () {
@@ -175,42 +122,45 @@ export default {
         getCartContents () {
             ApiService.getShoppingCart().then(res => {
                 this.cart = res.data;
-                this.slot = this.cart.delivery_slots.find(x => x.slot_id === this.cart.selected_slot.slot_id);
+                this.processCartContents();
+            });
+        },
+        processCartContents () {
+            this.slot = this.cart.delivery_slots.find(x => x.slot_id === this.cart.selected_slot.slot_id);
 
-                this.items = [];
+            this.items = [];
 
-                if (!this.cart.items || !this.cart.items.length) {
-                    return;
-                }
+            if (!this.cart.items || !this.cart.items.length) {
+                return;
+            }
 
-                for (let item of this.cart.items) {
-                    for (let i = 0; i < item.items.length; i++) {
-                        let subItem = item.items[i]
+            for (let item of this.cart.items) {
+                for (let i = 0; i < item.items.length; i++) {
+                    let subItem = item.items[i];
 
-                        if (!item.price) {
-                            continue;
+                    subItem._quantity = subItem.decorators.find(x => x.type === "QUANTITY").quantity;
+                    subItem._totalPrice = item.price;
+                    subItem._hidePrice = item.items.length > 1 && i !== item.items.length - 1;
+
+                    if (item.decorators && item.decorators.length) {
+                        if (item.decorators.find(x => x.type === "PRICE")) {
+                            subItem._discountPrice = item.decorators.find(x => x.type === "PRICE").display_price;
                         }
 
-                        subItem._quantity = subItem.decorators.find(x => x.type === "QUANTITY").quantity;
-                        subItem._totalPrice = item.price;
-                        subItem._hidePrice = item.items.length > 1 && i !== item.items.length - 1;
-
-                        if (item.decorators && item.decorators.length) {
-                            if (item.decorators.find(x => x.type === "PRICE")) {
-                                subItem._discountPrice = item.decorators.find(x => x.type === "PRICE").display_price;
-                            }
-
-                            if (item.decorators.find(x => x.type === "LABEL")) {
-                                subItem._labelText = item.decorators.find(x => x.type === "LABEL").text.toLowerCase();
-                            }
+                        if (item.decorators.find(x => x.type === "LABEL")) {
+                            subItem._labelText = item.decorators.find(x => x.type === "LABEL").text.toLowerCase();
                         }
+                    }
 
+                    subItem._quantitySelectOpen = false;
+
+                    if (item.price) {
                         this.items.push(subItem);
+                    } else {
+                        this.unavailableItems.push(subItem);
                     }
                 }
-                
-                this.unavailableItems = this.cart.items.filter(x => x.price === 0);
-            });
+            }
         },
         getPriceEuros (price) {
             if (price.toString().length > 2) {
@@ -273,11 +223,19 @@ export default {
         width: 22px;
         padding-top: 5px;
         padding-left: 5px;
+        cursor: pointer;
     }
 
-    img {
+    .quantity-and-image {
         margin-left: 20px;
         height: 50px;
+        width: 50px;
+        display: inline-block;
+        
+        img {
+            height: 50px;
+            width: 50px;
+        }
     }
 
     .product-info {
