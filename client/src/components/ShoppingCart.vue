@@ -7,9 +7,58 @@
             </div>
         </b-list-group-item>
 
-        <div v-if="cart && cart.items && cart.items.length">
+        <div v-if="items.length">
             <b-list-group-item
-                v-for="item in cart.items"
+                v-for="item in items"
+                :key="item.id"
+                class="product-item"
+                :class="{ 'no-border-bottom': item._hidePrice }"
+                >
+                <b-badge>{{ item._quantity }}</b-badge>
+
+                <img src="../assets/img/placeholder-small.png">
+
+                <div class="product-info">
+                    <span class="product-name">{{ item.name }}</span>
+                    <br>
+                    <span
+                        v-if="item.unit_quantity"
+                        class="product-quantity"
+                        >
+                        {{ item.unit_quantity }}
+                    </span>
+                    <span
+                        v-if="item.unit_quantity_sub"
+                        class="product-quantity"
+                        >
+                        {{ item.unit_quantity_sub }}
+                    </span>
+                </div>
+
+                <span
+                    v-if="!item._hidePrice"
+                    class="price"
+                    >
+                    <span
+                        v-if="item._discountPrice"
+                        class="original"
+                        >
+                        <span class="price-euros">{{ getPriceEuros(item.price) }}</span>.<sup>{{ getPriceCents(item.price) }}</sup>
+                    </span>
+                    <span :class="{ 'text-primary': item._discountPrice }">
+                        <span class="price-euros">{{ getPriceEuros(item._discountPrice ? item._discountPrice : item.price) }}</span>.<sup>{{ getPriceCents(item._discountPrice ? item._discountPrice : item.price) }}</sup>
+                    </span>
+                </span>
+            </b-list-group-item>
+        </div>
+
+        <div v-if="unavailableItems.length">
+            <b-list-group-item class="unable-to-deliver">
+                De onderstaande items zijn niet leverbaar.
+            </b-list-group-item>
+
+            <b-list-group-item
+                v-for="item in unavailableItems"
                 :key="item.id"
                 class="product-item"
                 >
@@ -18,7 +67,7 @@
                 <img src="../assets/img/placeholder-small.png">
 
                 <div class="product-info">
-                    <span class="product-name">{{ item.items[0].name }}</span>
+                    <span class="product-name unavailable">{{ item.items[0].name }}</span>
                     <br>
                     <span
                         v-if="item.items[0].unit_quantity"
@@ -33,18 +82,6 @@
                         {{ item.items[0].unit_quantity_sub }}
                     </span>
                 </div>
-
-                <span class="price">
-                    <span
-                        v-if="getDiscount(item)"
-                        class="original"
-                        >
-                        <span class="price-euros">{{ getPriceEuros(getDiscount(item)) }}</span>.<sup>{{ getPriceCents(getDiscount(item)) }}</sup>
-                    </span>
-                    <span :class="{ 'text-primary': getDiscount(item) }">
-                        <span class="price-euros">{{ getPriceEuros(item.price) }}</span>.<sup>{{ getPriceCents(item.price) }}</sup>
-                    </span>
-                </span>
             </b-list-group-item>
         </div>
 
@@ -80,7 +117,9 @@ export default {
     data () {
         return {
             cart: null,
-            slot: null
+            slot: null,
+            items: [],
+            unavailableItems: []
         }
     },
     computed: {
@@ -121,6 +160,34 @@ export default {
             ApiService.getShoppingCart().then(res => {
                 this.cart = res.data;
                 this.slot = this.cart.delivery_slots.find(x => x.slot_id === this.cart.selected_slot.slot_id);
+
+                this.items = [];
+
+                if (!this.cart.items || !this.cart.items.length) {
+                    return;
+                }
+
+                for (let item of this.cart.items) {
+                    for (let i = 0; i < item.items.length; i++) {
+                        let subItem = item.items[i]
+
+                        if (!item.price) {
+                            continue;
+                        }
+
+                        subItem._quantity = subItem.decorators.find(x => x.type === "QUANTITY").quantity;
+                        subItem._totalPrice = item.price;
+                        subItem._hidePrice = item.items.length > 1 && i !== item.items.length - 1;
+
+                        if (item.decorators && item.decorators.length && item.decorators.find(x => x.type === "PRICE")) {
+                            subItem._discountPrice = item.decorators.find(x => x.type === "PRICE").display_price;
+                        }
+
+                        this.items.push(subItem);
+                    }
+                }
+                
+                this.unavailableItems = this.cart.items.filter(x => x.price === 0);
             });
         },
         getPriceEuros (price) {
@@ -133,12 +200,11 @@ export default {
         getPriceCents (price) {
             return price.toString().slice(-2);
         },
+        getDiscount (product) {
+            return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "PRICE") ? product.decorators.find(x => x.type === "PRICE").display_price : null;
+        },
         getItemQuantity (item) {
             return item.items[0].decorators.find(x => x.type === "QUANTITY").quantity;
-        },
-        getDiscount (product) {
-            console.log(product.decorators);
-            return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "PRICE") ? product.decorators.find(x => x.type === "PRICE").display_price : null;
         }
     }
 }
@@ -160,6 +226,14 @@ export default {
     }
 }
 
+.no-border-bottom {
+    border-bottom: none;
+}
+
+.unable-to-deliver {
+    background: #f8f8f8;
+}
+
 .product-item {
     padding-top: 20px;
     padding-bottom: 20px;
@@ -176,7 +250,7 @@ export default {
         height: 22px;
         width: 22px;
         padding-top: 5px;
-        padding-left: 6px;
+        padding-left: 5px;
     }
 
     img {
@@ -194,6 +268,10 @@ export default {
         .product-name {
             font-size: 15px;
             font-weight: 500;
+
+            &.unavailable {
+                color: #999;
+            }
         }
 
         .product-quantity {
