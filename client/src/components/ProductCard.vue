@@ -14,6 +14,13 @@
                 >
                 {{ product.unit_quantity_sub }}
             </span>
+            <br>
+            <b-badge
+                v-if="getLabel(product)"
+                variant="warning"
+                >
+                {{ getLabel(product) }}
+            </b-badge>
 
             <b-icon
                 class="details-icon"
@@ -67,6 +74,9 @@ export default {
         },
         hasDiscount (product) {
             return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "PRICE");
+        },
+        getLabel (product) {
+            return product.decorators && product.decorators.length && product.decorators.find(x => x.type === "LABEL").text;
         }
     }
 }
@@ -126,5 +136,11 @@ export default {
 
 .price sup {
     left: -0.3em;
+}
+
+.badge {
+    display: inline;
+    margin-right: 15px;
+    font-size: 12px;
 }
 </style>

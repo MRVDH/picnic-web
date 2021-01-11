@@ -14,7 +14,7 @@
                 class="product-item"
                 :class="{ 'no-border-bottom': item._hidePrice }"
                 >
-                <b-badge>{{ item._quantity }}</b-badge>
+                <b-badge class="quantity">{{ item._quantity }}</b-badge>
 
                 <img src="../assets/img/placeholder-small.png">
 
@@ -259,7 +259,7 @@ export default {
         border-bottom: none;
     }
 
-    .badge {
+    .quantity.badge {
         height: 22px;
         width: 22px;
         padding-top: 5px;
@@ -318,8 +318,6 @@ export default {
         .badge {
             display: inline;
             margin-right: 15px;
-            font-weight: 600;
-            padding: 0.25em 0.4em;
             font-size: 12px;
         }
     }
