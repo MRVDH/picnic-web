@@ -45,5 +45,8 @@ export default {
     },
     removeProductFromCart (productId) {
         return httpInstance.post(`/api/cart/remove`, { productId });
+    },
+    getProductDetails (productId) {
+        return httpInstance.get(`/api/product/${productId}`);
     }
 }

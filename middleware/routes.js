@@ -99,5 +99,15 @@ export default {
                 res.sendStatus(500);
             }
         });
+        
+        app.get("/api/product/:productId", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getProduct(req.params.productId));
+            } catch {
+                res.sendStatus(500);
+            }
+        });
     }
 }
