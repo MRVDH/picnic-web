@@ -2,7 +2,16 @@
     <b-row class="product-details">
         <b-col cols="7">
             <!-- Name and product quantity -->
-            <h3>{{ product.name }}</h3>
+            <div class="product-title">
+                <h3>{{ product.name }}</h3>
+                <b-badge
+                    v-if="getLabel()"
+                    variant="warning"
+                    class="badge-label"
+                    >
+                    {{ getLabel() }}
+                </b-badge>
+            </div>
             <span class="product-quantity text-success">{{ product.unit_quantity }}</span>
             <span
                 v-if="product.unit_quantity_sub"
@@ -49,12 +58,34 @@
                 </b-badge>
             </span>
 
+            <hr>
+
             <!-- Allergy badges -->
+            <b-badge
+                v-if="product.fresh_label"
+                variant="success"
+                class="allergy-badge"
+                >
+                +{{ product.fresh_label.number }} {{ product.fresh_label.unit }}
+            </b-badge>
+            <span
+                v-if="product.tags && product.tags.length"
+                class="allergy-badge"
+                >
+                <b-badge
+                    v-for="tag in product.tags"
+                    :key="tag.name"
+                    :style="{ 'background-color': tag.color }"
+                    :title="tag.description"
+                    >
+                    {{ tag.name }}
+                </b-badge>
+            </span>
+
             <!-- Description -->
             <!-- Nutrition value -->
             <!-- Ingredients -->
             <!-- Extra information -->
-            <hr>
         </b-col>
         <b-col cols="5">
             <img src="../assets/img/placeholder.png">
@@ -104,6 +135,9 @@ export default {
             ApiService.getProductDetails(this.$route.params.productId).then(res => {
                 this.product = res.data.product_details;
             });
+        },
+        getLabel () {
+            return this.product.decorators && this.product.decorators.length && this.product.decorators.find(x => x.type === "LABEL") ? this.product.decorators.find(x => x.type === "LABEL").text : null;
         },
         getOrderQuantity () {
             for (let item of this.cart.items) {
@@ -162,8 +196,12 @@ export default {
     padding: 20px;
 }
 
+.product-title {
+    height: 60px;
+}
+
 h3 {
-    margin-bottom: 25px;
+    margin-bottom: 0;
 }
 
 img {
@@ -223,5 +261,9 @@ img {
         margin-right: 15px;
         font-size: 12px;
     }
+}
+
+.allergy-badge, .allergy-badge span {
+    margin-right: 10px;
 }
 </style>
