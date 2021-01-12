@@ -1,6 +1,6 @@
 <template>
     <b-row class="product-details">
-        <b-col cols="7">
+        <b-col cols="6">
             <!-- Name and product quantity -->
             <div class="product-title">
                 <h3>{{ product.name }}</h3>
@@ -83,11 +83,73 @@
             </span>
 
             <!-- Description -->
+            <p class="description">{{ product.description }}</p>
+            
             <!-- Nutrition value -->
+            <h5 v-if="product.nutritional_values && product.nutritional_values.length">Voedingswaarde</h5>
+            <div
+                v-if="product.nutritional_values && product.nutritional_values.length"
+                class="nutrition-table"
+                >
+                <div class="table-header">
+                    <span class="column-2">% RI</span>
+                    <span class="column-1">100 g</span>
+                </div>
+                <div
+                    v-for="nutVal in product.nutritional_values"
+                    :key="nutVal.name"
+                    >
+                    <div 
+                        class="nutrition-table-row"
+                        >
+                        <span class="nutrition-title">{{ nutVal.name }}</span>
+                        <span class="column-2">{{ nutVal.gda_percentage }}</span>
+                        <span class="column-1">{{ nutVal.value }}</span>
+                    </div>
+                    <div v-if="nutVal.sub_values && nutVal.sub_values.length">
+                        <div
+                            v-for="subVal in nutVal.sub_values"
+                            :key="subVal.name"
+                            class="nutrition-table-row"
+                            >
+                            <span class="sub-item">{{ subVal.name }}</span>
+                            <span class="column-2">{{ subVal.gda_percentage || '-' }}</span>
+                            <span class="column-1">{{ subVal.value }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Ingredients -->
+            <h5
+                v-if="product.ingredients_blob"
+                class="mt-4"
+                >
+                Ingredienten
+            </h5>
+            <p v-if="product.ingredients_blob">{{ product.ingredients_blob }}</p>
+
             <!-- Extra information -->
+            <h5
+                v-if="additionalInfoItmes"
+                class="my-4"
+                >
+                Extra informatie
+            </h5>
+            <div v-if="additionalInfoItmes">
+                <div
+                    v-for="item in additionalInfoItmes"
+                    :key="item.id"
+                    >
+                    <h6>{{ item.title }}</h6>
+                    <p>{{ item.text }}</p>
+                </div>
+            </div>
         </b-col>
-        <b-col cols="5">
+        <b-col
+            cols="5"
+            offset="1"
+            >
             <img src="../assets/img/placeholder.png">
         </b-col>
     </b-row>
@@ -116,6 +178,13 @@ export default {
             set (cart) {
                 this.$store.commit(SET_CART, cart);
             }
+        },
+        additionalInfoItmes () {
+            if (this.product && this.product.items && this.product.items.length && this.product.items.find(x => x.id === "additional_info")) {
+                return this.product.items.find(x => x.id === "additional_info").items;
+            }
+
+            return null;
         }
     },
     watch: {
@@ -265,5 +334,43 @@ img {
 
 .allergy-badge, .allergy-badge span {
     margin-right: 10px;
+}
+
+.description {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.nutrition-table {
+    color: #666;
+    line-height: 1.8rem;
+
+    .column-1 {
+        float: right;
+    }
+
+    .column-2 {
+        float: right;
+        width: 80px;
+        text-align: right;
+    }
+
+    .table-header {
+        height: 29px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .nutrition-table-row {
+        border-bottom: 1px solid #BBB;
+
+        .nutrition-title {
+            font-weight: 600;
+        }
+
+        .sub-item {
+            margin-left: 10px;
+        }
+    }
 }
 </style>
