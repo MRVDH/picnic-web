@@ -34,6 +34,13 @@
                     />
             </b-form-group>
 
+            <span
+                v-if="loginError"
+                class="text-primary"
+                >
+                Er is een fout opgetreden tijdens het inloggen.
+            </span>
+
             <b-button
                 variant="primary"
                 class="float-right"
@@ -57,6 +64,7 @@ export default {
             loginModalOpen: false,
             email: "",
             password: "",
+            loginError: false
         }
     },
     computed: {
@@ -80,11 +88,12 @@ export default {
                 return;
             }
 
+            this.loginError = false;
             ApiService.login(this.email, this.password).then((res) => {
                 this.authKey = res.data.authKey;
                 this.loginModalOpen = false;
             }).catch(() => {
-
+                this.loginError = true;
             });
         }
     }
