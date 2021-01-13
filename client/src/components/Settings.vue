@@ -1,7 +1,16 @@
 <template>
     <b-row v-if="user">
         <b-col cols="6">
-            <h3>Profiel</h3>
+            <h3>
+                Profiel
+                <b-button
+                    variant="primary"
+                    size="sm"
+                    @click="logout()"
+                    >
+                    Uitloggen
+                </b-button>
+            </h3>
 
             <p class="info-title">Naam</p>
             <p class="info-value">{{ user.firstname }} {{ user.lastname }}</p>
@@ -100,6 +109,8 @@
 <script>
 import ApiService from '@/services/ApiService';
 
+import { SET_AUTH_KEY } from '@/store/mutationTypes';
+
 export default {
     name: 'Settings',
     data () {
@@ -168,6 +179,10 @@ export default {
             }
 
             return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(totalPrice);
+        },
+        logout () {
+            this.$store.dispatch(SET_AUTH_KEY, null);
+            location.reload();
         }
     }
 }
@@ -182,6 +197,10 @@ export default {
 .col-6 {
     padding-left: 7px;
     padding-right: 7px;
+}
+
+button {
+    margin-top: -6px;
 }
 
 .info-title {
