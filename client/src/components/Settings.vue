@@ -24,10 +24,10 @@
                 <p class="info-value">{{ discount.share_url }}</p>
 
                 <p class="info-title">Totaal verdiend</p>
-                <p class="info-value">&euro; {{ discount.amount_earned / 100 }}</p>
+                <p class="info-value">{{ new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(discount.amount_earned / 100) }}</p>
 
                 <p class="info-title">Kortingswaarde</p>
-                <p class="info-value">&euro; {{ discount.inviter_value / 100 }}</p>
+                <p class="info-value">{{ new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(discount.inviter_value / 100) }}</p>
             </div>
 
             <h3>Abonnementen</h3>
