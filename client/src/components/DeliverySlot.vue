@@ -18,6 +18,7 @@
                 v-for="deliverySlot in deliverySlots"
                 :key="deliverySlot.slot_id"
                 class="slot-row"
+                @click="selectDeliverySlot(deliverySlot)"
                 >
                 <div class="date-block">
                     <span class="day-title">{{ getDayName(deliverySlot) }}</span>
@@ -25,14 +26,28 @@
                     <span class="day-date">{{ getDayDate(deliverySlot) }}</span>
                 </div>
 
-                <span class="day-time-frame">{{ getDayTimeFrame(deliverySlot) }}</span>
+                <span class="day-time-frame">
+                    <span
+                        v-if="slot.slot_id !== deliverySlot.slot_id"
+                        class="regular-time"
+                        >
+                        {{ getDayTimeFrame(deliverySlot) }}
+                    </span>
+                    <b-badge
+                        v-else
+                        variant="success"
+                        pill
+                        >
+                        {{ getDayTimeFrame(deliverySlot) }}
+                    </b-badge>
+                </span>
             </div>
         </b-modal>
     </b-list-group-item>
 </template>
 
 <script>
-//import ApiService from '@/services/ApiService';
+import ApiService from '@/services/ApiService';
 
 import { SET_CART } from '@/store/mutationTypes';
 
@@ -69,6 +84,10 @@ export default {
     },
     methods: {
         getDayName (slot) {
+            if (!slot) {
+                return;
+            }
+            
             let startDate = new Date(slot.window_start);
             
             let name = startDate.toLocaleDateString("nl-NL", { weekday: 'long' });
@@ -77,6 +96,10 @@ export default {
             return name;
         },
         getDayDate (slot) {
+            if (!slot) {
+                return;
+            }
+
             let startDate = new Date(slot.window_start);
             
             let name = startDate.toLocaleDateString("nl-NL", { month: 'long' });
@@ -85,6 +108,10 @@ export default {
             return `${startDate.getDate()} ${name.substring(0, 3)}`;
         },
         getDayTimeFrame (slot) {
+            if (!slot) {
+                return;
+            }
+
             let startDate = new Date(slot.window_start);
             let endDate = new Date(slot.window_end);
 
@@ -92,6 +119,15 @@ export default {
             name += `${endDate.getHours().toString().length === 1 ? '0' + endDate.getHours() : endDate.getHours()}:${endDate.getMinutes().toString().length === 1 ? '0' + endDate.getMinutes() : endDate.getMinutes()}`;
 
             return name;
+        },
+        selectDeliverySlot (slot) {
+            if (slot.slot_id === this.slot_id) {
+                return
+            }
+
+            ApiService.setDeliverySlot(this.slot_id).then((res) => {
+                this.cart = res.data;
+            });
         }
     }
 }
@@ -140,5 +176,13 @@ export default {
     float: right;
     font-weight: 500;
     margin-top: 13px;
+
+    .regular-time {
+        padding-right: 11px;
+    }
+
+    .badge {
+        font-size: 16px;
+    }
 }
 </style>

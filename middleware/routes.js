@@ -109,5 +109,15 @@ export default {
                 res.sendStatus(500);
             }
         });
+        
+        app.post("/api/slot", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.setDeliverySlot(req.body.slotId));
+            } catch {
+                res.sendStatus(500);
+            }
+        });
     }
 }
