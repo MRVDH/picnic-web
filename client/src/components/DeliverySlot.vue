@@ -21,15 +21,26 @@
                 @click="selectDeliverySlot(deliverySlot)"
                 >
                 <div class="date-block">
-                    <span class="day-title">{{ getDayName(deliverySlot) }}</span>
+                    <span
+                        class="day-title"
+                        :class="{ 'unavailable': !deliverySlot.is_available }"
+                        >
+                        {{ getDayName(deliverySlot) }}
+                    </span>
                     <br>
-                    <span class="day-date">{{ getDayDate(deliverySlot) }}</span>
+                    <span
+                        class="day-date"
+                        :class="{ 'unavailable': !deliverySlot.is_available }"
+                        >
+                        {{ getDayDate(deliverySlot) }}
+                    </span>
                 </div>
 
                 <span class="day-time-frame">
                     <span
                         v-if="slot.slot_id !== deliverySlot.slot_id"
                         class="regular-time"
+                        :class="{ 'unavailable': !deliverySlot.is_available }"
                         >
                         {{ getDayTimeFrame(deliverySlot) }}
                     </span>
@@ -87,7 +98,7 @@ export default {
             if (!slot) {
                 return;
             }
-            
+
             let startDate = new Date(slot.window_start);
             
             let name = startDate.toLocaleDateString("nl-NL", { weekday: 'long' });
@@ -125,8 +136,9 @@ export default {
                 return
             }
 
-            ApiService.setDeliverySlot(this.slot_id).then((res) => {
+            ApiService.setDeliverySlot(slot.slot_id).then((res) => {
                 this.cart = res.data;
+                this.modalOpen = false;
             });
         }
     }
@@ -184,5 +196,10 @@ export default {
     .badge {
         font-size: 16px;
     }
+}
+
+.unavailable {
+    color: #CCC;
+    text-decoration: line-through;
 }
 </style>
