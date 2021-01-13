@@ -119,5 +119,55 @@ export default {
                 res.sendStatus(500);
             }
         });
+        
+        app.get("/api/user", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getUserDetails());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
+        
+        app.get("/api/consent", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getConsentSettings());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
+        
+        app.post("/api/consent", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.setConsentSettings([{ consent_request_text_id: req.body.consentId, consent_request_locale: 'nl_NL', agreement: req.body.newVal }]));
+            } catch {
+                res.sendStatus(500);
+            }
+        });
+        
+        app.get("/api/discount", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getMgmDetails());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
+        
+        app.get("/api/deliveries", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getDeliveries());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
     }
 }

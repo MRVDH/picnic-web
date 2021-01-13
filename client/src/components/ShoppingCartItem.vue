@@ -14,6 +14,8 @@
             <img
                 v-if="!quantitySelectOpen"
                 src="../assets/img/placeholder-small.png"
+                style="cursor: pointer;"
+                @click="goToProductPage()"
                 >
 
             <img
@@ -37,7 +39,10 @@
             </b-badge>
         </div>
 
-        <div class="product-info">
+        <div
+            class="product-info"
+            @click="goToProductPage()"
+            >
             <span
                 class="product-name"
                 :class="{ 'unavailable': unavailable }"
@@ -143,6 +148,9 @@ export default {
                     noCloseButton: true
                 });
             });
+        },
+        goToProductPage () {
+            this.$router.push({ name: 'Product', params: { productId: this.product.id } });
         }
     }
 }
@@ -202,6 +210,7 @@ export default {
         margin-left: 20px;
         line-height: 1.1em;
         margin-top: 7px;
+        cursor: pointer;
 
         .product-name {
             font-size: 15px;
