@@ -1,6 +1,5 @@
 <template>
     <div id="app">
-        <CustomLoginModal />
         <a
             href="https://github.com/MRVDH/picnic-web"
             target="_blank"
@@ -33,6 +32,7 @@
                     <span class="unofficial-text">Onofficieel</span>
                 </b-col>
             </b-row>
+            <CustomLogin v-if="!loggedIn" />
             <router-view />
         </b-container>
     </div>
@@ -40,7 +40,7 @@
 
 <script>
 import CustomHeader from '@/components/Header';
-import CustomLoginModal from '@/components/LoginModal';
+import CustomLogin from '@/components/Login';
 
 import ApiService from '@/services/ApiService';
 
@@ -50,7 +50,7 @@ export default {
     name: 'App',
     components: {
         CustomHeader,
-        CustomLoginModal
+        CustomLogin
     },
     computed: {
         loggedIn () {
