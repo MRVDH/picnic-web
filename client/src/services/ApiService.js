@@ -60,5 +60,11 @@ export default {
     },
     setConsent (consentId, newVal) {
         return httpInstance.post(`/api/consent`, { consentId, newVal });
+    },
+    getDiscount () {
+        return httpInstance.get(`/api/discount`);
+    },
+    getDeliveries () {
+        return httpInstance.get(`/api/deliveries`);
     }
 }

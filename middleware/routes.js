@@ -149,5 +149,25 @@ export default {
                 res.sendStatus(500);
             }
         });
+        
+        app.get("/api/discount", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getMgmDetails());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
+        
+        app.get("/api/deliveries", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getDeliveries());
+            } catch {
+                res.sendStatus(500);
+            }
+        });
     }
 }
