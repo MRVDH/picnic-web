@@ -48,5 +48,8 @@ export default {
     },
     getProductDetails (productId) {
         return httpInstance.get(`/api/product/${productId}`);
+    },
+    setDeliverySlot (slotId) {
+        return httpInstance.post(`/api/slot`, { slotId });
     }
 }
