@@ -6,7 +6,7 @@ Unofficial (unaffiliated) web interface for the online supermarket Picnic. Uses 
 
 Live version: [picnic.maartenvandenhoven.com](http://picnic.maartenvandenhoven.com)
 
-![picnic-web-screenshot](https://i.imgur.com/lfXafmk.png)
+![picnic-web-screenshot](https://i.imgur.com/nUIi0e6.png)
 
 ### FAQ
 
@@ -15,9 +15,6 @@ I have not been able to retreive images from the picnic server yet.
 
 #### Why this when there is an app?
 For when you don't have your phone with you but you'd still like to browse, manage your cart, etc.
-
-#### I can't find feature X, where is it?
-Todo: User settings, selecting delivery slots, password reset.
 
 #### Something broke, what now?
 Please report issues in the [Github issues section](https://github.com/MRVDH/picnic-web/issues) or email me at [info@maartenvandenhoven.com](mailto:info@maartenvandenhoven.com).
