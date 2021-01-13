@@ -1,11 +1,6 @@
 <template>
     <b-list-group>
-        <b-list-group-item>
-            <div class="delivery-card">
-                <b-icon icon="clock" />
-                {{ timeString }}
-            </div>
-        </b-list-group-item>
+        <CustomDeliverySlot />
 
         <div v-if="items.length">
             <CustomShoppingCartItem
@@ -58,11 +53,13 @@ import ApiService from '@/services/ApiService';
 
 import { SET_CART } from '@/store/mutationTypes';
 
+import CustomDeliverySlot from '@/components/DeliverySlot';
 import CustomShoppingCartItem from '@/components/ShoppingCartItem';
 
 export default {
     name: 'ShoppingCart',
     components: {
+        CustomDeliverySlot,
         CustomShoppingCartItem
     },
     data () {
@@ -83,22 +80,6 @@ export default {
             set (cart) {
                 this.$store.commit(SET_CART, cart);
             }
-        },
-        timeString () {
-            if (!this.slot) {
-                return "";
-            }
-
-            let startDate = new Date(this.slot.window_start);
-            let endDate = new Date(this.slot.window_end);
-
-            let name = startDate.toLocaleDateString("nl-NL", { weekday: 'long' });
-            name = name.charAt(0).toUpperCase() + name.slice(1);
-
-            name += ` ${startDate.getHours().toString().length === 1 ? '0' + startDate.getHours() : startDate.getHours()}:${startDate.getMinutes().toString().length === 1 ? '0' + startDate.getMinutes() : startDate.getMinutes()} - `;
-            name += `${endDate.getHours().toString().length === 1 ? '0' + endDate.getHours() : endDate.getHours()}:${endDate.getMinutes().toString().length === 1 ? '0' + endDate.getMinutes() : endDate.getMinutes()}`;
-
-            return name;
         }
     },
     watch: {
@@ -184,21 +165,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.delivery-card {
-    background: #f8f8f8;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    padding: 10px 15px;
-    font-weight: 500;
-    text-align: center;
-    min-height: 46px;
-
-    .b-icon {
-        float: left;
-        margin-top: 3px;
-    }
-}
-
 .no-border-bottom {
     border-bottom: none;
 }
