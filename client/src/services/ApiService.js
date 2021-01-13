@@ -51,5 +51,20 @@ export default {
     },
     setDeliverySlot (slotId) {
         return httpInstance.post(`/api/slot`, { slotId });
+    },
+    getUserDetails () {
+        return httpInstance.get(`/api/user`);
+    },
+    getConsentSettings () {
+        return httpInstance.get(`/api/consent`);
+    },
+    setConsent (consentId, newVal) {
+        return httpInstance.post(`/api/consent`, { consentId, newVal });
+    },
+    getDiscount () {
+        return httpInstance.get(`/api/discount`);
+    },
+    getDeliveries () {
+        return httpInstance.get(`/api/deliveries`);
     }
 }
