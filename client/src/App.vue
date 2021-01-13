@@ -19,6 +19,32 @@
                 icon="globe"
                 />
         </a>
+            
+        <b-icon
+            class="icon-info"
+            icon="exclamation-circle"
+            @click="showInfoModal = true"
+            />
+
+        <b-modal
+            v-model="showInfoModal"
+            title="Over Picnic Web"
+            :hide-footer="true"
+            >
+            <p>
+                Picnic Web is een onofficiële web interface voor de online supermarkt Picnic. De broncode is te vinden op GitHub:
+                <a
+                    href="https://github.com/MRVDH/picnic-web" 
+                    target="_blank"
+                    >https://github.com/MRVDH/picnic-web</a>.
+            </p>
+            
+            <h5>Privacy</h5>
+
+            <p>
+                Picnic Web plaatst geen cookies. Op de backend (server) worden geen logs, IP-adressen of andere gegevens bijgehouden. Requests tussen de Picnic Web frontend en de Picnic Web backend en requests tussen de Picnic Web Backend en de officiële Picnic servers worden via HTTPS verstuurd. Na het inloggen wordt er alleen een authenticatietoken in de browser van de gebruiker via Local Storage opgeslagen om data op te vragen van picnic, vergelijkbaar met de werking van de officiële app.
+            </p>
+        </b-modal>
 
         <b-container>
             <CustomHeader />
@@ -27,9 +53,14 @@
                     <b-badge
                         variant="primary"
                         >
-                        <h2>Picnic Web</h2>
+                        <h2 @click="goToStorePage()">Picnic Web</h2>
                     </b-badge>
-                    <span class="unofficial-text">Onofficieel</span>
+                    <span
+                        class="unofficial-text"
+                        @click="showInfoModal = true"
+                        >
+                        Onofficieel
+                    </span>
                 </b-col>
             </b-row>
             <CustomLogin v-if="!loggedIn" />
@@ -51,6 +82,11 @@ export default {
     components: {
         CustomHeader,
         CustomLogin
+    },
+    data () {
+        return {
+            showInfoModal: false
+        }
     },
     computed: {
         loggedIn () {
@@ -82,6 +118,9 @@ export default {
             ApiService.getShoppingCart().then(res => {
                 this.cart = res.data;
             });
+        },
+        goToStorePage () {
+            this.$router.push("/");
         }
     }
 }
@@ -96,7 +135,7 @@ export default {
 .badge h2 {
     margin: 0;
     line-height: 1;
-    cursor: default;
+    cursor: pointer;
 }
 
 .row {
@@ -109,6 +148,7 @@ export default {
     position: absolute;
     padding-top: 7px;
     padding-left: 10px;
+    cursor: pointer;
 }
 
 .icon-github {
@@ -123,6 +163,15 @@ export default {
 .icon-website {
     position: fixed;
     top: 55px;
+    left: 18px;
+    font-size: 26px;
+    color: #666;
+    cursor: pointer;
+}
+
+.icon-info {
+    position: fixed;
+    top: 92px;
     left: 18px;
     font-size: 26px;
     color: #666;
