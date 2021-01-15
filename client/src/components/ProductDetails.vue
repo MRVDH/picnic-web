@@ -1,5 +1,8 @@
 <template>
-    <b-row class="product-details">
+    <b-row
+        v-if="product"
+        class="product-details"
+        >
         <b-col cols="6">
             <!-- Name and product quantity -->
             <div class="product-title">
@@ -150,7 +153,26 @@
             cols="5"
             offset="1"
             >
-            <img src="../assets/img/placeholder.png">
+            <div class="image-container">
+                <b-carousel
+                    v-if="product.image_ids.length > 1"
+                    indicators
+                    controls
+                    height="480"
+                    interval="9999999999999"
+                    >
+                    <!-- Text slides with image -->
+                    <b-carousel-slide
+                        v-for="(imageId, index) in product.image_ids"
+                        :key="index"
+                        :img-src="`https://storefront-prod.nl.picnicinternational.com/static/images/${imageId}/large.png`"
+                        />
+                </b-carousel>
+                <img
+                    v-else
+                    :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${product.image_ids[0]}/large.png`"
+                    >
+            </div>
         </b-col>
     </b-row>
 </template>
@@ -209,10 +231,12 @@ export default {
             return this.product.decorators && this.product.decorators.length && this.product.decorators.find(x => x.type === "LABEL") ? this.product.decorators.find(x => x.type === "LABEL").text : null;
         },
         getOrderQuantity () {
-            for (let item of this.cart.items) {
-                for (let subItem of item.items) {
-                    if (subItem.id === this.product.id) {
-                        return subItem.decorators.find(x => x.type === "QUANTITY").quantity
+            if (this.cart && this.cart.items && this.cart.items.length) {
+                for (let item of this.cart.items) {
+                    for (let subItem of item.items) {
+                        if (subItem.id === this.product.id) {
+                            return subItem.decorators.find(x => x.type === "QUANTITY").quantity
+                        }
                     }
                 }
             }
@@ -263,6 +287,20 @@ export default {
 .product-details {
     background: #FFF;
     padding: 20px;
+
+    img {
+        height: 400px;
+        object-fit: contain;
+    }
+}
+
+.carousel-item {
+    height: 400px;
+
+    ::v-deep img {
+        height: 100%;
+        object-fit: contain;
+    }
 }
 
 .product-title {
@@ -273,9 +311,26 @@ h3 {
     margin-bottom: 0;
 }
 
+.image-container {
+    padding: 20px;
+    background: #fff;
+    background: linear-gradient(180deg, #fff 0%, #eee 100%);
+}
+
 img {
-    background: #DDD;
     width: 100%;
+}
+
+::v-deep .carousel-control-prev-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E") !important;
+}
+
+::v-deep .carousel-control-next-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E") !important;
+}
+
+::v-deep .carousel-indicators .active {
+    background-color: #E1171E;
 }
 
 .product-quantity {
