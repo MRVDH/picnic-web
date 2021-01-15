@@ -1,7 +1,7 @@
 <template>
     <div>
         <b-list-group>
-            <b-list-group-item>
+            <b-list-group-item class="list-header">
                 <b-input-group v-if="!selectedTopCategory && !selectedSubCategory">
                     <b-input-group-prepend is-text>
                         <b-icon icon="search" />
@@ -33,9 +33,9 @@
                     button
                     @click="selectTopCategory(category)"
                     >
-                    <!-- future image placeholder -->
-                    <!-- <img src="../assets/img/placeholder-small.png"> -->
-                    {{ category.name }}
+                    <img :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${category.image_id}/small.png`">
+                    
+                    <span class="category-title">{{ category.name }}</span>
 
                     <b-icon
                         class="float-right"
@@ -54,9 +54,9 @@
                     button
                     @click="selectSubCategory(category)"
                     >
-                    <!-- future image placeholder -->
-                    <!-- <img src="../assets/img/placeholder-small.png"> -->
-                    {{ category.name }}
+                    <img :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${category.image_id}/small.png`">
+                    
+                    <span class="category-title">{{ category.name }}</span>
 
                     <b-icon
                         class="float-right"
@@ -189,6 +189,10 @@ export default {
     margin-bottom: 20px;
 }
 
+.list-group-item:not(.list-header) {
+    height: 70px;
+}
+
 .other-items .list-group-item:first-child {
     border-top: none;
 }
@@ -210,7 +214,14 @@ export default {
 }
 
 img {
-    height: 10px;
+    position: absolute;
+    margin-top: -12px;
+    margin-left: -10px;
+    height: 49px;
+}
+
+.category-title {
+    margin-left: 50px;
 }
 
 .b-icon.bi-chevron-right {
