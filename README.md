@@ -6,12 +6,10 @@ Unofficial (unaffiliated) web interface for the online supermarket Picnic. Uses 
 
 Live version: [picnic.maartenvandenhoven.com](http://picnic.maartenvandenhoven.com)
 
-![picnic-web-screenshot](https://i.imgur.com/nUIi0e6.png)
+![picnic-web-screenshot](https://i.imgur.com/k2IMc5J.png)
 
 ### FAQ
-
-#### Where are the images?
-I have not been able to retreive images from the picnic server yet.
+Frequently asked questions.
 
 #### Why this when there is an app?
 For when you don't have your phone with you but you'd still like to browse, manage your cart, etc.
