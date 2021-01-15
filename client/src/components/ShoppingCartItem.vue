@@ -13,7 +13,7 @@
         <div class="quantity-and-image">
             <img
                 v-if="!quantitySelectOpen"
-                src="../assets/img/placeholder-small.png"
+                :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${product.image_ids[0]}/small.png`"
                 style="cursor: pointer;"
                 @click="goToProductPage()"
                 >
@@ -189,8 +189,9 @@ export default {
         display: inline;
         
         img {
-            height: 50px;
+            height: 100%;
             width: 50px;
+            object-fit: contain;
         }
 
         .badge {

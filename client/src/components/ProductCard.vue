@@ -4,10 +4,12 @@
         class="category-card"
         >
         <div class="inner-container">
-            <img
-                src="../assets/img/placeholder.png"
-                @click="addProductToCart()"
-                >
+            <div class="image-container">
+                <img
+                    :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${product.image_id}/medium.png`"
+                    @click="addProductToCart()"
+                    >
+            </div>
             <span
                 class="product-name"
                 @click="addProductToCart()"
@@ -184,8 +186,15 @@ export default {
     .inner-container {
         padding: 10px;
 
+        .image-container {
+            padding: 0 30px;
+            padding-top: 15px;
+        }
+
         img {
             width: 100%;
+            height: 200px;
+            object-fit: contain;
             cursor: pointer;
         }
 
