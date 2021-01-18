@@ -50,11 +50,13 @@
             <CustomHeader />
             <b-row>
                 <b-col cols="9">
-                    <b-badge
-                        variant="primary"
-                        >
-                        <h2 @click="goToStorePage()">Picnic Web</h2>
-                    </b-badge>
+                        <b-badge
+                            variant="primary"
+                            >
+                            <a href="#/">
+                                <h2>Picnic Web</h2>
+                            </a>
+                        </b-badge>
                     <span
                         class="unofficial-text"
                         @click="showInfoModal = true"
@@ -118,9 +120,6 @@ export default {
             ApiService.getShoppingCart().then(res => {
                 this.cart = res.data;
             });
-        },
-        goToStorePage () {
-            this.$router.push("/");
         }
     }
 }
@@ -132,10 +131,17 @@ export default {
     margin-bottom: 20px;
 }
 
-.badge h2 {
+.badge h2, .badge a {
     margin: 0;
     line-height: 1;
     cursor: pointer;
+    color: white;
+    text-decoration: none;
+}
+
+.badge h2:hover, .badge a:hover {
+    color: white;
+    text-decoration: none;
 }
 
 .row {

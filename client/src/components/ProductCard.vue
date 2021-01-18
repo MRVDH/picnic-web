@@ -56,12 +56,13 @@
                 +
             </b-badge>
 
-            <b-icon
-                class="details-icon"
-                icon="exclamation-circle"
-                font-scale="1.3"
-                @click="goToProductPage()"
-                />
+            <a :href="`#/product/${product.id}`">
+                <b-icon
+                    class="details-icon"
+                    icon="exclamation-circle"
+                    font-scale="1.3"
+                    />
+            </a>
 
             <span class="price">
                 <span
@@ -140,9 +141,6 @@ export default {
         },
         getLabel () {
             return this.product.decorators && this.product.decorators.length && this.product.decorators.find(x => x.type === "LABEL") ? this.product.decorators.find(x => x.type === "LABEL").text : null;
-        },
-        goToProductPage () {
-            this.$router.push({ name: 'Product', params: { productId: this.product.id } });
         },
         addProductToCart () {
             ApiService.addProductToCart(this.product.id).then((res) => {
