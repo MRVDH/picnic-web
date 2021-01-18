@@ -106,5 +106,8 @@ export default {
 
 .top-menu-items {
     margin-bottom: 20px;
+    position: sticky;
+    top: 20px;
+    z-index: 2;
 }
 </style>

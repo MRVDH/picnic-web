@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-list-group>
+        <b-list-group class="list-header-group">
             <b-list-group-item class="list-header">
                 <b-input-group v-if="!selectedTopCategory && !selectedSubCategory">
                     <b-input-group-prepend is-text>
@@ -185,6 +185,12 @@ export default {
 </script>
 
 <style scoped>
+.list-header-group {
+    position: sticky;
+    top: 15px;
+    z-index: 2;
+}
+
 .list-group {
     margin-bottom: 20px;
 }
