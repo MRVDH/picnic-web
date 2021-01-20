@@ -24,6 +24,20 @@
             </b-list-group-item>
 
             <div
+                v-if="!allCategories || !allCategories.length"
+                class="other-items"
+                >
+                <b-list-group-item
+                    v-for="n in 8"
+                    :key="n"
+                    >
+                    <b-skeleton-img no-aspect />
+                    
+                    <b-skeleton />
+                </b-list-group-item>
+            </div>
+
+            <div
                 v-if="!selectedTopCategory && !searchText"
                 class="other-items"
                 >
@@ -224,6 +238,20 @@ img {
     margin-top: -12px;
     margin-left: -10px;
     height: 49px;
+}
+
+.b-skeleton-img {
+    height: 45px;
+    width: 45px;
+    display: inline-block;
+    margin-left: -10px;
+}
+
+.b-skeleton-text {
+    width: 100px;
+    margin-left: 12px;
+    display: inline-block;
+    margin-bottom: 15px;
 }
 
 .category-title {
