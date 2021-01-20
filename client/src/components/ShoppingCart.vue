@@ -10,6 +10,12 @@
                 :unavailable="false"
                 />
         </div>
+        <b-list-group-item
+            else
+            class="empty-cart-box"
+            >
+            Nog geen producten toegevoegd.
+        </b-list-group-item>
 
         <div v-if="unavailableItems.length">
             <b-list-group-item class="unable-to-deliver">
@@ -171,6 +177,10 @@ export default {
 
 .unable-to-deliver {
     background: #f8f8f8;
+}
+
+.empty-cart-box {
+    text-align: center;
 }
 
 .product-item {
