@@ -16,8 +16,34 @@
                             />
                     </b-tabs>
                 </div>
+                <div v-else>
+                    <b-skeleton type="button" />
+                    <b-skeleton type="button" />
+                    <b-skeleton type="button" />
+                    <b-skeleton type="button" />
+                </div>
             </b-col>
         </b-row>
+
+        <div v-if="!selectedTopMenuItem">
+            <b-row>
+                <b-col cols="12">
+                    <b-skeleton
+                        width="50px"
+                        style="margin-bottom: 20px"
+                        />
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col
+                    v-for="n in 8"
+                    :key="n"
+                    cols="3"
+                    >
+                    <b-skeleton-img no-aspect />
+                </b-col>
+            </b-row>
+        </div>
 
         <div v-if="selectedTopMenuItem">
             <CustomCategoriesAndProducts :categories="selectedTopMenuItem.items" />
@@ -86,6 +112,17 @@ export default {
 </script>
 
 <style scoped>
+.b-skeleton-button {
+    display: inline-block;
+    margin-right: 10px;
+    line-height: 2.0;
+}
+
+.b-skeleton-img {
+    height: 370px;
+    margin-bottom: 5px;
+}
+
 .floating-box {
     background: white;
     box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);

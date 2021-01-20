@@ -19,6 +19,15 @@
                     <CustomProductCard :product="product" />
                 </b-col>
             </b-row>
+            <b-row v-if="!category.items.length">
+                <b-col
+                    v-for="n in 8"
+                    :key="n"
+                    cols="3"
+                    >
+                    <b-skeleton-img no-aspect />
+                </b-col>
+            </b-row>
         </div>
     </div>
 </template>
@@ -49,5 +58,10 @@ export default {
 
 .category-name {
     font-weight: 500;
+}
+
+.b-skeleton-img {
+    height: 370px;
+    margin-bottom: 5px;
 }
 </style>
