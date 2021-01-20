@@ -11,7 +11,7 @@
                 />
         </div>
         <b-list-group-item
-            else
+            v-else
             class="empty-cart-box"
             >
             Nog geen producten toegevoegd.
