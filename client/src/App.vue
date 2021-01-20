@@ -66,7 +66,7 @@
                 </b-col>
             </b-row>
             <CustomLogin v-if="!loggedIn" />
-            <router-view />
+            <router-view v-if="loggedIn" />
         </b-container>
     </div>
 </template>
