@@ -72,7 +72,7 @@
             <h3>Bestellingen</h3>
 
             <div v-if="user.completed_deliveries && deliveries && deliveries.length">
-                <p>Totaal: {{ user.completed_deliveries }}</p>
+                <p>Totaal {{ user.completed_deliveries }} afgeleverde bestellingen</p>
 
                 <div
                     v-for="delivery in deliveries"
@@ -81,12 +81,12 @@
                     >
                     <div class="delivery-block">
                         <span
-                            v-if="delivery.status === 'CURRENT'"
+                            v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()"
                             class="current-delivery text-success"
                             >
                             Lopende bestelling
                         </span>
-                        <br v-if="delivery.status === 'CURRENT'">
+                        <br v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()">
                         <span
                             class="delivery-title"
                             >
@@ -157,7 +157,7 @@ export default {
             ApiService.setConsent(consentId, newVal);
         },
         getDayName (delivery) {
-            let date = new Date(delivery.creation_time);
+            let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { weekday: 'long' });
             name = name.charAt(0).toUpperCase() + name.slice(1);
@@ -165,7 +165,7 @@ export default {
             return name;
         },
         getDayDate (delivery) {
-            let date = new Date(delivery.creation_time);
+            let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { month: 'long' });
             
