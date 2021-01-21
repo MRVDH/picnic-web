@@ -18,29 +18,19 @@
                 v-for="deliverySlot in deliverySlots"
                 :key="deliverySlot.slot_id"
                 class="slot-row"
+                :class="{ 'unavailable': !deliverySlot.is_available }"
                 @click="selectDeliverySlot(deliverySlot)"
                 >
                 <div class="date-block">
-                    <span
-                        class="day-title"
-                        :class="{ 'unavailable': !deliverySlot.is_available }"
-                        >
-                        {{ getDayName(deliverySlot) }}
-                    </span>
+                    <span class="day-title">{{ getDayName(deliverySlot) }}</span>
                     <br>
-                    <span
-                        class="day-date"
-                        :class="{ 'unavailable': !deliverySlot.is_available }"
-                        >
-                        {{ getDayDate(deliverySlot) }}
-                    </span>
+                    <span class="day-date">{{ getDayDate(deliverySlot) }}</span>
                 </div>
 
                 <span class="day-time-frame">
                     <span
                         v-if="slot.slot_id !== deliverySlot.slot_id"
                         class="regular-time"
-                        :class="{ 'unavailable': !deliverySlot.is_available }"
                         >
                         {{ getDayTimeFrame(deliverySlot) }}
                     </span>
@@ -132,7 +122,7 @@ export default {
             return name;
         },
         selectDeliverySlot (slot) {
-            if (slot.slot_id === this.slot_id) {
+            if (slot.slot_id === this.slot_id || !slot.is_available) {
                 return
             }
 
@@ -199,7 +189,11 @@ export default {
 }
 
 .unavailable {
-    color: #CCC;
-    text-decoration: line-through;
+    cursor: default;
+
+    span {
+        text-decoration: line-through;
+        color: #CCC;
+    }
 }
 </style>
