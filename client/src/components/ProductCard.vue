@@ -7,11 +7,13 @@
             <div class="image-container">
                 <img
                     :src="`https://storefront-prod.nl.picnicinternational.com/static/images/${product.image_id}/medium.png`"
+                    :class="{ 'unavailable': !loggedIn }"
                     @click="addProductToCart()"
                     >
             </div>
             <span
                 class="product-name"
+                :class="{ 'unavailable': !loggedIn }"
                 @click="addProductToCart()"
                 >
                 {{ product.name }}
@@ -34,14 +36,14 @@
             </b-badge>
             <br>
             <b-badge
-                v-if="getOrderQuantity() && quantitySelectOpen"
+                v-if="loggedIn && getOrderQuantity() && quantitySelectOpen"
                 class="badge-quantity"
                 @click="removeProductFromCart()"
                 >
                 -
             </b-badge>
             <b-badge
-                v-if="getOrderQuantity()"
+                v-if="loggedIn && getOrderQuantity()"
                 class="badge-quantity"
                 :variant="quantitySelectOpen ? 'light' : ''"
                 @click="quantitySelectOpen = !quantitySelectOpen"
@@ -49,7 +51,7 @@
                 {{ getOrderQuantity() }}
             </b-badge>
             <b-badge
-                v-if="getOrderQuantity() && quantitySelectOpen"
+                v-if="loggedIn && getOrderQuantity() && quantitySelectOpen"
                 class="badge-quantity badge-add"
                 @click="addProductToCart()"
                 >
@@ -95,6 +97,9 @@ export default {
         }
     },
     computed: {
+        loggedIn () {
+            return this.$store.state.authKey;
+        },
         cart: {
             get () {
                 return this.$store.state.cart;
@@ -106,6 +111,10 @@ export default {
     },
     methods: {
         getOrderQuantity () {
+            if (!this.cart) {
+                return;
+            }
+
             for (let item of this.cart.items) {
                 for (let subItem of item.items) {
                     if (subItem.id === this.product.id) {
@@ -143,6 +152,10 @@ export default {
             return this.product.decorators && this.product.decorators.length && this.product.decorators.find(x => x.type === "LABEL") ? this.product.decorators.find(x => x.type === "LABEL").text : null;
         },
         addProductToCart () {
+            if (!this.loggedIn) {
+                return;
+            }
+
             ApiService.addProductToCart(this.product.id).then((res) => {
                 this.cart = res.data;
                 this.$bvToast.toast(`Product toegevoegd!`, {
@@ -155,7 +168,7 @@ export default {
             });
         },
         removeProductFromCart () {
-            if (!this.getOrderQuantity()) {
+            if (!this.loggedIn || !this.getOrderQuantity()) {
                 return;
             }
 
@@ -187,6 +200,10 @@ export default {
         .image-container {
             padding: 0 30px;
             padding-top: 15px;
+        }
+
+        .unavailable {
+            cursor: default;
         }
 
         img {

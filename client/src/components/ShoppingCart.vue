@@ -1,5 +1,5 @@
 <template>
-    <b-list-group>
+    <b-list-group v-if="loggedIn">
         <CustomDeliverySlot />
 
         <div v-if="items.length">

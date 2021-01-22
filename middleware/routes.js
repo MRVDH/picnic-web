@@ -1,9 +1,16 @@
 import PicnicClient from "picnic-api";
+import dotenv from 'dotenv';
 
-function buildPicnicClient(req) {
-    return new PicnicClient({
-        authKey: req.get("x-picnic-auth")
-    });
+dotenv.config();
+
+function buildPicnicClient(req, allowAnonymous = false) {
+    let authKey = req.get("x-picnic-auth");
+
+    if (!authKey && allowAnonymous) {
+        authKey = process.env.AUTH_KEY;
+    }
+
+    return new PicnicClient({ authKey });
 }
 
 export default {
@@ -21,17 +28,23 @@ export default {
         });
 
         app.get("/api/lists/:depth", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
-                res.send(await picnicClient.getLists(req.params.depth));
+                let lists = await picnicClient.getLists(req.params.depth);
+
+                if (req.get("x-picnic-auth")) {
+                    res.send(lists);
+                } else {
+                    res.send(lists.filter(x => x.id !== "purchases"));
+                }
             } catch {
                 res.sendStatus(500);
             }
         });
 
         app.post("/api/lists", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
                 res.send(await picnicClient.getList(req.body.listId, req.body.subListId, req.body.depth));
@@ -41,17 +54,23 @@ export default {
         });
         
         app.get("/api/categories/:depth", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
-                res.send((await picnicClient.getCategories(req.params.depth || 0)).catalog);
+                let categories = (await picnicClient.getCategories(req.params.depth || 0)).catalog;
+
+                if (req.get("x-picnic-auth")) {
+                    res.send(categories);
+                } else {
+                    res.send(categories.filter(x => x.id !== "purchases"));
+                }
             } catch {
                 res.sendStatus(500);
             }
         });
         
         app.post("/api/suggestions", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
                 res.send(await picnicClient.getSuggestions(req.body.query));
@@ -61,7 +80,7 @@ export default {
         });
         
         app.post("/api/search", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
                 res.send(await picnicClient.search(req.body.query));
@@ -101,7 +120,7 @@ export default {
         });
         
         app.get("/api/product/:productId", async (req, res) => {
-            let picnicClient = buildPicnicClient(req);
+            let picnicClient = buildPicnicClient(req, true);
 
             try {
                 res.send(await picnicClient.getProduct(req.params.productId));

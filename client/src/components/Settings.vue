@@ -1,5 +1,5 @@
 <template>
-    <b-row v-if="user">
+    <b-row v-if="user && loggedIn">
         <b-col cols="6">
             <h3>
                 Profiel
@@ -124,7 +124,7 @@ export default {
     computed: {
         loggedIn () {
             return this.$store.state.authKey;
-        },
+        }
     },
     watch: {
         loggedIn () {

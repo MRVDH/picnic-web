@@ -19,6 +19,7 @@ const app = express();
 
 app.use(request.cors);
 app.enable("trust proxy");
+app.use("/api/", request.rateLimit());
 app.use(express.static(path.join(__dirname, `dist`)));
 app.use('/js', express.static(path.join(__dirname, 'dist/js')));
 app.use('/css', express.static(path.join(__dirname, 'dist/css')));
