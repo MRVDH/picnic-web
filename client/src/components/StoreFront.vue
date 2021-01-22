@@ -12,6 +12,7 @@
                             :key="item.id"
                             :title="item.name"
                             :active="item.name === selectedTopMenuItem.name"
+                            :disabled="item.id === 'purchases' && !loggedIn"
                             @click="selectTopMenuItem(item)"
                             />
                     </b-tabs>
@@ -82,9 +83,7 @@ export default {
         }
     },
     mounted () {
-        if (this.loggedIn) {
-            this.getLists();
-        }
+        this.getLists();
     },
     methods: {
         getLists () {
@@ -94,9 +93,24 @@ export default {
                 this.topMenuItems = this.lists.filter(x => !x.is_included_in_category_tree);
                 this.selectedTopMenuItem = this.topMenuItems[0];
                 this.productCategories = this.lists.filter(x => x.is_included_in_category_tree);
+
+                if (!this.loggedIn) {
+                    this.topMenuItems.unshift({
+                        id: "purchases",
+                        name: "Besteld"
+                    });
+                }
+
+                if (this.selectedTopMenuItem.id !== "purchases") {
+                    this.selectTopMenuItem(this.selectedTopMenuItem);
+                }
             });
         },
         selectTopMenuItem (item) {
+            if (!this.loggedIn && item.id === "purchases") {
+                return;
+            }
+
             this.selectedTopMenuItem = item;
 
             if (this.selectedTopMenuItem.items[0].items.length) {
@@ -139,6 +153,10 @@ export default {
 
 .floating-box >>> .nav-item a.active {
     color: #fff;
+}
+
+.floating-box >>> .nav-item a.disabled {
+    color: #bbb;
 }
 
 .top-menu-items {

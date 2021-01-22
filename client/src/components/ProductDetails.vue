@@ -40,7 +40,10 @@
             </span>
 
             <!-- Quantity -->
-            <span class="float-right">
+            <span
+                v-if="loggedIn"
+                class="float-right"
+                >
                 <b-badge
                     class="badge-quantity"
                     @click="removeProductFromCart()"
@@ -159,7 +162,7 @@
                     indicators
                     controls
                     height="480"
-                    interval="9999999999999"
+                    :interval="999999999"
                     >
                     <!-- Text slides with image -->
                     <b-carousel-slide
@@ -217,7 +220,7 @@ export default {
         },
     },
     mounted () {
-        if (this.loggedIn && this.$route.params.productId) {
+        if (this.$route.params.productId) {
             this.getProductDetails();
         }
     },

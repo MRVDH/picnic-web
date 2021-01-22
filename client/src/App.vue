@@ -50,13 +50,11 @@
             <CustomHeader />
             <b-row>
                 <b-col cols="9">
-                        <b-badge
-                            variant="primary"
-                            >
-                            <a href="#/">
-                                <h2>Picnic Web</h2>
-                            </a>
-                        </b-badge>
+                    <b-badge variant="primary">
+                        <a href="#/">
+                            <h2>Picnic Web</h2>
+                        </a>
+                    </b-badge>
                     <span
                         class="unofficial-text"
                         @click="showInfoModal = true"
@@ -66,7 +64,7 @@
                 </b-col>
             </b-row>
             <CustomLogin v-if="!loggedIn" />
-            <router-view v-if="loggedIn" />
+            <router-view />
         </b-container>
     </div>
 </template>

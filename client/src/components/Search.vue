@@ -156,9 +156,7 @@ export default {
         }
     },
     mounted () {
-        if (this.loggedIn) {
-            this.getCategories();
-        }
+        this.getCategories();
     },
     methods: {
         getCategories () {

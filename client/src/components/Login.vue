@@ -1,46 +1,67 @@
 <template>
     <b-row>
         <b-col>
-            <form ref="form">
-                <b-form-group
-                    label="Email"
-                    label-for="email-input"
-                    >
-                    <b-form-input
-                        id="email-input"
-                        v-model="email"
-                        required
-                        />
-                </b-form-group>
+            <b-button
+                :class="{ 'margin-bottom': visible }"
+                variant="primary"
+                @click="visible = !visible"
+                >
+                Inloggen
+                <b-icon :icon="visible ? 'chevron-up' : 'chevron-down'" />
+            </b-button>
+            <span
+                class="logged-out-info-text"
+                :class="{ 'vertical-align': visible }"
+                >
+                Je bent op dit moment uitgelogd. Login om je winkelmand en account te beheren.
+            </span>
+            <b-collapse
+                id="collapse-login"
+                v-model="visible"
+                >
+                <b-card>
+                    <form ref="form">
+                        <b-form-group
+                            label="Email"
+                            label-for="email-input"
+                            >
+                            <b-form-input
+                                id="email-input"
+                                v-model="email"
+                                required
+                                />
+                        </b-form-group>
 
-                <b-form-group
-                    label="Wachtwoord"
-                    label-for="password-input"
-                    >
-                    <b-form-input
-                        id="password-input"
-                        v-model="password"
-                        type="password"
-                        required
-                        />
-                </b-form-group>
+                        <b-form-group
+                            label="Wachtwoord"
+                            label-for="password-input"
+                            >
+                            <b-form-input
+                                id="password-input"
+                                v-model="password"
+                                type="password"
+                                required
+                                />
+                        </b-form-group>
 
-                <span
-                    v-if="loginError"
-                    class="text-primary"
-                    >
-                    Er is een fout opgetreden tijdens het inloggen.
-                </span>
+                        <span
+                            v-if="loginError"
+                            class="text-primary"
+                            >
+                            Er is een fout opgetreden tijdens het inloggen.
+                        </span>
 
-                <b-button
-                    variant="primary"
-                    class="float-right"
-                    :disabled="!email || !password"
-                    @click="submitLogin()"
-                    >
-                    Inloggen
-                </b-button>
-            </form>
+                        <b-button
+                            variant="primary"
+                            class="float-right"
+                            :disabled="!email || !password"
+                            @click="submitLogin()"
+                            >
+                            Inloggen
+                        </b-button>
+                    </form>
+                </b-card>
+            </b-collapse>
         </b-col>
     </b-row>
 </template>
@@ -56,7 +77,8 @@ export default {
         return {
             email: "",
             password: "",
-            loginError: false
+            loginError: false,
+            visible: false
         }
     },
     computed: {
@@ -87,9 +109,21 @@ export default {
 </script>
 
 <style scoped>
-.row {
+.b-card {
     background: #FFF;
     padding: 20px;
+}
+
+.margin-bottom {
+    margin-bottom: 10px;
+}
+
+.logged-out-info-text {
+    padding-left: 20px;
+}
+
+.vertical-align {
+    vertical-align: text-bottom;
 }
 
 form {
