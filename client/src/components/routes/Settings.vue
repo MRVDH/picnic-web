@@ -1,5 +1,8 @@
 <template>
-    <b-row v-if="user && loggedIn">
+    <b-row
+        v-if="user && loggedIn"
+        class="d-none d-md-flex"
+        >
         <b-col cols="6">
             <h3>
                 Profiel

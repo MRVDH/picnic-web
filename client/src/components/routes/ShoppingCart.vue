@@ -1,5 +1,8 @@
 <template>
-    <b-list-group v-if="loggedIn">
+    <b-list-group
+        v-if="loggedIn"
+        class="d-none d-md-block"
+        >
         <CustomDeliverySlot />
 
         <div v-if="items.length">
@@ -59,8 +62,8 @@ import ApiService from '@/services/ApiService';
 
 import { SET_CART } from '@/store/mutationTypes';
 
-import CustomDeliverySlot from '@/components/DeliverySlot';
-import CustomShoppingCartItem from '@/components/ShoppingCartItem';
+import CustomDeliverySlot from '@/components/others/DeliverySlot';
+import CustomShoppingCartItem from '@/components/others/ShoppingCartItem';
 
 export default {
     name: 'ShoppingCart',

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="d-none d-md-block">
         <b-row class="top-menu-items">
             <b-col cols="12">
                 <div
@@ -55,7 +55,7 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomCategoriesAndProducts from '@/components/CategoriesAndProducts';
+import CustomCategoriesAndProducts from '@/components/others/CategoriesAndProducts';
 
 export default {
     name: 'StoreFront',
