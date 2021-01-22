@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="d-none d-md-block">
         <b-list-group class="list-header-group">
             <b-list-group-item class="list-header">
                 <b-input-group v-if="!selectedTopCategory && !selectedSubCategory">
@@ -114,7 +114,7 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomCategoriesAndProducts from '@/components/CategoriesAndProducts';
+import CustomCategoriesAndProducts from '@/components/others/CategoriesAndProducts';
 
 export default {
     name: 'Search',

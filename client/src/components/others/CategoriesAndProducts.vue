@@ -14,7 +14,8 @@
                 <b-col
                     v-for="product in getProductsOnly(category.items)"
                     :key="product.id"
-                    cols="3"
+                    cols="6"
+                    md="3"
                     >
                     <CustomProductCard :product="product" />
                 </b-col>
@@ -23,7 +24,8 @@
                 <b-col
                     v-for="n in 8"
                     :key="n"
-                    cols="3"
+                    cols="6"
+                    md="3"
                     >
                     <b-skeleton-img no-aspect />
                 </b-col>
@@ -33,7 +35,7 @@
 </template>
 
 <script>
-import CustomProductCard from '@/components/ProductCard';
+import CustomProductCard from '@/components/others/ProductCard';
 
 export default {
     name: 'CategoriesAndProducts',

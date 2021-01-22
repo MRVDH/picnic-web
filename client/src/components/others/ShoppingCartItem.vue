@@ -20,7 +20,7 @@
 
             <img
                 v-if="quantitySelectOpen"
-                src="../assets/img/placeholder-small.png"
+                src="../../assets/img/placeholder-small.png"
                 style="width: 0;"
                 >
             <b-badge

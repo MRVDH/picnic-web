@@ -1,7 +1,7 @@
 <template>
     <b-row
         v-if="product"
-        class="product-details"
+        class="product-details d-none d-md-flex"
         >
         <b-col cols="6">
             <!-- Name and product quantity -->

@@ -47,7 +47,9 @@
         </b-modal>
 
         <b-container>
-            <CustomHeader />
+            <CustomHeader
+                class="d-none d-md-block"
+                />
             <b-row>
                 <b-col cols="9">
                     <b-badge variant="primary">
@@ -63,15 +65,26 @@
                     </span>
                 </b-col>
             </b-row>
-            <CustomLogin v-if="!loggedIn" />
+            <b-row class="d-sm-block d-md-none">
+                <b-col cols="12">
+                    <b-card>
+                        <h4 style="text-align: center; margin-bottom: 1rem;">Welkom!</h4> 
+                        Picnic Web is gebouwd voor grotere schermen (tablets, laptops, desktops, etc). Open Picnic Web op een groter scherm, of <span style="font-weight: 500;">open de officiële Picnic app</span>.
+                    </b-card>
+                </b-col>
+            </b-row>
+            <CustomLogin
+                v-if="!loggedIn"
+                class="d-none d-md-block"
+                />
             <router-view />
         </b-container>
     </div>
 </template>
 
 <script>
-import CustomHeader from '@/components/Header';
-import CustomLogin from '@/components/Login';
+import CustomHeader from '@/components/global/Header';
+import CustomLogin from '@/components/global/Login';
 
 import ApiService from '@/services/ApiService';
 
@@ -157,8 +170,8 @@ export default {
 
 .icon-github {
     position: fixed;
-    top: 18px;
-    left: 18px;
+    right: 18px;
+    bottom: 18px;
     font-size: 26px;
     color: #666;
     cursor: pointer;
@@ -166,8 +179,8 @@ export default {
 
 .icon-website {
     position: fixed;
-    top: 55px;
-    left: 18px;
+    right: 55px;
+    bottom: 18px;
     font-size: 26px;
     color: #666;
     cursor: pointer;
@@ -175,8 +188,8 @@ export default {
 
 .icon-info {
     position: fixed;
-    top: 92px;
-    left: 18px;
+    right: 92px;
+    bottom: 18px;
     font-size: 26px;
     color: #666;
     cursor: pointer;

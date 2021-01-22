@@ -7,27 +7,27 @@ const routes = [
     {
         path: '/',
         name: 'StoreFront',
-        component: () => import(/* webpackChunkName: "store-front" */ '../components/StoreFront.vue')
+        component: () => import(/* webpackChunkName: "store-front" */ '../components/routes/StoreFront.vue')
     },
     {
         path: '/search',
         name: 'Search',
-        component: () => import(/* webpackChunkName: "search" */ '../components/Search.vue')
+        component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
         path: '/cart',
         name: 'Cart',
-        component: () => import(/* webpackChunkName: "cart" */ '../components/ShoppingCart.vue')
+        component: () => import(/* webpackChunkName: "cart" */ '../components/routes/ShoppingCart.vue')
     },
     {
         path: '/product/:productId',
         name: 'Product',
-        component: () => import(/* webpackChunkName: "product-details" */ '../components/ProductDetails.vue')
+        component: () => import(/* webpackChunkName: "product-details" */ '../components/routes/ProductDetails.vue')
     },
     {
         path: '/user',
         name: 'User',
-        component: () => import(/* webpackChunkName: "settings" */ '../components/Settings.vue')
+        component: () => import(/* webpackChunkName: "settings" */ '../components/routes/Settings.vue')
     }
 ];
 
