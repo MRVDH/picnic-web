@@ -203,7 +203,7 @@ export default {
         }
 
         .unavailable {
-            cursor: default;
+            cursor: default !important;
         }
 
         img {
