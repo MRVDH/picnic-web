@@ -2,18 +2,14 @@
     <b-row>
         <b-col>
             <b-button
-                :class="{ 'margin-bottom': visible }"
                 variant="primary"
                 @click="visible = !visible"
                 >
                 Inloggen
                 <b-icon :icon="visible ? 'chevron-up' : 'chevron-down'" />
             </b-button>
-            <span
-                class="logged-out-info-text"
-                :class="{ 'vertical-align': visible }"
-                >
-                Je bent op dit moment uitgelogd. Login om je winkelmand en account te beheren.
+            <span class="logged-out-info-text">
+                Log in om je winkelmand en account te beheren.
             </span>
             <b-collapse
                 id="collapse-login"
@@ -21,6 +17,13 @@
                 >
                 <b-card>
                     <form ref="form">
+                        <p>
+                            Nog geen Picnic account? Download de app, registreer en gebruik code <a
+                                href="https://picnic.app/nl/vriendenkorting/MAAR3267"
+                                target="_blank"
+                                >MAAR3267</a> voor € 5,00 korting op de eerste bestelling voor jou en de auteur van Picnic Web. 😄
+                        </p>
+                        
                         <b-form-group
                             label="Email"
                             label-for="email-input"
@@ -108,22 +111,22 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.card {
+    margin-top: 10px;
+
+    a {
+        font-weight: 500;
+    }
+}
+
 .b-card {
     background: #FFF;
     padding: 20px;
 }
 
-.margin-bottom {
-    margin-bottom: 10px;
-}
-
 .logged-out-info-text {
-    padding-left: 20px;
-}
-
-.vertical-align {
-    vertical-align: text-bottom;
+    padding-left: 10px;
 }
 
 form {
