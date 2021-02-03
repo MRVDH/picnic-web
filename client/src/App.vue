@@ -69,7 +69,10 @@
                 <b-col cols="12">
                     <b-card>
                         <h4 style="text-align: center; margin-bottom: 1rem;">Welkom!</h4> 
-                        Picnic Web is gebouwd voor grotere schermen (tablets, laptops, desktops, etc). Open Picnic Web op een groter scherm, of <span style="font-weight: 500;">open de officiële Picnic app</span>.
+                        Picnic Web is gebouwd voor grotere schermen (tablets, laptops, desktops, etc). Open Picnic Web op een groter scherm, of <a
+                            href="https://picnic.app/nl/deeplink/?path=winkel/purchases"
+                            style="font-weight: 500;"
+                            >open de officiële Picnic app</a>.
                     </b-card>
                 </b-col>
             </b-row>
