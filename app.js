@@ -17,6 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
+app.use(request.logging());
 app.use(request.cors);
 app.enable("trust proxy");
 app.use("/api/", request.rateLimit());

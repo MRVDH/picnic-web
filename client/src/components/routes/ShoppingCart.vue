@@ -53,6 +53,15 @@
             <span class="total-price">
                 <span class="price-euros">&euro; {{ getPriceEuros(cart.total_price) }}</span>.<sup>{{ getPriceCents(cart.total_price) }}</sup>
             </span>
+
+            <b-button
+                id="checkout-button"
+                variant="primary"
+                href="https://picnic.app/nl/deeplink/?path=cart"
+                target="_blank"
+                >
+                Naar de kassa
+            </b-button>
         </b-list-group-item>
     </b-list-group>
 </template>
@@ -272,7 +281,6 @@ export default {
 
 .total {
     padding-top: 50px;
-    padding-bottom: 50px;
     font-weight: 600;
     font-size: 19px;
 
@@ -306,5 +314,10 @@ export default {
 
 hr {
     border: 1px #DDD dashed;
+}
+
+#checkout-button {
+    display: block;
+    margin-top: 50px;
 }
 </style>

@@ -111,6 +111,8 @@ export default {
                 return;
             }
 
+            scrollTo(0, 0);
+
             this.selectedTopMenuItem = item;
 
             if (this.selectedTopMenuItem.items[0].items.length) {

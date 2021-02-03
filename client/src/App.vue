@@ -42,7 +42,7 @@
             <h5>Privacy</h5>
 
             <p>
-                Picnic Web plaatst geen cookies. Op de backend (server) worden geen logs, IP-adressen of andere gegevens bijgehouden. Requests tussen de Picnic Web frontend en de Picnic Web backend en requests tussen de Picnic Web Backend en de officiële Picnic servers worden via HTTPS verstuurd. Na het inloggen wordt er alleen een authenticatietoken in de browser van de gebruiker via Local Storage opgeslagen om data op te vragen van picnic, vergelijkbaar met de werking van de officiële app.
+                De eerder genoemde broncode wordt bij elke update op de 'main' branch automatisch naar de Picnic Web servers geupload. De code die op de server draait verschilt dus niet met de code die in de respository te zien is. Picnic Web plaatst geen cookies. Op de backend (server) worden requests gelogd met alleen het tijdstip, de status code, http method en url, en dus geen IP-adressen of andere gevoelige informatie. Requests tussen de Picnic Web frontend en de Picnic Web backend en requests tussen de Picnic Web Backend en de officiële Picnic servers worden via HTTPS verstuurd. Na het inloggen wordt er alleen een authenticatietoken in de browser van de gebruiker via Local Storage opgeslagen om data op te vragen van picnic, vergelijkbaar met de werking van de officiële app. 
             </p>
         </b-modal>
 
@@ -69,7 +69,10 @@
                 <b-col cols="12">
                     <b-card>
                         <h4 style="text-align: center; margin-bottom: 1rem;">Welkom!</h4> 
-                        Picnic Web is gebouwd voor grotere schermen (tablets, laptops, desktops, etc). Open Picnic Web op een groter scherm, of <span style="font-weight: 500;">open de officiële Picnic app</span>.
+                        Picnic Web is gebouwd voor grotere schermen (tablets, laptops, desktops, etc). Open Picnic Web op een groter scherm, of <a
+                            href="https://picnic.app/nl/deeplink/?path=winkel/purchases"
+                            style="font-weight: 500;"
+                            >open de officiële Picnic app</a>.
                     </b-card>
                 </b-col>
             </b-row>

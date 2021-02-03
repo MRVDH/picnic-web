@@ -1,6 +1,32 @@
 import rateLimit from "express-rate-limit";
+import morgan from "morgan"; 
 
 export default {
+    logging () {
+        // Waiting for color status to be implemented: https://github.com/expressjs/morgan/issues/186
+        morgan.token(`status`, (req, res) => {
+            const status = (typeof res.headersSent !== `boolean`
+            ? Boolean(res._header)
+            : res.headersSent)
+              ? res.statusCode
+              : undefined
+          
+            // get status color
+            const color =
+              status >= 500
+                ? 31 // red
+                : status >= 400
+                ? 33 // yellow
+                : status >= 300
+                ? 36 // cyan
+                : status >= 200
+                ? 32 // green
+                : 0 // no color
+            return `\x1b[${color}m${status}\x1b[0m`
+        });
+
+        return morgan("[:date[clf]] :status :method :url");
+    },
     cors (req, res, next) {
         var allowedOrigins = ['http://localhost:8080', 'http://localhost:8081', 'https://www.openstreetmap.org', 'https://www.mapwith.ai'];
 
