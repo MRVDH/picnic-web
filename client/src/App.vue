@@ -42,7 +42,7 @@
             <h5>Privacy</h5>
 
             <p>
-                Picnic Web plaatst geen cookies. Op de backend (server) worden geen logs, IP-adressen of andere gegevens bijgehouden. Requests tussen de Picnic Web frontend en de Picnic Web backend en requests tussen de Picnic Web Backend en de officiële Picnic servers worden via HTTPS verstuurd. Na het inloggen wordt er alleen een authenticatietoken in de browser van de gebruiker via Local Storage opgeslagen om data op te vragen van picnic, vergelijkbaar met de werking van de officiële app.
+                De eerder genoemde broncode wordt bij elke update op de 'main' branch automatisch naar de Picnic Web servers geupload. De code die op de server draait verschilt dus niet met de code die in de respository te zien is. Picnic Web plaatst geen cookies. Op de backend (server) worden requests gelogd met alleen het tijdstip, de status code, http method en url, en dus geen IP-adressen of andere gevoelige informatie. Requests tussen de Picnic Web frontend en de Picnic Web backend en requests tussen de Picnic Web Backend en de officiële Picnic servers worden via HTTPS verstuurd. Na het inloggen wordt er alleen een authenticatietoken in de browser van de gebruiker via Local Storage opgeslagen om data op te vragen van picnic, vergelijkbaar met de werking van de officiële app. 
             </p>
         </b-modal>
 
