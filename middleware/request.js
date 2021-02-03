@@ -25,7 +25,19 @@ export default {
             return `\x1b[${color}m${status}\x1b[0m`
         });
 
-        return morgan("[:date[clf]] :status :method :url");
+        return morgan("[:date[clf]] :status :method :url", {
+            skip: (req, res) => {
+                if (req.method === "OPTIONS") {
+                    return true;
+                }
+
+                if (!req.originalUrl.startsWith("/api/")) {
+                    return true;
+                }
+
+                return false;
+            }
+        });
     },
     cors (req, res, next) {
         var allowedOrigins = ['http://localhost:8080', 'http://localhost:8081', 'https://www.openstreetmap.org', 'https://www.mapwith.ai'];
