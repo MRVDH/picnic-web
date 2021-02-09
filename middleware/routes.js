@@ -188,5 +188,15 @@ export default {
                 res.sendStatus(500);
             }
         });
+        
+        app.get("/api/delivery/:deliveryId", async (req, res) => {
+            let picnicClient = buildPicnicClient(req);
+
+            try {
+                res.send(await picnicClient.getDelivery(req.params.deliveryId));
+            } catch {
+                res.sendStatus(500);
+            }
+        });
     }
 }

@@ -28,6 +28,11 @@ const routes = [
         path: '/user',
         name: 'User',
         component: () => import(/* webpackChunkName: "settings" */ '../components/routes/Settings.vue')
+    },
+    {
+        path: '/delivery/:deliveryId',
+        name: 'Delivery',
+        component: () => import(/* webpackChunkName: "delivery" */ '../components/routes/Delivery.vue')
     }
 ];
 

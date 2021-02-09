@@ -66,5 +66,8 @@ export default {
     },
     getDeliveries () {
         return httpInstance.get(`/api/deliveries`);
+    },
+    getDelivery (deliveryId) {
+        return httpInstance.get(`/api/delivery/${deliveryId}`);
     }
 }

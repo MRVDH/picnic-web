@@ -82,26 +82,33 @@
                     :key="delivery.id"
                     class="delivery-row"
                     >
-                    <div class="delivery-block">
-                        <span
-                            v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()"
-                            class="current-delivery text-success"
-                            >
-                            Lopende bestelling
-                        </span>
-                        <br v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()">
-                        <span
-                            class="delivery-title"
-                            >
-                            {{ getDayName(delivery) }} {{ getDayDate(delivery) }}
-                        </span>
-                        <br>
-                        <span
-                            class="delivery-price"
-                            >
-                            {{ getTotalDeliveryPrice(delivery) }}
-                        </span>
-                    </div>
+                    <router-link :to="{ name: 'Delivery', params: { deliveryId: delivery.id }}">
+                        <div class="delivery-block">
+                            <span
+                                v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()"
+                                class="current-delivery text-success"
+                                >
+                                Lopende bestelling
+                            </span>
+                            <br v-if="delivery.status === 'CURRENT' && new Date(delivery.slot.window_end) > new Date()">
+                            <span
+                                class="delivery-title"
+                                >
+                                {{ getDayName(delivery) }} {{ getDayDate(delivery) }}
+                            </span>
+                            <br>
+                            <span
+                                class="delivery-price"
+                                >
+                                {{ getTotalDeliveryPrice(delivery) }}
+                            </span>
+                            <b-icon
+                                class="float-right"
+                                icon="chevron-right"
+                                font-scale="0.8"
+                                />
+                        </div>
+                    </router-link>
                 </div>
             </div>
             <p v-else>Nog bestellingen geplaatst.</p>
@@ -231,9 +238,19 @@ button {
 .delivery-block {
     display: inline-block;
     font-size: 15px;
-}
+    width: 100%;
+    cursor: pointer;
 
-.delivery-price {
-    color: #999;
+    span {
+        color: #333;
+
+        &.delivery-price {
+            color: #999;
+        }
+    }
+
+    .b-icon {
+        margin-top: -5px;
+    }
 }
 </style>

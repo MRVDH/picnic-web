@@ -4,8 +4,15 @@
         :class="{ 'no-border-bottom': product._hidePrice }"
         >
         <b-badge
+            v-if="quantityAlterable"
             class="quantity"
             @click="quantitySelectOpen = !quantitySelectOpen"
+            >
+            {{ product._quantity }}
+        </b-badge>
+        <b-badge
+            v-else
+            class="quantity-unalterable"
             >
             {{ product._quantity }}
         </b-badge>
@@ -97,7 +104,8 @@ export default {
     name: 'ShoppingCartItem',
     props: {
         product: Object,
-        unavailable: Boolean
+        unavailable: Boolean,
+        quantityAlterable: Boolean
     },
     data () {
         return {
@@ -180,6 +188,14 @@ export default {
         padding-top: 5px;
         padding-left: 5px;
         cursor: pointer;
+    }
+
+    .quantity-unalterable.badge {
+        height: 22px;
+        width: 22px;
+        padding-top: 5px;
+        padding-left: 5px;
+        cursor: default;
     }
 
     .quantity-and-image {
