@@ -47,7 +47,12 @@
         </div>
 
         <div v-if="selectedTopMenuItem">
-            <CustomCategoriesAndProducts :categories="selectedTopMenuItem.items" />
+            <CustomCategoryAndProducts
+                v-for="category in selectedTopMenuItem.items"
+                :key="category.id"
+                :category="category"
+                :parent-id="selectedTopMenuItem.id"
+                />
         </div>
     </div>
 </template>
@@ -55,12 +60,12 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomCategoriesAndProducts from '@/components/others/CategoriesAndProducts';
+import CustomCategoryAndProducts from '@/components/others/CategoryAndProducts';
 
 export default {
     name: 'StoreFront',
     components: {
-        CustomCategoriesAndProducts
+        CustomCategoryAndProducts
     },
     data () {
         return {
