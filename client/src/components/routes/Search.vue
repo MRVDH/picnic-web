@@ -102,11 +102,19 @@
         </b-list-group>
 
         <div v-if="searchResults.length">
-            <CustomCategoriesAndProducts :categories="searchResults" />
+            <CustomCategoryAndProducts
+                v-for="category in searchResults"
+                :key="category.id"
+                :category="category"
+                />
         </div>
 
         <div v-if="selectedSubCategory">
-            <CustomCategoriesAndProducts :categories="finalCategories" />
+            <CustomCategoryAndProducts
+                v-for="category in finalCategories"
+                :key="category.id"
+                :category="category"
+                />
         </div>
     </div>
 </template>
@@ -114,12 +122,12 @@
 <script>
 import ApiService from '@/services/ApiService';
 
-import CustomCategoriesAndProducts from '@/components/others/CategoriesAndProducts';
+import CustomCategoryAndProducts from '@/components/others/CategoryAndProducts';
 
 export default {
     name: 'Search',
     components: {
-        CustomCategoriesAndProducts
+        CustomCategoryAndProducts
     },
     data () {
         return {
