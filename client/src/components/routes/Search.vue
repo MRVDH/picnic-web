@@ -20,6 +20,19 @@
                         @click="goBack()"
                         />
                     {{ selectedSubCategory ? selectedSubCategory.name : selectedTopCategory.name }}
+                    
+                    <b-tabs
+                        v-if="selectedSubCategory && finalCategories.length !== 1"
+                        v-model="subCategoryTabIndex"
+                        pills
+                        >
+                        <b-tab
+                            v-for="item in subListCategories"
+                            :key="item.id"
+                            :title="item.name"
+                            @click="jumpToCategory(item.id)"
+                            />
+                    </b-tabs>
                 </div>
             </b-list-group-item>
 
@@ -28,7 +41,7 @@
                 class="other-items"
                 >
                 <b-list-group-item
-                    v-for="n in 8"
+                    v-for="n in 19"
                     :key="n"
                     >
                     <b-skeleton-img no-aspect />
@@ -115,6 +128,7 @@
                 v-for="category in finalCategories"
                 :key="category.id"
                 :category="category"
+                :show-header="finalCategories.length !== 1"
                 />
         </div>
     </div>
@@ -138,12 +152,16 @@ export default {
             selectedSubCategory: null,
             finalCategories: [],
             suggestions: [],
-            searchResults: []
+            searchResults: [],
+            subCategoryTabIndex: 0
         }
     },
     computed: {
         loggedIn () {
             return this.$store.state.authKey;
+        },
+        subListCategories () {
+            return this.selectedSubCategory && this.selectedSubCategory.items && this.selectedSubCategory.items.length ? this.selectedSubCategory.items.filter(x => x.type === "CATEGORY") : [];
         }
     },
     watch: {
@@ -167,12 +185,18 @@ export default {
             });
         }
     },
+    created () {
+        window.addEventListener('scroll', this.handleScroll);
+    },
     mounted () {
         if (this.$route.params.query) {
             this.selectSuggestion(this.$route.params.query);
         }
 
         this.getCategories();
+    },
+    destroyed () {
+        window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
         getCategories () {
@@ -227,12 +251,48 @@ export default {
                 this.selectedTopCategory = null;
                 this.$router.push({ name: 'Search' });
             }
+        },
+        jumpToCategory (id) {
+            window.scrollTo({top: document.getElementById(id).getBoundingClientRect().top + window.pageYOffset + -120, behavior: 'smooth'});
+        },
+        handleScroll () {
+            let currentCategory = null;
+
+            for (let category of this.subListCategories) {
+                var elementRelativeToViewport = document.getElementById(category.id).getBoundingClientRect().y;
+
+                if (elementRelativeToViewport > 0 && elementRelativeToViewport < window.innerHeight / 2) {
+                    currentCategory = category;
+                    break;
+                }
+            }
+
+            if (currentCategory) {
+                this.subCategoryTabIndex = this.subListCategories.indexOf(currentCategory);
+            }
         }
     }
 }
 </script>
 
 <style scoped>
+.tabs {
+    margin-top: 0.75rem;
+}
+
+.tabs >>> .nav-link {
+    font-size: 13px;
+    padding: 1px 8px;
+    border-radius: 6px;
+    margin-right: 8px;
+}
+
+.tabs >>> .nav-link:not(.active) {
+    color: #333;
+    font-weight: 500;
+    background-color: #f8f8f8;
+}
+
 .list-header-group {
     position: sticky;
     top: 15px;

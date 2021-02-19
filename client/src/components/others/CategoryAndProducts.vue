@@ -2,7 +2,12 @@
     <div>
         <b-row v-if="showHeader">
             <b-col cols="12">
-                <span class="category-name">{{ category.name }}</span>
+                <span
+                    :id="category.id"
+                    class="category-name"
+                    >
+                    {{ category.name }}
+                    </span>
             </b-col>
         </b-row>
         <b-row>
