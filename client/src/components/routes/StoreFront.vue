@@ -26,25 +26,10 @@
             </b-col>
         </b-row>
 
-        <div v-if="!selectedTopMenuItem">
-            <b-row>
-                <b-col cols="12">
-                    <b-skeleton
-                        width="50px"
-                        style="margin-bottom: 20px"
-                        />
-                </b-col>
-            </b-row>
-            <b-row>
-                <b-col
-                    v-for="n in 8"
-                    :key="n"
-                    cols="3"
-                    >
-                    <b-skeleton-img no-aspect />
-                </b-col>
-            </b-row>
-        </div>
+        <CustomCategoryAndProductsSkeleton
+            v-if="!selectedTopMenuItem"
+            :include-header="true"
+            />
 
         <div v-if="selectedTopMenuItem">
             <CustomCategoryAndProducts
@@ -61,18 +46,18 @@
 import ApiService from '@/services/ApiService';
 
 import CustomCategoryAndProducts from '@/components/others/CategoryAndProducts';
+import CustomCategoryAndProductsSkeleton from '@/components/others/CategoryAndProductsSkeleton';
 
 export default {
     name: 'StoreFront',
     components: {
-        CustomCategoryAndProducts
+        CustomCategoryAndProducts,
+        CustomCategoryAndProductsSkeleton
     },
     data () {
         return {
-            lists: [],
             topMenuItems: [],
-            selectedTopMenuItem: null,
-            productCategories: []
+            selectedTopMenuItem: null
         }
     },
     computed: {
@@ -93,11 +78,8 @@ export default {
     methods: {
         getLists () {
             ApiService.getLists().then((res) => {
-                this.lists = res.data.filter(x => !x.hidden && x.sellable_item_count > 0);
-
-                this.topMenuItems = this.lists.filter(x => !x.is_included_in_category_tree);
-                this.selectedTopMenuItem = this.topMenuItems[0];
-                this.productCategories = this.lists.filter(x => x.is_included_in_category_tree);
+                this.topMenuItems = res.data.filter(x => !x.is_included_in_category_tree && !x.hidden && x.sellable_item_count > 0);
+                this.selectedTopMenuItem = this.topMenuItems.find(x => x.id === this.$route.params.listId) || this.topMenuItems[0];
 
                 if (!this.loggedIn) {
                     this.topMenuItems.unshift({
@@ -112,6 +94,8 @@ export default {
             });
         },
         selectTopMenuItem (item) {
+            this.$router.push({ name: 'StoreFront', params: { listId: item.id } });
+
             if (!this.loggedIn && item.id === "purchases") {
                 return;
             }
