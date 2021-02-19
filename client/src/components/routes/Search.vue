@@ -106,6 +106,7 @@
                 v-for="category in searchResults"
                 :key="category.id"
                 :category="category"
+                :show-header="false"
                 />
         </div>
 
@@ -155,6 +156,9 @@ export default {
             this.searchResults = [];
 
             if (text.length < 2) {
+                if (this.$route.name !== 'Search') {
+                    this.$router.push({ name: 'Search' });
+                }
                 return;
             }
 
@@ -164,19 +168,37 @@ export default {
         }
     },
     mounted () {
+        if (this.$route.params.query) {
+            this.selectSuggestion(this.$route.params.query);
+        }
+
         this.getCategories();
     },
     methods: {
         getCategories () {
             ApiService.getCategories().then(res => {
                 this.allCategories = res.data.filter(x => x.is_included_in_category_tree);
+
+                if (this.$route.params.listId) {
+                    this.selectTopCategory(this.allCategories.find(x => x.id === this.$route.params.listId));
+                }
             });
         },
         selectTopCategory (category) {
             this.selectedTopCategory = category;
+
+            if (this.$route.params.subListId) {
+                this.selectSubCategory(this.selectedTopCategory.items.find(x => x.id === this.$route.params.subListId));
+            } else if (this.$route.params.listId !== category.id) {
+                this.$router.push({ name: 'SearchList', params: { listId: category.id } });
+            }
         },
         selectSubCategory (category) {
             this.selectedSubCategory = category;
+
+            if (this.$route.params.subListId !== category.id) {
+                this.$router.push({ name: 'SearchList', params: { listId: this.selectedTopCategory.id, subListId: category.id } });
+            }
 
             this.finalCategories = [];
 
@@ -188,16 +210,22 @@ export default {
         },
         selectSuggestion (suggestion) {
             this.searchText = suggestion;
+            
+            if (this.$route.params.query !== this.searchText) {
+                this.$router.push({ name: 'SearchQuery', params: { query: this.searchText } });
+            }
 
-            ApiService.search(suggestion).then(res => {
+            ApiService.search(this.searchText).then(res => {
                 this.searchResults = res.data;
             });
         },
         goBack () {
             if (this.selectedSubCategory) {
                 this.selectedSubCategory = null;
+                this.$router.push({ name: 'SearchList', params: { listId: this.selectedTopCategory.id } });
             } else {
                 this.selectedTopCategory = null;
+                this.$router.push({ name: 'Search' });
             }
         }
     }

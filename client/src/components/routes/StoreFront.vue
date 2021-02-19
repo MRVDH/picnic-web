@@ -94,7 +94,9 @@ export default {
             });
         },
         selectTopMenuItem (item) {
-            this.$router.push({ name: 'StoreFront', params: { listId: item.id } });
+            if (this.$route.params.listId !== item.id) {
+                this.$router.push({ name: 'StoreFront', params: { listId: item.id } });
+            }
 
             if (!this.loggedIn && item.id === "purchases") {
                 return;

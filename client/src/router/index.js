@@ -19,6 +19,16 @@ const routes = [
         component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
+        path: '/search/query/:query?',
+        name: 'SearchQuery',
+        component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
+    },
+    {
+        path: '/search/list/:listId?/:subListId?',
+        name: 'SearchList',
+        component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
+    },
+    {
         path: '/cart',
         name: 'Cart',
         component: () => import(/* webpackChunkName: "cart" */ '../components/routes/ShoppingCart.vue')

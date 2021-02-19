@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-row>
+        <b-row v-if="showHeader">
             <b-col cols="12">
                 <span class="category-name">{{ category.name }}</span>
             </b-col>
@@ -58,7 +58,11 @@ export default {
     },
     props: {
         category: Object,
-        parentId: String
+        parentId: String,
+        showHeader: {
+            type: Boolean,
+            default: true
+        }
     },
     data () {
         return {
