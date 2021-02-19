@@ -5,13 +5,27 @@ Vue.use(VueRouter);
 
 const routes = [
     {
-        path: '/',
+        path: '/', 
+        redirect: '/store-front'
+    },
+    {
+        path: '/store-front/:listId?',
         name: 'StoreFront',
         component: () => import(/* webpackChunkName: "store-front" */ '../components/routes/StoreFront.vue')
     },
     {
         path: '/search',
         name: 'Search',
+        component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
+    },
+    {
+        path: '/search/query/:query?',
+        name: 'SearchQuery',
+        component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
+    },
+    {
+        path: '/search/list/:listId?/:subListId?',
+        name: 'SearchList',
         component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
