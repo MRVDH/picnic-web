@@ -5,7 +5,11 @@ Vue.use(VueRouter);
 
 const routes = [
     {
-        path: '/',
+        path: '/', 
+        redirect: '/store-front'
+    },
+    {
+        path: '/store-front/:listId?',
         name: 'StoreFront',
         component: () => import(/* webpackChunkName: "store-front" */ '../components/routes/StoreFront.vue')
     },
