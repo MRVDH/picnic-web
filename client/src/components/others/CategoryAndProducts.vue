@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-row>
+        <b-row v-if="showHeader">
             <b-col cols="12">
                 <span class="category-name">{{ category.name }}</span>
             </b-col>
@@ -36,16 +36,11 @@
                 </b-col>
             </b-col>
         </b-row>
-        <b-row v-if="!category.items.length">
-            <b-col
-                v-for="n in 8"
-                :key="n"
-                cols="6"
-                md="3"
-                >
-                <b-skeleton-img no-aspect />
-            </b-col>
-        </b-row>
+
+        <CustomCategoryAndProductsSkeleton
+            v-if="!category.items.length"
+            :include-header="false"
+            />
     </div>
 </template>
 
@@ -53,15 +48,21 @@
 import ApiService from '@/services/ApiService';
 
 import CustomProductCard from '@/components/others/ProductCard';
+import CustomCategoryAndProductsSkeleton from '@/components/others/CategoryAndProductsSkeleton';
 
 export default {
     name: 'CategoryAndProducts',
     components: {
-        CustomProductCard
+        CustomProductCard,
+        CustomCategoryAndProductsSkeleton
     },
     props: {
         category: Object,
-        parentId: String
+        parentId: String,
+        showHeader: {
+            type: Boolean,
+            default: true
+        }
     },
     data () {
         return {
