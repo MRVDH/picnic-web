@@ -6,7 +6,7 @@
         <b-list-group-item
             class="delivery-date"
             >
-            <a href="#/user">
+            <a href="/store/user">
                 <b-icon
                     icon="arrow-left-short"
                     font-scale="1.5"

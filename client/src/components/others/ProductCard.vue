@@ -58,7 +58,7 @@
                 +
             </b-badge>
 
-            <a :href="`#/product/${product.id}`">
+            <a :href="`/store/product/${product.id}`">
                 <b-icon
                     class="details-icon"
                     icon="exclamation-circle"

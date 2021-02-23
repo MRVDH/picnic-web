@@ -6,51 +6,52 @@ Vue.use(VueRouter);
 const routes = [
     {
         path: '/', 
-        redirect: '/store-front'
+        redirect: '/store/front'
     },
     {
-        path: '/store-front/:listId?',
+        path: '/store/front/:listId?',
         name: 'StoreFront',
         component: () => import(/* webpackChunkName: "store-front" */ '../components/routes/StoreFront.vue')
     },
     {
-        path: '/search',
+        path: '/store/search',
         name: 'Search',
         component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
-        path: '/search/query/:query?',
+        path: '/store/search/query/:query?',
         name: 'SearchQuery',
         component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
-        path: '/search/list/:listId?/:subListId?',
+        path: '/store/search/list/:listId?/:subListId?',
         name: 'SearchList',
         component: () => import(/* webpackChunkName: "search" */ '../components/routes/Search.vue')
     },
     {
-        path: '/cart',
+        path: '/store/cart',
         name: 'Cart',
         component: () => import(/* webpackChunkName: "cart" */ '../components/routes/ShoppingCart.vue')
     },
     {
-        path: '/product/:productId',
+        path: '/store/product/:productId',
         name: 'Product',
         component: () => import(/* webpackChunkName: "product-details" */ '../components/routes/ProductDetails.vue')
     },
     {
-        path: '/user',
+        path: '/store/user',
         name: 'User',
         component: () => import(/* webpackChunkName: "settings" */ '../components/routes/Settings.vue')
     },
     {
-        path: '/delivery/:deliveryId',
+        path: '/store/delivery/:deliveryId',
         name: 'Delivery',
         component: () => import(/* webpackChunkName: "delivery" */ '../components/routes/Delivery.vue')
     }
 ];
 
 const router = new VueRouter({
+    mode: 'history',
     routes,
     scrollBehavior (to, from, savedPosition) {
         if (savedPosition) {
