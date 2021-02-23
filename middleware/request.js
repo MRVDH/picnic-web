@@ -1,5 +1,46 @@
+import PicnicClient from "picnic-api";
 import rateLimit from "express-rate-limit";
-import morgan from "morgan"; 
+import morgan from "morgan";
+import fs from "fs";
+import cheerio from "cheerio";
+
+async function buildFinalHtml(dirname, req, title, description = null, image = null) {
+    const baseHTML = (await fs.promises.readFile(`${dirname}/dist/index.html`)).toString();
+    const $ = cheerio.load(baseHTML);
+
+    $('meta[property="og:url"]').attr('content', `https://${req.get('host')}${req.originalUrl}`);
+    $('meta[property="og:title"]').attr('content', title);
+    
+    if (image) {
+        $('meta[property="og:image"]').attr('content', image);
+    }
+
+    if (description) {
+        $('meta[property="og:description"]').attr('content', description);
+    }
+
+    return $.html();
+}
+
+async function applyProductMetaTags(req, res, dirname) {
+    let picnicClient = new PicnicClient({ authKey: process.env.AUTH_KEY });
+
+    let productId = req.originalUrl.split("product/")[1];
+    let product = null;
+
+    try {
+        product = await picnicClient.getProduct(productId);
+    } catch {
+        return null;
+    }
+
+    let title = `${product.product_details.name} - Picnic Web (onofficieel)`;
+    let image = `https://storefront-prod.nl.picnicinternational.com/static/images/${product.product_details.image_id}/large.png`;
+
+    let finalHtml = await buildFinalHtml(dirname, req, title, product.product_details.description, image);
+
+    return finalHtml;
+}  
 
 export default {
     logging () {
@@ -67,11 +108,24 @@ export default {
         });
     },
     filterNonApiRequests (dirname) {
-        return (req, res, next) => {
-            if (!req.originalUrl.includes('/api/', 0)) {
+        return async (req, res, next) => {
+            try {
+                if (req.originalUrl.startsWith("/store/product/")) {
+                    let html = await applyProductMetaTags(req, res, dirname);
+
+                    if (!html) {
+                        res.sendFile(`${dirname}/dist/index.html`);
+                        return;
+                    }
+
+                    res.send(html);
+                } else if (req.originalUrl.startsWith("/store") || req.originalUrl === "" || req.originalUrl === "/") {
+                    res.sendFile(`${dirname}/dist/index.html`);
+                } else {
+                    next();
+                }
+            } catch {
                 res.sendFile(`${dirname}/dist/index.html`);
-            } else {
-                next();
             }
         };
     }
