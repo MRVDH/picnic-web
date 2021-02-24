@@ -70,6 +70,12 @@ export default {
             if (this.loggedIn) {
                 this.getLists();
             }
+        },
+        $route (to, from) {
+            if (from.name === "StoreFront" && to.name === "StoreFront" && from.params.listId && !to.params.listId) {
+                this.selectTopMenuItem(this.topMenuItems[this.loggedIn ? 0 : 1]);
+            }
+            console.log(from, to);
         }
     },
     mounted () {
