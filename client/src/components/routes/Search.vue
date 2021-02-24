@@ -183,6 +183,18 @@ export default {
             ApiService.getSuggestions(text).then(res => {
                 this.suggestions = res.data;
             });
+        },
+        $route (to, from) {
+            if (to.name === "Search") {
+                if (from.name === "SearchQuery") {
+                    this.searchText = "";
+                    this.searchResults = [];
+                }
+                if (from.name === "SearchList") {
+                    this.selectedSubCategory = null;
+                    this.selectedTopCategory = null;
+                }
+            }
         }
     },
     created () {
