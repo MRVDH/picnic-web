@@ -69,5 +69,8 @@ export default {
     },
     getDelivery (deliveryId) {
         return httpInstance.get(`/api/delivery/${deliveryId}`);
+    },
+    getDeliveryLocationData (deliveryId) {
+        return httpInstance.get(`/api/delivery/location/${deliveryId}`);
     }
 }

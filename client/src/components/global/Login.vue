@@ -24,7 +24,9 @@
                                 >MAAR3267</a> voor € 5,00 korting op de eerste bestelling voor jou en de auteur van Picnic Web. 😄
                         </p>
                         
-                        <b-form-group
+                        <!-- ==== Temporarily disabled on Picnic's request -->
+                        
+                        <!-- <b-form-group
                             label="Email"
                             label-for="email-input"
                             >
@@ -45,6 +47,20 @@
                                 type="password"
                                 required
                                 />
+                        </b-form-group> -->
+
+                        <p>Op verzoek van Picnic kan je op dit moment niet inloggen. Indien je een auth token hebt kan je die wel hier invoeren.</p>
+
+                        <b-form-group
+                            label="Auth token"
+                            label-for="auth-token-input"
+                            >
+                            <b-form-input
+                                id="auth-token-input"
+                                v-model="authToken"
+                                type="text"
+                                required
+                                />
                         </b-form-group>
 
                         <span
@@ -57,7 +73,7 @@
                         <b-button
                             variant="primary"
                             class="float-right"
-                            :disabled="!email || !password"
+                            :disabled="!authToken"
                             @click="submitLogin()"
                             >
                             Inloggen
@@ -70,7 +86,8 @@
 </template>
 
 <script>
-import ApiService from '@/services/ApiService';
+// ==== Temporarily disabled on Picnic's request
+//import ApiService from '@/services/ApiService';
 
 import { SET_AUTH_KEY } from '@/store/mutationTypes';
 
@@ -80,6 +97,7 @@ export default {
         return {
             email: "",
             password: "",
+            authToken: "",
             loginError: false,
             visible: false
         }
@@ -96,16 +114,23 @@ export default {
     },
     methods: {
         submitLogin () {
-            if (!this.email || !this.password) {
+            // ==== Temporarily disabled on Picnic's request
+            // if (!this.email || !this.password) {
+            //     return;
+            // }
+            if (!this.authToken) {
                 return;
             }
 
-            this.loginError = false;
-            ApiService.login(this.email, this.password).then((res) => {
-                this.authKey = res.data.authKey;
-            }).catch(() => {
-                this.loginError = true;
-            });
+            this.authKey = this.authToken;
+
+            // ==== Temporarily disabled on Picnic's request
+            // this.loginError = false;
+            // ApiService.login(this.email, this.password).then((res) => {
+            //     this.authKey = res.data.authKey;
+            // }).catch(() => {
+            //     this.loginError = true;
+            // });
         }
     }
 }

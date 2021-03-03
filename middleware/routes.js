@@ -19,5 +19,6 @@ export default {
         app.get("/api/discount", picnicController.getMgmDetails);
         app.get("/api/deliveries", picnicController.getDeliveries);
         app.get("/api/delivery/:deliveryId", picnicController.getDelivery);
+        app.get("/api/delivery/location/:deliveryId", picnicController.getDeliveryLocationData);
     }
 }
