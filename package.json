@@ -14,7 +14,7 @@
         "express-rate-limit": "^5.2.3",
         "morgan": "^1.10.0",
         "path": "^0.12.7",
-        "picnic-api": "^1.3.0",
+        "picnic-api": "^1.4.1",
         "request": "^2.88.2"
     },
     "author": "Maarten van den Hoven",

@@ -180,5 +180,20 @@ export default {
         } catch (err) {
             res.sendStatus(err?.response?.status || 500);
         }
+    },
+    async getDeliveryLocationData(req, res) {
+        let picnicClient = buildPicnicClient(req);
+
+        try {
+            const deliveryPosition = await picnicClient.getDeliveryPosition(req.params.deliveryId);
+            const deliveryScenario = await picnicClient.getDeliveryScenario(req.params.deliveryId);
+
+            res.send({
+                deliveryPosition,
+                deliveryScenario
+            });
+        } catch (err) {
+            res.sendStatus(err?.response?.status || 500);
+        }
     }
 }

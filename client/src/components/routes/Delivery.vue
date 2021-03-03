@@ -50,6 +50,7 @@ export default {
     data () {
         return {
             delivery: null,
+            deliveryLocationData: null,
             items: []
         }
     },
@@ -75,6 +76,9 @@ export default {
             ApiService.getDelivery(this.$route.params.deliveryId).then(res => {
                 this.delivery = res.data;
                 this.processDeliveryContents();
+            });
+            ApiService.getDeliveryLocationData(this.$route.params.deliveryId).then(res => {
+                this.deliveryLocationData = res.data;
             });
         },
         processDeliveryContents () {
@@ -103,6 +107,10 @@ export default {
             }
         },
         getDayName (delivery) {
+            if (!delivery) {
+                return;
+            }
+
             let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { weekday: 'long' });
@@ -111,6 +119,10 @@ export default {
             return name;
         },
         getDayDate (delivery) {
+            if (!delivery) {
+                return;
+            }
+
             let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { month: 'long' });
