@@ -11,6 +11,7 @@
     "axios": "^0.21.1",
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.6.5",
+    "mapbox-gl": "^2.1.1",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",
     "vuex": "^3.4.0",

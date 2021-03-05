@@ -4,6 +4,7 @@
         class="d-none d-md-block"
         >
         <b-list-group-item
+            v-if="delivery"
             class="delivery-date"
             >
             <a href="/store/user">
@@ -14,6 +15,12 @@
             </a>
             {{ getDayName(delivery) }} {{ getDayDate(delivery) }}
         </b-list-group-item>
+
+        
+        <CustomDeliveryDriverLocation
+            v-if="delivery"
+            :delivery-id="delivery.id"
+            />
 
         <div v-if="items.length">
             <CustomShoppingCartItem
@@ -38,19 +45,20 @@
 import ApiService from '@/services/ApiService';
 import DataConverterService from '@/services/DataConverterService';
 
+import CustomDeliveryDriverLocation from '@/components/others/DeliveryDriverLocation';
 import CustomShoppingCartItem from '@/components/others/ShoppingCartItem';
 import CustomTotals from '@/components/others/Totals';
 
 export default {
     name: 'Delivery',
     components: {
+        CustomDeliveryDriverLocation,
         CustomShoppingCartItem,
         CustomTotals
     },
     data () {
         return {
             delivery: null,
-            deliveryLocationData: null,
             items: []
         }
     },
@@ -76,9 +84,6 @@ export default {
             ApiService.getDelivery(this.$route.params.deliveryId).then(res => {
                 this.delivery = res.data;
                 this.processDeliveryContents();
-            });
-            ApiService.getDeliveryLocationData(this.$route.params.deliveryId).then(res => {
-                this.deliveryLocationData = res.data;
             });
         },
         processDeliveryContents () {
@@ -107,10 +112,6 @@ export default {
             }
         },
         getDayName (delivery) {
-            if (!delivery) {
-                return;
-            }
-
             let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { weekday: 'long' });
@@ -119,10 +120,6 @@ export default {
             return name;
         },
         getDayDate (delivery) {
-            if (!delivery) {
-                return;
-            }
-
             let date = new Date(delivery.slot.window_start);
             
             let name = date.toLocaleDateString("nl-NL", { month: 'long' });
