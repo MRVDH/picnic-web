@@ -47,7 +47,7 @@
                                 type="password"
                                 required
                                 />
-                        </b-form-group> -->
+                        </b-form-group>
 
                         <p>Op verzoek van Picnic kan je op dit moment niet inloggen. Indien je een auth token hebt kan je die wel hier invoeren.</p>
 
@@ -77,7 +77,9 @@
                             @click="submitLogin()"
                             >
                             Inloggen
-                        </b-button>
+                        </b-button> -->
+
+                        <p class="text-primary">Op verzoek van Picnic kan je op dit moment niet inloggen.</p>
                     </form>
                 </b-card>
             </b-collapse>
