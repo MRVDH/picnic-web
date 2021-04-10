@@ -84,7 +84,7 @@ export default {
     methods: {
         getLists () {
             ApiService.getLists().then((res) => {
-                this.topMenuItems = res.data.filter(x => !x.is_included_in_category_tree && !x.hidden && x.sellable_item_count > 0);
+                this.topMenuItems = res.data.filter(x => !x.is_included_in_category_tree && !x.hidden && x.items.length > 0);
                 this.selectedTopMenuItem = this.topMenuItems.find(x => x.id === this.$route.params.listId) || this.topMenuItems[0];
 
                 if (!this.loggedIn) {
