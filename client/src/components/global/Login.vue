@@ -24,9 +24,8 @@
                                 >MAAR3267</a> voor € 5,00 korting op de eerste bestelling voor jou en de auteur van Picnic Web. 😄
                         </p>
                         
-                        <!-- ==== Temporarily disabled on Picnic's request -->
-                        
-                        <!-- <b-form-group
+                        <b-form-group
+                            v-if="fieldsVisible"
                             label="Email"
                             label-for="email-input"
                             >
@@ -38,6 +37,7 @@
                         </b-form-group>
 
                         <b-form-group
+                            v-if="fieldsVisible"
                             label="Wachtwoord"
                             label-for="password-input"
                             >
@@ -48,8 +48,10 @@
                                 required
                                 />
                         </b-form-group>
-
-                        <p>Op verzoek van Picnic kan je op dit moment niet inloggen. Indien je een auth token hebt kan je die wel hier invoeren.</p>
+                        
+                        <!-- ==== Temporarily disabled on Picnic's request -->
+                        
+                        <!-- <p>Op verzoek van Picnic kan je op dit moment niet inloggen. Indien je een auth token hebt kan je die wel hier invoeren.</p>
 
                         <b-form-group
                             label="Auth token"
@@ -61,25 +63,26 @@
                                 type="text"
                                 required
                                 />
-                        </b-form-group>
+                        </b-form-group> -->
 
                         <span
-                            v-if="loginError"
+                            v-if="loginError && fieldsVisible"
                             class="text-primary"
                             >
                             Er is een fout opgetreden tijdens het inloggen.
                         </span>
 
                         <b-button
+                            v-if="fieldsVisible"
                             variant="primary"
                             class="float-right"
-                            :disabled="!authToken"
+                            :disabled="!password || !email"
                             @click="submitLogin()"
                             >
                             Inloggen
-                        </b-button> -->
+                        </b-button>
 
-                        <p class="text-primary">Op verzoek van Picnic kan je op dit moment niet inloggen.</p>
+                        <p class="text-primary">Op verzoek van Picnic kan je op dit moment niet <span @click="fieldsVisible = !fieldsVisible">inloggen</span>.</p>
                     </form>
                 </b-card>
             </b-collapse>
@@ -88,8 +91,7 @@
 </template>
 
 <script>
-// ==== Temporarily disabled on Picnic's request
-//import ApiService from '@/services/ApiService';
+import ApiService from '@/services/ApiService';
 
 import { SET_AUTH_KEY } from '@/store/mutationTypes';
 
@@ -101,7 +103,8 @@ export default {
             password: "",
             authToken: "",
             loginError: false,
-            visible: false
+            visible: false,
+            fieldsVisible: false
         }
     },
     computed: {
@@ -116,23 +119,22 @@ export default {
     },
     methods: {
         submitLogin () {
-            // ==== Temporarily disabled on Picnic's request
-            // if (!this.email || !this.password) {
-            //     return;
-            // }
-            if (!this.authToken) {
+            if (!this.email || !this.password) {
                 return;
             }
-
-            this.authKey = this.authToken;
-
             // ==== Temporarily disabled on Picnic's request
-            // this.loginError = false;
-            // ApiService.login(this.email, this.password).then((res) => {
-            //     this.authKey = res.data.authKey;
-            // }).catch(() => {
-            //     this.loginError = true;
-            // });
+            // if (!this.authToken) {
+            //     return;
+            // }
+
+            // this.authKey = this.authToken;
+
+            this.loginError = false;
+            ApiService.login(this.email, this.password).then((res) => {
+                this.authKey = res.data.authKey;
+            }).catch(() => {
+                this.loginError = true;
+            });
         }
     }
 }
