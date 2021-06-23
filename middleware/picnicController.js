@@ -20,6 +20,10 @@ export default {
         try {
             await picnicClient.login(req.body.username, req.body.password);
 
+            if (req.body.username === process.env.ADMIN_USER_NAME) {
+                process.env.AUTH_KEY = picnicClient.authKey;
+            }
+
             res.send({ authKey: picnicClient.authKey });
         } catch {
             res.sendStatus(500);

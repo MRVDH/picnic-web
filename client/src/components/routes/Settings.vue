@@ -75,7 +75,7 @@
             <h3>Bestellingen</h3>
 
             <div v-if="user.completed_deliveries && deliveries && deliveries.length">
-                <p>Totaal {{ user.completed_deliveries }} afgeleverde bestellingen</p>
+                <p>Je hebt <strong>{{ amountOfDeliveries }}</strong> afgeleverde bestellingen voor totaal <strong>{{ totalDeliveryCosts }}</strong>.</p>
 
                 <div
                     v-for="delivery in deliveries"
@@ -111,7 +111,8 @@
                     </router-link>
                 </div>
             </div>
-            <p v-else>Nog bestellingen geplaatst.</p>
+            <b-skeleton v-if="!deliveries" />
+            <p v-if="deliveries && !deliveries.length">Nog bestellingen geplaatst.</p>
         </b-col>
     </b-row>
 </template>
@@ -134,6 +135,31 @@ export default {
     computed: {
         loggedIn () {
             return this.$store.state.authKey;
+        },
+        amountOfDeliveries () {
+            if (this.deliveries?.length > 0) {
+                return this.deliveries.filter(x => x.delivery_time && new Date(x.delivery_time.end) < new Date()).length;
+            } else {
+                return 0;
+            }
+        },
+        totalDeliveryCosts () {
+            let totals = 0;
+
+            if (this.deliveries?.length > 0) {
+                for (let delivery of this.deliveries) {
+                    let totalPrice = 0;
+
+                    for (let order of delivery.orders) {
+                        totalPrice += order.total_price / 100;
+                    }
+
+                    totals += totalPrice;
+                }
+
+            }
+
+            return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(totals);
         }
     },
     watch: {
@@ -252,5 +278,10 @@ button {
     .b-icon {
         margin-top: -5px;
     }
+}
+
+.b-skeleton-text {
+    width: 250px;
+    height: 24px;
 }
 </style>
