@@ -1,5 +1,6 @@
 import axios from "axios";
 import store from "@/store";
+import { SET_AUTH_KEY } from '@/store/mutationTypes';
 
 let baseURL = window.location.hostname === "localhost" ? "http://localhost:8081" : ("https://" + window.location.hostname);
 
@@ -12,6 +13,16 @@ httpInstance.interceptors.request.use((config) => {
 
     return config;
 }, (error) => {
+    return Promise.reject(error);
+});
+
+httpInstance.interceptors.response.use((response) => {
+    return response;
+}, (error) => {
+    if (error.response.status === 401) {
+        store.dispatch(SET_AUTH_KEY, null);
+    }
+    
     return Promise.reject(error);
 });
 

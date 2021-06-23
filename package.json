@@ -9,12 +9,12 @@
     "dependencies": {
         "body-parser": "^1.19.0",
         "cheerio": "^1.0.0-rc.6",
-        "dotenv": "^8.2.0",
+        "dotenv": "^10.0.0",
         "express": "^4.17.1",
         "express-rate-limit": "^5.2.6",
         "morgan": "^1.10.0",
         "path": "^0.12.7",
-        "picnic-api": "^1.4.1",
+        "picnic-api": "^1.4.2",
         "request": "^2.88.2"
     },
     "author": "Maarten van den Hoven",
