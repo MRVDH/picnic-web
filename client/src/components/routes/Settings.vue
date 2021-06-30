@@ -18,11 +18,29 @@
             <p class="info-title">Naam</p>
             <p class="info-value">{{ user.firstname }} {{ user.lastname }}</p>
             <p class="info-title">Telefoonnummer</p>
-            <p class="info-value">{{ user.phone }}</p>
+            <p class="info-value">
+                <a
+                    id="sp1"
+                    class="spoiler"
+                    href="#sp1"
+                    >{{ user.phone }}</a>
+            </p>
             <p class="info-title">E-mailadres</p>
-            <p class="info-value">{{ user.contact_email }}</p>
+            <p class="info-value">
+                <a
+                    id="sp2"
+                    class="spoiler"
+                    href="#sp2"
+                    >{{ user.contact_email }}</a>
+            </p>
             <p class="info-title">Bezorgadres</p>
-            <p class="info-value">{{ user.address.street }} {{ user.address.house_number }}{{ user.address.house_number_ext }}, {{ user.address.postcode }} {{ user.address.city }}</p>
+            <p class="info-value">
+                <a
+                    id="sp3"
+                    class="spoiler"
+                    href="#sp3"
+                    >{{ user.address.street }} {{ user.address.house_number }}{{ user.address.house_number_ext }}, {{ user.address.postcode }} {{ user.address.city }}</a>
+            </p>
             <p class="info-title">Jouw thuis</p>
             <p class="info-value">Volwassenen: {{ user.household_details.adults }}, kinderen: {{ user.household_details.children }}, katten: {{ user.household_details.cats }}, honden: {{ user.household_details.dogs }}</p>
 
@@ -283,5 +301,16 @@ button {
 .b-skeleton-text {
     width: 250px;
     height: 24px;
+}
+
+.spoiler {
+    background: #333333;
+    border-radius: 0.2em;
+    color: transparent;
+
+    &:target {
+        background: transparent;
+        color: inherit;
+    }
 }
 </style>
