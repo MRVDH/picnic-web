@@ -1,0 +1,523 @@
+@import "tailwindcss";
+
+/* ─── Picnic Design Tokens ─────────────────────────────────────────── */
+:root {
+  --picnic-red: #e1171e;
+  --picnic-red-dark: #c41419;
+  --picnic-green: #4a8c3f;
+  --picnic-yellow: #f5a623;
+  --picnic-bg: #f5f5f5;
+  --picnic-white: #ffffff;
+  --picnic-text: #333333;
+  --picnic-text-secondary: #888888;
+  --picnic-border: #e8e8e8;
+  --picnic-tab-inactive: #999999;
+  --picnic-tab-active: #e1171e;
+  --picnic-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --nav-height: 56px;
+  --max-content-width: 1280px;
+}
+
+/* ─── Reset & Base ─────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--picnic-bg);
+  color: var(--picnic-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── App Shell ────────────────────────────────────────────────────── */
+.app-shell {
+  min-height: 100dvh;
+  background: var(--picnic-bg);
+}
+
+.app-main {
+  padding-top: var(--nav-height);
+  min-height: 100dvh;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  background: var(--picnic-white);
+  --content-width: min(100vw, var(--max-content-width));
+}
+
+/* ─── Navigation Bar ───────────────────────────────────────────────── */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--picnic-white);
+  border-bottom: 1px solid var(--picnic-border);
+  display: flex;
+  align-items: center;
+  z-index: 100;
+  padding: 0 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.nav-bar__brand {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--picnic-red);
+  text-decoration: none;
+  margin-right: 40px;
+  letter-spacing: -0.5px;
+}
+
+.nav-bar__items {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  text-decoration: none;
+  color: var(--picnic-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.nav-bar__item:hover {
+  background: var(--picnic-bg);
+  color: var(--picnic-text);
+}
+
+.nav-bar__item--active {
+  color: var(--picnic-red);
+  background: rgba(225, 23, 30, 0.06);
+}
+
+.nav-bar__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-bar__label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ─── Page Loading ─────────────────────────────────────────────────── */
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.pml-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--picnic-border);
+  border-top-color: var(--picnic-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pml-activity-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ─── Page Error ───────────────────────────────────────────────────── */
+.page-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 24px;
+  text-align: center;
+  color: var(--picnic-text-secondary);
+}
+
+.page-error__detail {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--picnic-tab-inactive);
+}
+
+/* ─── Page Content ─────────────────────────────────────────────────── */
+.page-content {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.page-header {
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px;
+  color: var(--picnic-text);
+}
+
+/* ─── Rich Text Markdown ───────────────────────────────────────────── */
+.pml-markdown-h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+  line-height: 1.2;
+}
+
+.pml-markdown-h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 6px 0 4px;
+  line-height: 1.25;
+}
+
+.pml-markdown-h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 4px 0 2px;
+  line-height: 1.3;
+}
+
+.pml-markdown-h4,
+.pml-markdown-h5,
+.pml-markdown-h6 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 0 2px;
+  line-height: 1.35;
+}
+
+.pml-markdown-ul,
+.pml-markdown-ol {
+  padding-left: 20px;
+  margin: 4px 0;
+}
+
+.pml-markdown-ul li,
+.pml-markdown-ol li {
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+/* ─── Fusion Blocks ────────────────────────────────────────────────── */
+.fusion-block {
+  width: 100%;
+}
+
+.fusion-block--horizontal {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fusion-block--horizontal::-webkit-scrollbar {
+  display: none;
+}
+
+.fusion-pml-item {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.fusion-pml-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.fusion-pml-overlay>* {
+  pointer-events: auto;
+}
+
+/* ─── Horizontal Scroll Wrapper ────────────────────────────────────── */
+.horizontal-scroll-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.horizontal-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--picnic-white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--picnic-text);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.horizontal-scroll-btn:hover {
+  background: var(--picnic-bg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.horizontal-scroll-btn--left {
+  left: 8px;
+}
+
+.horizontal-scroll-btn--right {
+  right: 8px;
+}
+
+/* ─── Touchable ────────────────────────────────────────────────────── */
+.touchable {
+  user-select: none;
+}
+
+.touchable:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+/* ─── Selling Unit Tile ────────────────────────────────────────────── */
+.selling-unit-tile {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--picnic-white);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.selling-unit-tile__image {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #fafafa;
+}
+
+.selling-unit-tile__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.selling-unit-tile__info {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.selling-unit-tile__price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selling-unit-tile__price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--picnic-text);
+}
+
+.selling-unit-tile__name {
+  font-size: 12px;
+  color: var(--picnic-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.selling-unit-tile__quantity {
+  font-size: 11px;
+  color: var(--picnic-text-secondary);
+}
+
+/* ─── Stepper Button ───────────────────────────────────────────────── */
+.stepper-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--picnic-red);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.stepper-button:hover {
+  background: var(--picnic-red-dark);
+}
+
+/* ─── Text Button ──────────────────────────────────────────────────── */
+.pml-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 24px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pml-text-button--primary {
+  background: var(--picnic-red);
+  color: white;
+}
+
+.pml-text-button--primary:hover {
+  background: var(--picnic-red-dark);
+}
+
+.pml-text-button--secondary {
+  background: transparent;
+  color: var(--picnic-red);
+  border: 1.5px solid var(--picnic-red);
+}
+
+/* ─── Accordion ────────────────────────────────────────────────────── */
+.pml-accordion {
+  width: 100%;
+}
+
+.pml-accordion__item {
+  border-bottom: 1px solid var(--picnic-border);
+}
+
+.pml-accordion__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pml-accordion__body {
+  padding: 0 16px 12px;
+}
+
+/* ─── Search Bar ───────────────────────────────────────────────────── */
+.search-bar-container {
+  position: relative;
+}
+
+.search-page-header {
+  padding: 12px 16px;
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 50;
+  background: var(--picnic-white);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--picnic-bg);
+  border-radius: 12px;
+  padding: 10px 14px;
+  gap: 8px;
+}
+
+.search-bar__icon {
+  flex-shrink: 0;
+}
+
+.search-bar__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  outline: none;
+  color: var(--picnic-text);
+}
+
+.search-bar__input::placeholder {
+  color: var(--picnic-tab-inactive);
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--picnic-white);
+  border-radius: 0 0 12px 12px;
+  box-shadow: var(--picnic-shadow);
+  z-index: 60;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.search-suggestions__item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 14px;
+  color: var(--picnic-text);
+  cursor: pointer;
+  border-bottom: 1px solid var(--picnic-border);
+}
+
+.search-suggestions__item:hover {
+  background: var(--picnic-bg);
+}
+
+.search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: var(--picnic-text-secondary);
+  font-size: 15px;
+}
+
+/* ─── Cart ─────────────────────────────────────────────────────────── */
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 12px;
+  color: var(--picnic-text-secondary);
+}
+
+.cart-empty__hint {
+  font-size: 13px;
+  color: var(--picnic-tab-inactive);
+}
