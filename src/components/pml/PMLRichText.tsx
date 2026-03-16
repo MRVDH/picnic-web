@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { pmlColor, pmlFontWeight, pmlTextSize } from "@/lib/pml-styles";
+import { pmlColor, pmlFontWeight, pmlTextSize, pmlDefaultFontWeight } from "@/lib/pml-styles";
 
 /**
  * Resolve the markdown field which can be a plain string or an EXPRESSION object.
@@ -27,17 +27,61 @@ function resolveMarkdown(raw: unknown): string {
 }
 
 export function PMLRichText({ component }: { component: any }) {
+  // Handle RICH_TEXT with children array (inline composition of multiple text spans)
+  if (component.children && Array.isArray(component.children)) {
+    const attrs = component.textAttributes || {};
+    const style: React.CSSProperties = {
+      fontSize: attrs.size ? `${pmlTextSize(attrs.size, component.textType)}px` : undefined,
+      fontWeight: pmlFontWeight(attrs.weight) ?? pmlDefaultFontWeight(component.textType),
+      color: pmlColor(attrs.color),
+      textAlign: mapTextAlignment(component.textAlignment),
+      lineHeight: 1.4,
+      ...(component.numberOfLines && {
+        overflow: "hidden",
+        display: "-webkit-box",
+        WebkitLineClamp: component.numberOfLines,
+        WebkitBoxOrient: "vertical" as any,
+      }),
+    };
+    return (
+      <div style={style}>
+        {component.children.map((child: any, i: number) => (
+          <PMLRichText key={i} component={child} />
+        ))}
+      </div>
+    );
+  }
+
   const text = resolveMarkdown(component.markdown);
+  if (!text) return null;
   const attrs = component.textAttributes || {};
+
+  // PicnicSymbols font: map special characters to web equivalents
+  if (attrs.family === "PicnicSymbols") {
+    const symbolMap: Record<string, string> = {
+      ">": "›",  // chevron right
+      "<": "‹",  // chevron left
+    };
+    const mapped = symbolMap[text] || text;
+    const symStyle: React.CSSProperties = {
+      fontSize: `${pmlTextSize(attrs.size, component.textType)}px`,
+      fontWeight: pmlFontWeight(attrs.weight) ?? pmlDefaultFontWeight(component.textType),
+      color: pmlColor(attrs.color),
+      display: "inline",
+      lineHeight: 1.4,
+    };
+    return <span style={symStyle}>{mapped}</span>;
+  }
 
   const style: React.CSSProperties = {
     fontSize: `${pmlTextSize(attrs.size, component.textType)}px`,
-    fontWeight: pmlFontWeight(attrs.weight),
+    fontWeight: pmlFontWeight(attrs.weight) ?? pmlDefaultFontWeight(component.textType),
     color: pmlColor(attrs.color),
     textAlign: mapTextAlignment(component.textAlignment),
     lineHeight: 1.4,
-    overflow: "hidden",
+    display: "inline",
     ...(component.numberOfLines && {
+      overflow: "hidden",
       display: "-webkit-box",
       WebkitLineClamp: component.numberOfLines,
       WebkitBoxOrient: "vertical" as any,
@@ -47,7 +91,7 @@ export function PMLRichText({ component }: { component: any }) {
   // Simple markdown rendering: bold, italic, links, line breaks
   const html = renderMarkdown(text);
 
-  return <div style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <span style={style} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function mapTextAlignment(alignment?: string): React.CSSProperties["textAlign"] {
@@ -59,8 +103,8 @@ function mapTextAlignment(alignment?: string): React.CSSProperties["textAlign"] 
   }
 }
 
-function renderMarkdown(text: string): string {
-  if (typeof text !== "string") return "";
+function renderMarkdown(text: unknown): string {
+  if (!text || typeof text !== "string") return "";
   // Split by line breaks (handle both \n literal and actual newlines)
   const normalized = text.replace(/\\n/g, "\n");
   const lines = normalized.split("\n");
@@ -119,14 +163,20 @@ function renderMarkdown(text: string): string {
 }
 
 function inlineMarkdown(text: string): string {
-  return text
-    // Color tags: #(#hex)text#(#hex) → colored span
-    .replace(/#\(([^)]+)\)([\s\S]*?)#\(\1\)/g, (_, color, content) => {
+  let result = text;
+  // Color tags: #(#hex)text#(#hex) → colored span
+  // Apply repeatedly to handle nested tags (innermost first with lazy match)
+  let prev = "";
+  while (prev !== result) {
+    prev = result;
+    result = result.replace(/#\(([^)]+)\)((?:(?!#\([^)]*\))[\s\S])*?)#\(\1\)/g, (_, color, content) => {
       if (/^#?[a-fA-F0-9]{3,8}$/.test(color) || /^[a-zA-Z]+$/.test(color)) {
         return `<span style="color:${color}">${content}</span>`;
       }
       return content;
-    })
+    });
+  }
+  return result
     // Strip any remaining unmatched color tags
     .replace(/#\([^)]*\)/g, "")
     // Strikethrough

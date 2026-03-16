@@ -25,6 +25,7 @@ export function PMLStack({ component, images }: { component: any; images?: Recor
     alignItems: mapAlignment(component.alignment),
     justifyContent: mapDistribution(component.distribution),
     minWidth: 0,
+    minHeight: 0,
     position: hasAbsoluteChild || component.absolutePosition ? "relative" : undefined,
     borderRadius: cornerRadius ? `${cornerRadius}px` : undefined,
     borderWidth: component.borderWidth ? `${component.borderWidth}px` : undefined,
@@ -56,16 +57,19 @@ export function PMLStack({ component, images }: { component: any; images?: Recor
             bottom: child.absolutePosition.bottom !== undefined ? `${child.absolutePosition.bottom}px` : undefined,
             left: child.absolutePosition.left !== undefined ? `${child.absolutePosition.left}px` : undefined,
           };
+          // Strip absolutePosition so the child component doesn't also apply it,
+          // which would create a nested absolute chain with a 0-sized containing block
+          const { absolutePosition: _, ...childWithoutAbsPos } = child;
           return (
             <div key={i} style={absStyle}>
-              <PMLRenderer component={child} images={images} />
+              <PMLRenderer component={childWithoutAbsPos} images={images} />
             </div>
           );
         }
         // Non-absolute siblings need position: relative so they paint above absolute siblings
         if (hasAbsoluteChild) {
           return (
-            <div key={i} style={{ position: "relative" }}>
+            <div key={i} style={{ position: "relative", alignSelf: "stretch", minWidth: 0 }}>
               <PMLRenderer component={child} images={images} />
             </div>
           );

@@ -15,6 +15,7 @@
   --picnic-tab-active: #e1171e;
   --picnic-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --nav-height: 56px;
+  --page-header-height: 48px;
   --max-content-width: 1280px;
 }
 
@@ -163,14 +164,44 @@ body {
 /* ─── Page Content ─────────────────────────────────────────────────── */
 .page-content {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .page-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  height: var(--page-header-height);
+  color: var(--picnic-text);
+  background: var(--picnic-white);
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 41;
+}
+
+.page-header__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  color: var(--picnic-text);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.page-header__back:hover {
+  background: var(--picnic-bg);
+}
+
+.page-header__title {
   font-size: 20px;
   font-weight: 700;
-  padding: 16px;
-  color: var(--picnic-text);
 }
 
 /* ─── Rich Text Markdown ───────────────────────────────────────────── */
@@ -297,6 +328,16 @@ body {
   transform: scale(0.98);
 }
 
+/* ─── Category Filter Pills ───────────────────────────────────────── */
+.category-filter-pill {
+  user-select: none;
+}
+
+.category-filter-pill:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
 /* ─── Selling Unit Tile ────────────────────────────────────────────── */
 .selling-unit-tile {
   display: flex;
@@ -370,10 +411,11 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: background 0.15s;
+  pointer-events: auto;
 }
 
 .stepper-button:hover {
-  background: var(--picnic-red-dark);
+  filter: brightness(0.9);
 }
 
 /* ─── Text Button ──────────────────────────────────────────────────── */

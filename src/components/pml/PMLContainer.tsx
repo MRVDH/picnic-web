@@ -34,6 +34,7 @@ export function PMLContainer({ component, images }: { component: any; images?: R
     ...(component.shadow && {
       boxShadow: `0 2px 8px rgba(0,0,0,0.1)`,
     }),
+    pointerEvents: component.pointerEvents === "box-none" ? "none" : component.pointerEvents === "none" ? "none" : undefined,
     minWidth: 0,
   };
 

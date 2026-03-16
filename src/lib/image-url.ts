@@ -9,6 +9,9 @@ export type PicnicImageSize = "tiny" | "small" | "medium" | "large" | "extra-lar
 
 /**
  * Build a full image URL from a Picnic image hash.
+ *
+ * Note: The Picnic CDN always serves images as .png regardless of the extension
+ * specified in the PML data (which may say "webp"). Always use "png" here.
  */
 export function getImageUrl(
   imageId: string,

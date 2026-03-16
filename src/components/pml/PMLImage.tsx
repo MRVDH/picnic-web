@@ -12,6 +12,7 @@ export function PMLImage({ component, images }: { component: any; images?: Recor
   const imageHash = images?.[imageKey] || imageKey;
 
   // If the resolved value is already a full URL, use it directly
+  // Note: always use .png — the CDN serves png regardless of what the PML data says
   const resolvedUrl = imageHash.startsWith("http")
     ? imageHash
     : getImageUrl(imageHash, "medium");

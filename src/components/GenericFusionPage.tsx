@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FusionPageRenderer } from "@/components/pml/FusionPageRenderer";
 
 export function GenericFusionPage({ pageId }: { pageId: string }) {
+  const router = useRouter();
   const [page, setPage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,20 @@ export function GenericFusionPage({ pageId }: { pageId: string }) {
 
   return (
     <div className="page-content">
-      {page?.header?.title && <h1 className="page-header">{page.header.title}</h1>}
+      {page?.header?.title && (
+        <div className="page-header">
+          <button
+            className="page-header__back"
+            onClick={() => router.back()}
+            aria-label="Ga terug"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          <h1 className="page-header__title">{page.header.title}</h1>
+        </div>
+      )}
       <FusionPageRenderer body={page?.body} />
     </div>
   );

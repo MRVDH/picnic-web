@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { PMLRenderer } from "./PMLRenderer";
+import { CategoryTreeProvider, useCategoryTreeState } from "./CategoryTreeContext";
 
 /**
  * Renders a Fusion page body tree (STATE_BOUNDARY → BLOCK → PML).
@@ -18,6 +19,15 @@ function FusionNode({ node, parentAxis, itemStyleOverride }: { node: any; parent
 
   switch (node.type) {
     case "STATE_BOUNDARY":
+      // Wrap CategoryTreeArticlesState in a provider for scroll-tracked active filter state
+      if (node.id === "CategoryTreeArticlesState") {
+        const defaultCatId = extractFirstCategoryId(node);
+        return (
+          <CategoryTreeProvider defaultCategoryId={defaultCatId}>
+            <FusionNode node={node.child} parentAxis={parentAxis} />
+          </CategoryTreeProvider>
+        );
+      }
       return <FusionNode node={node.child} parentAxis={parentAxis} />;
 
     case "SUSPENSE":
@@ -28,7 +38,7 @@ function FusionNode({ node, parentAxis, itemStyleOverride }: { node: any; parent
       return null;
 
     case "BLOCK":
-      return <FusionBlock block={node} parentAxis={parentAxis} />;
+      return <FusionBlock block={node} parentAxis={parentAxis} sizeOverride={itemStyleOverride} />;
 
     case "PML":
       return <FusionPMLItem item={node} parentAxis={parentAxis} styleOverride={itemStyleOverride} />;
@@ -68,17 +78,21 @@ function FusionSuspenseLoader({ pageId, parentAxis }: { pageId: string; parentAx
   return <FusionNode node={content.body} parentAxis={parentAxis} />;
 }
 
-function FusionBlock({ block, parentAxis }: { block: any; parentAxis?: string }) {
+function FusionBlock({ block, parentAxis, sizeOverride }: { block: any; parentAxis?: string; sizeOverride?: React.CSSProperties }) {
   const layout = block.layout;
   const children = block.children || [];
   const isHorizontal = layout?.axis === "HORIZONTAL";
   const axis = layout?.axis || "VERTICAL";
 
   // Compute block's own sizing from parent axis context
-  const blockSize = fusionBlockSize(block.size, parentAxis);
+  const blockSize = sizeOverride
+    ? { ...fusionBlockSize(block.size, parentAxis), ...sizeOverride }
+    : fusionBlockSize(block.size, parentAxis);
 
   // Check if children have fixed/computed widths — route to horizontal scroll block
-  const hasFixedWidthItems = isHorizontal && children.some((c: any) => {
+  // Exclude the L2 category filter bar which needs sticky positioning
+  const isCategoryFilterBar = block.id === "core-L2-category-page-horizontal-list-section";
+  const hasFixedWidthItems = isHorizontal && !isCategoryFilterBar && children.some((c: any) => {
     const main = c.size?.mainAxis;
     if (!main) return false;
     if (typeof main === "number") return true;
@@ -90,13 +104,54 @@ function FusionBlock({ block, parentAxis }: { block: any; parentAxis?: string })
     return <HorizontalScrollBlock block={block} layout={layout} children={children} blockSize={blockSize} />;
   }
 
+  // Detect VERTICAL blocks with sub-full-width items (e.g. product tile grids).
+  // These need flex-wrap to display as a grid instead of a single column.
+  // Two cases:
+  // 1. Direct SELLING_UNIT_TILE children → show 4 per row on web
+  // 2. Sub-full-width crossAxis children (e.g. wrapper BLOCKs with "6g") → respect API sizing
+  const hasDirectProductTiles = !isHorizontal && layout?.spacing?.crossAxis && children.some(
+    (c: any) => c.content?.type === "SELLING_UNIT_TILE"
+  );
+  const hasSubFullWidthChildren = !isHorizontal && layout?.spacing?.crossAxis && !hasDirectProductTiles && children.some(
+    (c: any) => {
+      const cross = c.size?.crossAxis;
+      if (!cross) return false;
+      const s = String(cross);
+      return s !== "12g" && s !== "SCREEN_WIDTH";
+    }
+  );
+  const isVerticalGrid = hasDirectProductTiles || hasSubFullWidthChildren;
+
+  const gap = layout?.spacing?.mainAxis || 0;
+  const crossGap = layout?.spacing?.crossAxis || 0;
+
+  // For direct product tile grids, show 4 per row on web.
+  // For wrapped grids (sub-full-width BLOCKs), respect the API's crossAxis sizing.
+  let gridItemStyle: React.CSSProperties | undefined;
+  if (hasDirectProductTiles) {
+    gridItemStyle = {
+      width: `calc((100% - ${3 * crossGap}px) / 4)`,
+      minWidth: `calc((100% - ${3 * crossGap}px) / 4)`,
+      height: undefined,
+      flexGrow: 0,
+      flexShrink: 0,
+    };
+  } else if (hasSubFullWidthChildren) {
+    gridItemStyle = {
+      height: undefined,
+      flexGrow: 0,
+      flexShrink: 0,
+    };
+  }
+
   const style: React.CSSProperties = {
     ...blockSize,
     display: "flex",
-    flexDirection: isHorizontal ? "row" : "column",
-    gap: layout?.spacing?.mainAxis ? `${layout.spacing.mainAxis}px` : undefined,
+    flexDirection: isVerticalGrid ? "row" : (isHorizontal ? "row" : "column"),
+    flexWrap: isVerticalGrid ? "wrap" : (isHorizontal && layout?.wrap !== false ? "wrap" : undefined),
+    gap: isVerticalGrid ? `${gap}px` : (layout?.spacing?.mainAxis ? `${layout.spacing.mainAxis}px` : undefined),
+    columnGap: isVerticalGrid ? `${crossGap}px` : (!isHorizontal && layout?.spacing?.crossAxis ? `${layout.spacing.crossAxis}px` : undefined),
     rowGap: isHorizontal && layout?.spacing?.crossAxis ? `${layout.spacing.crossAxis}px` : undefined,
-    columnGap: !isHorizontal && layout?.spacing?.crossAxis ? `${layout.spacing.crossAxis}px` : undefined,
     padding: layout?.padding
       ? `${layout.padding.top ?? 0}px ${layout.padding.right ?? 0}px ${layout.padding.bottom ?? 0}px ${layout.padding.left ?? 0}px`
       : undefined,
@@ -104,20 +159,49 @@ function FusionBlock({ block, parentAxis }: { block: any; parentAxis?: string })
     borderRadius: layout?.cornerRadius
       ? `${layout.cornerRadius.topLeft ?? 0}px ${layout.cornerRadius.topRight ?? 0}px ${layout.cornerRadius.bottomRight ?? 0}px ${layout.cornerRadius.bottomLeft ?? 0}px`
       : undefined,
-    overflow: layout?.cornerRadius || layout?.overflow === "hidden" ? "hidden" : undefined,
+    overflow: layout?.cornerRadius || layout?.overflow?.toUpperCase() === "HIDDEN" ? "hidden" : undefined,
     overflowX: isHorizontal ? "auto" : undefined,
     scrollbarWidth: "none",
     minWidth: 0,
-    flexWrap: isHorizontal && layout?.wrap !== false ? "wrap" : undefined,
     alignItems: mapBlockAlignment(layout?.alignment),
     justifyContent: mapBlockDistribution(layout?.distribution),
   };
 
+  // If this block contains a sticky filter bar child, remove overflow: hidden
+  // because overflow: hidden creates a clipping context that breaks sticky positioning
+  const hasStickyChild = children.some((c: any) => c.id === "core-L2-category-page-horizontal-list-section");
+  if (hasStickyChild && style.overflow === "hidden") {
+    style.overflow = undefined;
+  }
+
+  // L2 category page: make the filter bar sticky (below the page header)
+  if (isCategoryFilterBar) {
+    style.position = "sticky";
+    style.top = "calc(var(--nav-height) + var(--page-header-height))";
+    style.zIndex = 40;
+    style.backgroundColor = style.backgroundColor || "var(--picnic-white)";
+    // Prevent overflow hidden from cutting off sticky
+    style.overflow = undefined;
+    style.overflowX = "auto";
+    style.flexWrap = "nowrap";
+    style.scrollbarWidth = "none";
+  }
+
+  // L2 category page: vertical list section with scroll tracking
+  const isCategoryVerticalList = block.id === "core-L2-category-page-vertical-list-section";
+
   return (
-    <div style={style} className={isHorizontal ? "fusion-block--horizontal" : "fusion-block"}>
-      {children.map((child: any, i: number) => (
-        <FusionNode key={child.id || i} node={child} parentAxis={axis} />
-      ))}
+    <div id={block.id || undefined} style={style} className={isHorizontal ? "fusion-block--horizontal" : "fusion-block"}>
+      {isCategoryVerticalList
+        ? children.map((child: any, i: number) => (
+            <CategorySectionObserver key={child.id || i} sectionNode={child}>
+              <FusionNode node={child} parentAxis={hasDirectProductTiles ? "HORIZONTAL" : axis} itemStyleOverride={gridItemStyle} />
+            </CategorySectionObserver>
+          ))
+        : children.map((child: any, i: number) => {
+            return <FusionNode key={child.id || i} node={child} parentAxis={hasDirectProductTiles ? "HORIZONTAL" : axis} itemStyleOverride={gridItemStyle} />;
+          })
+      }
     </div>
   );
 }
@@ -136,6 +220,8 @@ function HorizontalScrollBlock({ block, layout, children, blockSize }: { block: 
     ? {
         width: `calc((100% - ${3 * gap}px) / 4)`,
         minWidth: `calc((100% - ${3 * gap}px) / 4)`,
+        height: undefined,
+        flexGrow: 0,
         flexShrink: 0,
       }
     : undefined;
@@ -196,9 +282,9 @@ function HorizontalScrollBlock({ block, layout, children, blockSize }: { block: 
         </button>
       )}
       <div ref={scrollRef} style={style} className="fusion-block--horizontal">
-        {children.map((child: any, i: number) => (
-          <FusionNode key={child.id || i} node={child} parentAxis="HORIZONTAL" itemStyleOverride={productTileStyle} />
-        ))}
+        {children.map((child: any, i: number) => {
+          return <FusionNode key={child.id || i} node={child} parentAxis="HORIZONTAL" itemStyleOverride={productTileStyle} />;
+        })}
       </div>
       {canScrollRight && (
         <button
@@ -217,12 +303,36 @@ function FusionPMLItem({ item, parentAxis, styleOverride }: { item: any; parentA
   const baseStyle = fusionItemSize(item, parentAxis);
   const style = styleOverride ? { ...baseStyle, ...styleOverride } : baseStyle;
 
-  // When content exists (e.g. SELLING_UNIT_TILE), render only the content.
-  // The pml.component in this case is a native interaction wrapper (steppers, 
-  // touch targets, mutations) that duplicates the visual tile — skip it.
+  const itemId = item.id || undefined;
+
+  // Category filter items: render with active-state-aware styling
+  if (itemId?.startsWith("category-tree-page-filter-item-") && item.pml?.component) {
+    const categoryId = itemId.replace("category-tree-page-filter-item-", "");
+    // Skip workaround/placeholder items
+    if (categoryId && !categoryId.includes("workaround")) {
+      return (
+        <div id={itemId} className="fusion-pml-item" style={style}>
+          <CategoryFilterItem categoryId={categoryId} component={item.pml.component} />
+        </div>
+      );
+    }
+  }
+
+  // When content is SELLING_UNIT_TILE and we have a PML tree, prefer the PML tree
+  // because it includes discount labels, subtexts, original prices, bundle badges, etc.
+  // The simple content.sellingUnit only has basic price/name data.
+  if (item.content?.type === "SELLING_UNIT_TILE" && item.pml?.component) {
+    return (
+      <div id={itemId} className="fusion-pml-item" style={style}>
+        <PMLRenderer component={item.pml.component} images={item.pml.images} />
+      </div>
+    );
+  }
+
+  // Fallback for SELLING_UNIT_TILE without PML tree
   if (item.content?.type === "SELLING_UNIT_TILE") {
     return (
-      <div className="fusion-pml-item" style={style}>
+      <div id={itemId} className="fusion-pml-item" style={style}>
         <PMLRenderer component={item.content} />
       </div>
     );
@@ -233,10 +343,87 @@ function FusionPMLItem({ item, parentAxis, styleOverride }: { item: any; parentA
   }
 
   return (
-    <div className="fusion-pml-item" style={style}>
+    <div id={itemId} className="fusion-pml-item" style={style}>
       <PMLRenderer component={item.pml.component} images={item.pml.images} />
     </div>
   );
+}
+
+/**
+ * Renders a category filter pill with active-state styling.
+ * The active filter gets a RED1 background with white text,
+ * inactive ones get GREY1 background with dark text.
+ */
+function CategoryFilterItem({ categoryId, component }: { categoryId: string; component: any }) {
+  const { focusedCategoryId, setFocusedCategoryId } = useCategoryTreeState();
+  const isActive = focusedCategoryId === categoryId;
+
+  // Extract the label from the PML tree
+  const label = extractFilterLabel(component);
+
+  const handleClick = () => {
+    setFocusedCategoryId(categoryId);
+    const target = document.getElementById(`vertical-article-tiles-sub-header-${categoryId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      className="category-filter-pill"
+      style={{
+        backgroundColor: isActive ? "#e1171e" : "#f8f5f2",
+        borderRadius: 20,
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px 16px",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        transition: "background-color 0.2s, color 0.2s",
+      }}
+    >
+      <span style={{
+        fontSize: 14,
+        fontWeight: 500,
+        color: isActive ? "#ffffff" : "#333333",
+      }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function extractFilterLabel(component: any): string {
+  if (!component) return "";
+  // The label is in: TOUCHABLE > CONTAINER > STACK > RICH_TEXT.markdown
+  // The markdown is an EXPRESSION like: `condition ? \`#(WHITE)Label#(WHITE)\` : \`#(GREY5)Label#(GREY5)\``
+  // Extract the label text from it
+  if (component.markdown) {
+    const md = typeof component.markdown === "string" ? component.markdown : "";
+    if (typeof component.markdown === "object" && component.markdown.expression) {
+      const expr: string = component.markdown.expression;
+      const match = expr.match(/`#\([^)]*\)([^#]+)#\(/);
+      if (match) return match[1];
+    }
+    return md.replace(/#\([^)]*\)/g, "").trim();
+  }
+  if (component.child) {
+    const r = extractFilterLabel(component.child);
+    if (r) return r;
+  }
+  if (component.children) {
+    for (const c of component.children) {
+      const r = extractFilterLabel(c);
+      if (r) return r;
+    }
+  }
+  return "";
 }
 
 function fusionItemSize(item: any, parentAxis?: string): React.CSSProperties {
@@ -349,4 +536,74 @@ function fusionBlockSize(size: any, parentAxis?: string): React.CSSProperties {
     width: mainSize,
     height: crossSize,
   };
+}
+
+/**
+ * Extract the first category ID from a CategoryTreeArticlesState boundary.
+ * Walks the tree to find the first filter item and extracts its category ID.
+ */
+function extractFirstCategoryId(node: any): string | undefined {
+  if (!node) return undefined;
+  if (node.id?.startsWith("category-tree-page-filter-item-")) {
+    return node.id.replace("category-tree-page-filter-item-", "");
+  }
+  if (node.child) {
+    const r = extractFirstCategoryId(node.child);
+    if (r) return r;
+  }
+  if (node.children) {
+    for (const c of node.children) {
+      const r = extractFirstCategoryId(c);
+      if (r) return r;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Wraps each category section and observes when it scrolls into view.
+ * Updates the CategoryTreeState context so the filter bar highlights the right tab.
+ */
+function CategorySectionObserver({ sectionNode, children }: { sectionNode: any; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { setFocusedCategoryId } = useCategoryTreeState();
+
+  // Extract category ID from the sub-header within this section
+  const categoryId = extractSubHeaderCategoryId(sectionNode);
+
+  useEffect(() => {
+    if (!ref.current || !categoryId) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setFocusedCategoryId(categoryId);
+          }
+        }
+      },
+      { rootMargin: "-160px 0px -60% 0px", threshold: 0 }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [categoryId, setFocusedCategoryId]);
+
+  return <div ref={ref}>{children}</div>;
+}
+
+function extractSubHeaderCategoryId(node: any): string | undefined {
+  if (!node) return undefined;
+  if (typeof node.id === "string" && node.id.startsWith("vertical-article-tiles-sub-header-") && !node.id.includes("__")) {
+    return node.id.replace("vertical-article-tiles-sub-header-", "");
+  }
+  if (node.child) {
+    const r = extractSubHeaderCategoryId(node.child);
+    if (r) return r;
+  }
+  if (node.children) {
+    for (const c of node.children) {
+      const r = extractSubHeaderCategoryId(c);
+      if (r) return r;
+    }
+  }
+  return undefined;
 }

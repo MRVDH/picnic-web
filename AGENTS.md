@@ -35,6 +35,7 @@ picnic-web/
 │   │   ├── SearchBar.tsx           # Debounced search with suggestion dropdown
 │   │   ├── TabBar.tsx              # Bottom navigation bar (driven by bootstrap tabs)
 │   │   └── pml/                    # PML rendering engine (see below)
+│   │       ├── CategoryTreeContext.tsx # React context for L2 category scroll tracking
 │   │       ├── FusionPageRenderer.tsx  # Fusion page → recursive PML tree
 │   │       ├── PMLRenderer.tsx         # Dispatcher: PML node type → component
 │   │       ├── PMLAccordion.tsx
@@ -130,6 +131,12 @@ STATE_BOUNDARY → SUSPENSE → BLOCK → [PML nodes...]
 
 `FusionPageRenderer` handles the structural types (STATE_BOUNDARY, SUSPENSE, BLOCK). It also maps `layout.alignment` and `layout.distribution` to CSS `align-items` and `justify-content`, and applies `overflow: hidden` on blocks with corner radii. PML items without a fixed main-axis size use `flex-grow: 1` to fill available space. `PMLRenderer` handles leaf/component types.
 
+For SELLING_UNIT_TILE items that include a `pml` field, the renderer uses the full PML tree (which contains discount labels, subtexts, original prices, bundle badges) instead of the simplified `content.sellingUnit` data.
+
+### Category Tree Scroll Tracking
+
+L2 category pages use `CategoryTreeContext` to track the active category section. The filter bar at the top is rendered sticky and highlights the active category. An `IntersectionObserver` updates the active category as the user scrolls through sections. Filter items are rendered as custom `CategoryFilterItem` components that use the context state.
+
 ### Supported PML Components
 
 | PML Type | Component | Description |
@@ -160,14 +167,14 @@ PML uses its own size/style format that must be converted to CSS:
 
 - **Sizes**: `"12g"` → `"100%"` (grid units: N/12 × 100%), `"SCREEN_WIDTH"` → `"100%"`, `"SCREEN_HEIGHT"` → `"100vh"`, `"CONTAINER_HEIGHT"` → `"auto"`, supports calc() expressions
 - **Padding**: PML padding object → CSS padding string
-- **Colors**: Hex passthrough
+- **Colors**: Hex passthrough + named Picnic color tokens (RED1→`#e1171e`, GREY1→`#f8f5f2`, etc.) + EXPRESSION objects (resolves default branch)
 - **Font weights**: Named values (`THIN`→100, `REGULAR`→400, `BOLD`→700, etc.)
-- **Text sizes**: Named types (`TITLE`→24px, `BODY`→14px, etc.)
+- **Text sizes**: Named types (`TITLE`→24px, `HEADER4`→18px, `BODY`→14px, etc.) with default bold weight for HEADER types
 
 ### Image Handling (`src/lib/image-url.ts`)
 
 - **CDN base**: `https://storefront-prod.{countryCode}.picnicinternational.com/static/images`
-- **URL format**: `{imageId}/{size}.png`
+- **URL format**: `{imageId}/{size}.{ext}` (ext defaults to `png`, some images use `webp`)
 - **Available sizes**: `tiny`, `small`, `medium` (default), `large`, `extra-large`
 - **Resolution**: Images are looked up via the `page.images` map using `imageId` as key. Falls back to using `imageId` directly if not in the map.
 - **Passthrough**: If an imageId is already an HTTP(S) URL, it's used as-is.
@@ -191,9 +198,10 @@ PML touchable elements use deeplink strings for navigation. The component parses
 - `- item` or `* item` — unordered lists
 - `1. item` — ordered lists
 - `[link text](url)` — rendered in Picnic red
-- `#(#FF0000)colored text#(#FF0000)` — inline color spans
-- `\n` — line breaks
+- `#(#FF0000)colored text#(#FF0000)` — inline color spans (supports nesting)
+- `\\n` — line breaks
 - Content is sanitized to prevent XSS
+- RICH_TEXT components with `children` arrays render inline child spans
 
 ## Styling
 

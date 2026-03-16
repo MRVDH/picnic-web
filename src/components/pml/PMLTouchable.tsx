@@ -12,6 +12,19 @@ export function PMLTouchable({ component, images }: { component: any; images?: R
 
     const action = component.onPress;
 
+    // Handle EXPRESSION actions for category nav scrolling
+    if (action.type === "EXPRESSION" && action.expression) {
+      const catMatch = action.expression.match(/focusedCategoryId\.content\s*=\s*"(\d+)"/);
+      if (catMatch) {
+        const catId = catMatch[1];
+        const target = document.getElementById(`vertical-article-tiles-sub-header-${catId}`);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+      return;
+    }
+
     if (action.actionType === "OPEN" && action.target) {
       const target: string = action.target;
 
@@ -69,6 +82,8 @@ export function PMLTouchable({ component, images }: { component: any; images?: R
     borderRadius: component.borderRadius ? `${component.borderRadius}px` : undefined,
     WebkitTapHighlightColor: "transparent",
     transition: "transform 0.1s, opacity 0.1s",
+    width: "100%",
+    height: "100%",
   };
 
   return (

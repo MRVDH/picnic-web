@@ -1,10 +1,52 @@
 /**
  * Maps PML color tokens to CSS color values.
- * The Picnic PML spec uses hex colors directly, so most pass through.
+ * Handles hex colors (passthrough), named Picnic tokens (RED1, GREY1, etc.),
+ * and EXPRESSION objects (resolves to the default/else branch color).
  */
-export function pmlColor(color?: string | null): string | undefined {
+export function pmlColor(color?: string | Record<string, any> | null): string | undefined {
   if (!color) return undefined;
-  return color;
+
+  // Handle EXPRESSION objects — extract the default (else-branch) color
+  if (typeof color === "object" && (color as any).type === "EXPRESSION") {
+    const expr: string = (color as any).expression ?? "";
+    // Pattern: condition ? 'COLOR_A' : 'COLOR_B' — take COLOR_B (default)
+    const elseMatch = expr.match(/:\s*'([^']+)'\s*$/);
+    if (elseMatch) return resolveColorToken(elseMatch[1]);
+    // Fallback: try first quoted value
+    const anyMatch = expr.match(/'([^']+)'/);
+    if (anyMatch) return resolveColorToken(anyMatch[1]);
+    return undefined;
+  }
+
+  if (typeof color !== "string") return undefined;
+  return resolveColorToken(color);
+}
+
+const PICNIC_COLORS: Record<string, string> = {
+  BLACK: "#000000",
+  BLUE1: "#1977d5",
+  BLUE2: "#3d589d",
+  GREEN1: "#4b8505",
+  GREEN2: "#a1c826",
+  GREEN3: "#709489",
+  GREEN4: "#6b7a3b",
+  GREEN5: "#f3f6e9",
+  GREY0: "#fcfaf9",
+  GREY1: "#f8f5f2",
+  GREY2: "#c9c6c3",
+  GREY3: "#787570",
+  GREY4: "#5b534e",
+  GREY5: "#333333",
+  ORANGE1: "#ce4a00",
+  RED1: "#e1171e",
+  RED2: "#b40117",
+  WHITE: "#ffffff",
+  YELLOW1: "#f5a60c",
+  YELLOW2: "#fbd92b",
+};
+
+function resolveColorToken(color: string): string {
+  return PICNIC_COLORS[color] || color;
 }
 
 /**
@@ -87,9 +129,26 @@ export function pmlTextSize(size?: number | null, textType?: string | null): num
   const map: Record<string, number> = {
     TITLE: 24,
     SUBTITLE: 18,
+    HEADER1: 28,
+    HEADER2: 24,
+    HEADER3: 20,
+    HEADER4: 18,
+    HEADER5: 16,
+    HEADER6: 14,
     BODY: 14,
     CAPTION: 12,
     FOOTNOTE: 10,
   };
   return map[textType] ?? 14;
+}
+
+/**
+ * Returns a default font weight for a given text type, if the text attributes
+ * don't specify one. Header types default to bold.
+ */
+export function pmlDefaultFontWeight(textType?: string | null): number | undefined {
+  if (!textType) return undefined;
+  if (textType.startsWith("HEADER") || textType === "TITLE") return 700;
+  if (textType === "SUBTITLE") return 600;
+  return undefined;
 }
