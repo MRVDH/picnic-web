@@ -1,4 +1,5 @@
 import type { Product, SearchSection } from "@/lib/types";
+import { buildSectionId } from "@/lib/types";
 import { ProductCard } from "./product-card";
 
 type ProductGridProps =
@@ -10,8 +11,12 @@ export function ProductGrid(props: ProductGridProps) {
   if (props.sections && props.sections.length > 0) {
     return (
       <div className="space-y-8">
-        {props.sections.map((section) => (
-          <section key={section.title}>
+        {props.sections.map((section, index) => (
+          <section
+            key={section.title}
+            id={buildSectionId(index)}
+            className="scroll-mt-36"
+          >
             <h2 className="mb-3 text-lg font-semibold text-foreground">
               {section.title}
             </h2>

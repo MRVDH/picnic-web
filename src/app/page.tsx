@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
+import { SectionNavBar } from "@/components/section-nav-bar";
 import type {
   Product,
   SearchSection,
@@ -102,6 +103,9 @@ function SearchPage() {
             initialQuery={urlQuery}
           />
         </div>
+        {searchState.status === "success" && searchState.sections.length > 0 && (
+          <SectionNavBar sections={searchState.sections} />
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
