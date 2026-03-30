@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SearchSuggestions } from "./search-suggestions";
-import type { SearchSuggestion, SuggestionsApiResponse } from "@/lib/types";
+import type {
+  SearchSuggestion,
+  SuggestionsApiResponse,
+  ApiErrorResponse,
+} from "@/lib/types";
 import { DEBOUNCE_DELAY_MS, MIN_SUGGESTION_LENGTH } from "@/lib/types";
 
 type SearchBarProps = {
@@ -39,7 +43,16 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
         const url = `/api/suggestions?q=${encodeURIComponent(trimmedInput)}`;
         const response = await fetch(url, { signal: controller.signal });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (response.status === 401) {
+            const data: ApiErrorResponse = await response.json();
+            if (data.code === "TOKEN_EXPIRED") {
+              window.location.href = "/login?expired=true";
+              return;
+            }
+          }
+          return;
+        }
 
         const data: SuggestionsApiResponse = await response.json();
         setRawSuggestions(data.suggestions);

@@ -8,7 +8,6 @@ import { PriceDisplay } from "./price-display";
 import { Badge } from "./badge";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
-const PRODUCT_IMAGE_SIZE = 128;
 const FLAG_SIZE = 14;
 
 type ProductCardProps = {
@@ -27,9 +26,9 @@ export function ProductCard({ product }: ProductCardProps) {
         <Image
           src={imageSrc}
           alt={product.name}
-          width={PRODUCT_IMAGE_SIZE}
-          height={PRODUCT_IMAGE_SIZE}
-          className="max-h-full w-auto object-contain"
+          fill
+          className="object-contain"
+          sizes="128px"
           unoptimized
           onError={() => {
             if (imageSrc !== PLACEHOLDER_IMAGE) {
@@ -69,14 +68,18 @@ export function ProductCard({ product }: ProductCardProps) {
       {(product.brand || product.highlight || product.flagIconKey) && (
         <div className="mb-0.5 flex items-center gap-1">
           {product.flagIconKey && product.flagFallbackImageId && (
-            <Image
-              src={buildImageUrl(product.flagFallbackImageId, "small")}
-              alt={product.flagIconKey}
-              width={FLAG_SIZE}
-              height={FLAG_SIZE}
-              className="inline-block"
-              unoptimized
-            />
+            <span
+              className="relative inline-block"
+              style={{ width: FLAG_SIZE, height: FLAG_SIZE }}
+            >
+              <Image
+                src={buildImageUrl(product.flagFallbackImageId, "small")}
+                alt={product.flagIconKey}
+                fill
+                sizes={`${FLAG_SIZE}px`}
+                unoptimized
+              />
+            </span>
           )}
           {product.brand && (
             <span className="text-sm text-[#333333]">{product.brand}</span>

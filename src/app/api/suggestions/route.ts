@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPicnicClient } from "@/lib/picnic-client";
+import { readAuthToken } from "@/lib/auth";
+import { buildPicnicClient } from "@/lib/picnic-client";
 import type {
   SuggestionsApiResponse,
   ApiErrorResponse,
@@ -14,6 +15,15 @@ import type {
 export async function GET(
   request: NextRequest,
 ): Promise<NextResponse<SuggestionsApiResponse | ApiErrorResponse>> {
+  const token = readAuthToken(request);
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Authentication required", code: "TOKEN_EXPIRED" as const },
+      { status: 401 },
+    );
+  }
+
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
 
   if (query === "") {
@@ -21,8 +31,9 @@ export async function GET(
   }
 
   try {
-    const client = getPicnicClient();
-    const rawSuggestions = await client.catalog.getSuggestions(query);
+    const client = buildPicnicClient(token);
+    const rawSuggestions: Array<{ id: string; suggestion: string }> =
+      await client.catalog.getSuggestions(query);
 
     const suggestions: SearchSuggestion[] = rawSuggestions.map((s) => ({
       id: s.id,
@@ -31,6 +42,13 @@ export async function GET(
 
     return NextResponse.json({ suggestions, query });
   } catch (error) {
+    if (isApiAuthError(error)) {
+      return NextResponse.json(
+        { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
+        { status: 401 },
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/suggestions] Failed to fetch suggestions:", message);
@@ -40,4 +58,21 @@ export async function GET(
       { status: 502 },
     );
   }
+}
+
+/**
+ * Check if the error indicates an authentication failure (401/403)
+ * from the Picnic API, as opposed to a network/timeout error.
+ */
+function isApiAuthError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes("401") ||
+      message.includes("403") ||
+      message.includes("unauthorized") ||
+      message.includes("forbidden")
+    );
+  }
+  return false;
 }

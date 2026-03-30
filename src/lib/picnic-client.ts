@@ -7,29 +7,29 @@ import { COUNTRY_CODE } from "./types";
  */
 const PicnicClient = require("picnic-api") as typeof import("picnic-api");
 
-type PicnicClientInstance = InstanceType<typeof PicnicClient>;
-
-let instance: PicnicClientInstance | null = null;
+export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
 
 /**
- * Returns a singleton PicnicClient instance.
- * Reads the auth token from the PICNIC_AUTH_TOKEN environment variable.
+ * Create a new PicnicClient instance with the given auth token.
+ * Must only be called server-side (route handlers).
+ *
+ * Each call creates a fresh instance — no cached state.
+ * PicnicClient construction is cheap (plain object, no I/O).
+ */
+export function buildPicnicClient(authToken: string): PicnicClientInstance {
+  return new PicnicClient({
+    countryCode: COUNTRY_CODE,
+    authKey: authToken,
+  });
+}
+
+/**
+ * Create a new PicnicClient instance without an auth token.
+ * Used for login-by-credentials where the authKey is not yet known.
  * Must only be called server-side (route handlers).
  */
-export function getPicnicClient(): PicnicClientInstance {
-  if (instance) {
-    return instance;
-  }
-
-  const authKey = process.env.PICNIC_AUTH_TOKEN;
-  if (!authKey) {
-    throw new Error("PICNIC_AUTH_TOKEN environment variable is not set");
-  }
-
-  instance = new PicnicClient({
+export function buildPicnicClientAnonymous(): PicnicClientInstance {
+  return new PicnicClient({
     countryCode: COUNTRY_CODE,
-    authKey,
   });
-
-  return instance;
 }

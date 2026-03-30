@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPicnicClient } from "@/lib/picnic-client";
+import { readAuthToken } from "@/lib/auth";
+import { buildPicnicClient } from "@/lib/picnic-client";
 import { parseFusionSearchSections } from "@/lib/parse-fusion-search";
 import type { SearchApiResponse, ApiErrorResponse } from "@/lib/types";
 
@@ -13,6 +14,15 @@ import type { SearchApiResponse, ApiErrorResponse } from "@/lib/types";
 export async function GET(
   request: NextRequest,
 ): Promise<NextResponse<SearchApiResponse | ApiErrorResponse>> {
+  const token = readAuthToken(request);
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Authentication required", code: "TOKEN_EXPIRED" as const },
+      { status: 401 },
+    );
+  }
+
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
 
   if (query === "") {
@@ -20,7 +30,7 @@ export async function GET(
   }
 
   try {
-    const client = getPicnicClient();
+    const client = buildPicnicClient(token);
 
     // Fetch the raw Fusion page to access the full PML structure.
     // The picnic-api catalog.search() method loses PML-embedded metadata
@@ -45,6 +55,13 @@ export async function GET(
 
     return NextResponse.json({ products, sections, query });
   } catch (error) {
+    if (isApiAuthError(error)) {
+      return NextResponse.json(
+        { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
+        { status: 401 },
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/search] Failed to search:", message);
@@ -54,4 +71,21 @@ export async function GET(
       { status: 502 },
     );
   }
+}
+
+/**
+ * Check if the error indicates an authentication failure (401/403)
+ * from the Picnic API, as opposed to a network/timeout error.
+ */
+function isApiAuthError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes("401") ||
+      message.includes("403") ||
+      message.includes("unauthorized") ||
+      message.includes("forbidden")
+    );
+  }
+  return false;
 }

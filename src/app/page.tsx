@@ -60,6 +60,10 @@ function SearchPage() {
           await response.json();
 
         if ("error" in data) {
+          if ("code" in data && data.code === "TOKEN_EXPIRED") {
+            window.location.href = "/login?expired=true";
+            return;
+          }
           setSearchState({ status: "error", query: trimmed, message: data.error });
           return;
         }
@@ -91,6 +95,11 @@ function SearchPage() {
 
   const isLoading = searchState.status === "loading";
 
+  const handleSignOut = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }, []);
+
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">
@@ -102,6 +111,13 @@ function SearchPage() {
             isLoading={isLoading}
             initialQuery={urlQuery}
           />
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+          >
+            Uitloggen
+          </button>
         </div>
         {searchState.status === "success" && searchState.sections.length > 0 && (
           <SectionNavBar sections={searchState.sections} />
@@ -133,7 +149,7 @@ function LandingView() {
     <div className="flex flex-1 flex-col items-center justify-center py-32 text-center">
       <PicnicLogo size="large" />
       <h1 className="mt-6 text-3xl font-bold text-foreground">
-        Welkom bij Picnic
+        Welkom bij Picnic Web
       </h1>
       <p className="mt-2 text-lg text-gray-500">
         Zoek je favoriete producten
@@ -204,9 +220,9 @@ function PicnicLogo({ size = "small" }: { size?: "small" | "large" }) {
   return (
     <span
       className={`${textSize} font-bold tracking-tight text-picnic-red select-none`}
-      aria-label="Picnic"
+      aria-label="Picnic Web"
     >
-      Picnic
+      Picnic Web
     </span>
   );
 }

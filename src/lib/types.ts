@@ -110,4 +110,19 @@ export type SuggestionsApiResponse = {
 
 export type ApiErrorResponse = {
   error: string;
+  code?: AuthErrorCode;
 };
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+/** Error codes returned by API routes for auth-related failures. */
+export type AuthErrorCode =
+  | "TOKEN_EXPIRED"
+  | "TOKEN_INVALID"
+  | "API_UNREACHABLE";
+
+/** Response shape from the /api/auth/login route. */
+export type AuthApiResponse =
+  | { success: true }
+  | { success: false; error: string }
+  | { success: false; error: "2FA_REQUIRED"; partialToken: string };
