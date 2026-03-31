@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { buildImageUrl } from "@/lib/image-url";
 import { PriceDisplay } from "./price-display";
@@ -12,15 +13,21 @@ const FLAG_SIZE = 14;
 
 type ProductCardProps = {
   product: Product;
+  /** When provided, wraps the card in a Link for client-side navigation. */
+  href?: string;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, href }: ProductCardProps) {
   const [imageSrc, setImageSrc] = useState(
     product.imageId ? buildImageUrl(product.imageId) : PLACEHOLDER_IMAGE,
   );
 
-  return (
-    <div className="relative flex flex-col rounded-lg border border-card-border bg-card-bg p-4 shadow-sm">
+  const cardContent = (
+    <div
+      className={`relative flex h-full flex-col rounded-lg border border-card-border bg-card-bg p-4 shadow-sm${
+        href ? " transition-shadow hover:shadow-md" : ""
+      }`}
+    >
       {/* Product image */}
       <div className="relative mb-3 flex h-32 items-center justify-center">
         <Image
@@ -121,4 +128,14 @@ export function ProductCard({ product }: ProductCardProps) {
       )}
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }

@@ -133,6 +133,94 @@ export function collectMarkdowns(node: unknown): string[] {
   return results;
 }
 
+/**
+ * Find the first node with an exact `id` match.
+ * Traverses `child`, `children`, and all object values recursively.
+ */
+export function findNodeById(
+  obj: unknown,
+  id: string,
+): PmlNode | null {
+  if (typeof obj !== "object" || obj === null) return null;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findNodeById(item, id);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  const record = obj as PmlNode;
+  if (record.id === id) return record;
+
+  for (const value of Object.values(record)) {
+    const result = findNodeById(value, id);
+    if (result) return result;
+  }
+  return null;
+}
+
+/**
+ * Find the first node whose `id` starts with the given prefix.
+ * Traverses all object values recursively.
+ */
+export function findNodeByIdPrefix(
+  obj: unknown,
+  prefix: string,
+): PmlNode | null {
+  if (typeof obj !== "object" || obj === null) return null;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findNodeByIdPrefix(item, prefix);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  const record = obj as PmlNode;
+  if (typeof record.id === "string" && record.id.startsWith(prefix)) {
+    return record;
+  }
+
+  for (const value of Object.values(record)) {
+    const result = findNodeByIdPrefix(value, prefix);
+    if (result) return result;
+  }
+  return null;
+}
+
+/**
+ * Recursively collect all values for a given property name.
+ * Replaces JSONPath `$..key` pattern without adding a dependency.
+ */
+export function collectPropertyValues(
+  node: unknown,
+  key: string,
+): unknown[] {
+  const results: unknown[] = [];
+  if (typeof node !== "object" || node === null) return results;
+
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      results.push(...collectPropertyValues(item, key));
+    }
+    return results;
+  }
+
+  const record = node as Record<string, unknown>;
+  if (key in record) {
+    results.push(record[key]);
+  }
+  for (const [k, value] of Object.entries(record)) {
+    if (k !== key && typeof value === "object" && value !== null) {
+      results.push(...collectPropertyValues(value, key));
+    }
+  }
+  return results;
+}
+
 /** Find all ICON nodes in a PML subtree. */
 export function findIconNodes(
   node: unknown,

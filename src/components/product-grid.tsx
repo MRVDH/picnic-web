@@ -22,7 +22,11 @@ export function ProductGrid(props: ProductGridProps) {
             </h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {section.products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  href={`/product/${product.id}`}
+                />
               ))}
             </div>
           </section>
@@ -38,7 +42,11 @@ export function ProductGrid(props: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          href={`/product/${product.id}`}
+        />
       ))}
     </div>
   );
