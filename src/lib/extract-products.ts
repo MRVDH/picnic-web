@@ -1,4 +1,4 @@
-import type { Product, Badge, BadgeVariant } from "./types";
+import type { Product, Badge, BadgeVariant, BundleThreshold } from "./types";
 
 // ─── Decorator type guards ───────────────────────────────────────────────────
 // The upstream SellingUnit.decorators is typed as `any[]`.
@@ -144,6 +144,41 @@ function extractBadges(decorators: unknown[]): Badge[] {
   return badges;
 }
 
+// ─── Price ranges → BundleThreshold[] ────────────────────────────────────────
+
+type RawPriceRange = { price: number; from_quantity: number };
+
+function isRawPriceRange(v: unknown): v is RawPriceRange {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    "price" in v &&
+    typeof (v as RawPriceRange).price === "number" &&
+    "from_quantity" in v &&
+    typeof (v as RawPriceRange).from_quantity === "number"
+  );
+}
+
+/** Parse raw price_ranges into BundleThreshold[], sorted by quantity ascending. */
+function parsePriceRanges(
+  raw: unknown[] | null,
+): BundleThreshold[] | null {
+  if (!raw || raw.length === 0) return null;
+
+  const thresholds: BundleThreshold[] = [];
+  for (const entry of raw) {
+    if (!isRawPriceRange(entry)) continue;
+    thresholds.push({
+      quantity: entry.from_quantity,
+      pricePerUnit: entry.price,
+    });
+  }
+
+  if (thresholds.length === 0) return null;
+  thresholds.sort((a, b) => a.quantity - b.quantity);
+  return thresholds;
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -174,6 +209,7 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
   const originalPrice = extractOriginalPrice(decorators);
   const { isUnavailable, reason } = extractUnavailability(decorators);
   const badges = extractBadges(decorators);
+  const priceRanges = parsePriceRanges(unit.price_ranges);
 
   // If there's a PRICE decorator with a higher value than display_price,
   // that's the original (pre-discount) price. If it's the same or lower,
@@ -195,6 +231,7 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
     originalPrice: hasDiscount ? originalPrice : null,
     unitQuantity: unit.unit_quantity,
     maxCount: unit.max_count,
+    priceRanges,
     badges,
     isUnavailable,
     unavailableReason: reason,

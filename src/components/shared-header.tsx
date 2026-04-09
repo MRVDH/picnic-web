@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { CartData, ApiErrorResponse } from "@/lib/types";
 import { CENTS_DIVISOR } from "@/lib/types";
+import { useCartOptional } from "@/contexts/cart-context";
 
 // ─── Cart badge state ─────────────────────────────────────────────────────────
 
@@ -77,11 +78,17 @@ type SharedHeaderProps = {
  * `children` is rendered in the centre slot (e.g. search bar, back button).
  */
 export function SharedHeader({ children, bottomBar }: SharedHeaderProps) {
-  const [cartState, setCartState] = useState<CartBadgeState>({
+  const cartContext = useCartOptional();
+  const [fetchedState, setFetchedState] = useState<CartBadgeState>({
     status: "loading",
   });
 
+  // Only fetch independently when NOT inside a CartProvider.
+  const shouldFetchIndependently = !cartContext;
+
   useEffect(() => {
+    if (!shouldFetchIndependently) return;
+
     let isCancelled = false;
 
     fetch("/api/cart")
@@ -89,23 +96,34 @@ export function SharedHeader({ children, bottomBar }: SharedHeaderProps) {
       .then((data: CartData | ApiErrorResponse) => {
         if (isCancelled) return;
         if ("error" in data) {
-          setCartState({ status: "error" });
+          setFetchedState({ status: "error" });
           return;
         }
-        setCartState({
+        setFetchedState({
           status: "ready",
           totalPrice: data.totalPrice,
           totalCount: data.totalCount,
         });
       })
       .catch(() => {
-        if (!isCancelled) setCartState({ status: "error" });
+        if (!isCancelled) setFetchedState({ status: "error" });
       });
 
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [shouldFetchIndependently]);
+
+  // Derive badge state: prefer context (reactive), fall back to own fetch.
+  const cartState: CartBadgeState = cartContext
+    ? cartContext.isLoading
+      ? { status: "loading" }
+      : {
+          status: "ready",
+          totalPrice: cartContext.totalPrice,
+          totalCount: cartContext.totalCount,
+        }
+    : fetchedState;
 
   return (
     <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">

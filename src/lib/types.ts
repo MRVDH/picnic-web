@@ -67,6 +67,8 @@ export type Product = {
   unitQuantity: string;
   /** Maximum number of units a user can order. */
   maxCount: number;
+  /** Bundle price ranges from the API, or null if no bundle. */
+  priceRanges: BundleThreshold[] | null;
   /** All labels/badges extracted from decorators. */
   badges: Badge[];
   /** Whether the product is currently unavailable. */
@@ -334,6 +336,38 @@ export type CartData = {
 
 /** Alias: the /api/cart route returns CartData directly. */
 export type CartApiResponse = CartData;
+
+// ─── Cart Mutations (PLP Cart Actions) ──────────────────────────────────────
+
+/** Request body for adding or removing products from the cart via POST /api/cart. */
+export type CartMutationRequest = {
+  /** Selling unit ID (e.g. "s1013635"). */
+  productId: string;
+  /** Whether to add or remove units. */
+  action: "add" | "remove";
+  /** Number of units to add or remove (typically 1). */
+  count: number;
+};
+
+// ─── Bundle Progress (PLP Cart Actions) ─────────────────────────────────────
+
+/** A single tier in a bundle pricing scheme. */
+export type BundleThreshold = {
+  /** Number of units needed to unlock this tier. */
+  quantity: number;
+  /** Price per unit in cents at this tier. */
+  pricePerUnit: number;
+};
+
+/** Bundle discount progress for a single product. */
+export type BundleProgress = {
+  /** The product this bundle applies to. */
+  productId: string;
+  /** Ordered list of bundle tiers (ascending by quantity). */
+  thresholds: BundleThreshold[];
+  /** Current quantity in cart. */
+  currentQuantity: number;
+};
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 

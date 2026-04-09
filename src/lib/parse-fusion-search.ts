@@ -1,4 +1,4 @@
-import type { Product, Badge, BadgeVariant, SearchSection } from "./types";
+import type { Product, Badge, BadgeVariant, BundleThreshold, SearchSection } from "./types";
 import type { PmlNode, SellingUnitTileContainer } from "./pml-helpers";
 import {
   findSellingUnitContainers,
@@ -12,6 +12,27 @@ import {
   extractUnavailabilityFromPml,
   extractOriginalPriceFromPml,
 } from "./extract-tile-data";
+
+/** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
+function parsePriceRangesFromRaw(
+  raw: unknown[] | null,
+): BundleThreshold[] | null {
+  if (!raw || raw.length === 0) return null;
+  const thresholds: BundleThreshold[] = [];
+  for (const entry of raw) {
+    if (
+      typeof entry === "object" && entry !== null &&
+      "price" in entry && typeof (entry as Record<string, unknown>).price === "number" &&
+      "from_quantity" in entry && typeof (entry as Record<string, unknown>).from_quantity === "number"
+    ) {
+      const e = entry as { price: number; from_quantity: number };
+      thresholds.push({ quantity: e.from_quantity, pricePerUnit: e.price });
+    }
+  }
+  if (thresholds.length === 0) return null;
+  thresholds.sort((a, b) => a.quantity - b.quantity);
+  return thresholds;
+}
 
 /** Convert a selling-unit tile container into a Product. */
 function containerToProduct(container: SellingUnitTileContainer): Product | null {
@@ -53,6 +74,7 @@ function containerToProduct(container: SellingUnitTileContainer): Product | null
     originalPrice: hasDiscount ? originalPrice : null,
     unitQuantity: su.unit_quantity,
     maxCount: su.max_count,
+    priceRanges: parsePriceRangesFromRaw(su.price_ranges),
     badges,
     isUnavailable,
     unavailableReason: reason,

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@/lib/types";
+import type { Product, BundleProgress } from "@/lib/types";
 import { buildImageUrl } from "@/lib/image-url";
 import { PriceDisplay } from "./price-display";
 import { Badge } from "./badge";
+import { QuantityStepper } from "./quantity-stepper";
+import { useCart } from "@/contexts/cart-context";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 const FLAG_SIZE = 14;
@@ -21,6 +23,22 @@ export function ProductCard({ product, href }: ProductCardProps) {
   const [imageSrc, setImageSrc] = useState(
     product.imageId ? buildImageUrl(product.imageId) : PLACEHOLDER_IMAGE,
   );
+  const { getQuantity, addProduct, removeProduct, getBundleProgress, registerBundleData } = useCart();
+  const quantity = getQuantity(product.id);
+  const bundleProgress = getBundleProgress(product.id);
+  const showCartActions = !product.isUnavailable;
+
+  // Register bundle thresholds from search results when available.
+  useEffect(() => {
+    if (product.priceRanges) {
+      registerBundleData(product.id, product.priceRanges);
+    }
+  }, [product.id, product.priceRanges, registerBundleData]);
+
+  // When a bundle threshold is active, compute the discounted unit price.
+  const bundleUnitPrice = getActiveBundlePrice(bundleProgress, quantity);
+  const effectiveDisplayPrice = bundleUnitPrice ?? product.displayPrice;
+  const bundleOriginalPrice = bundleUnitPrice ? product.displayPrice : null;
 
   const cardContent = (
     <div
@@ -51,6 +69,20 @@ export function ProductCard({ product, href }: ProductCardProps) {
               {product.unavailableReason}
             </span>
           </div>
+        )}
+
+        {/* Cart action overlay — positioned at bottom-right of image */}
+        {showCartActions && (
+          <CartActionOverlay
+            productId={product.id}
+            quantity={quantity}
+            maxCount={product.maxCount}
+            onAdd={() => addProduct(product.id, product.maxCount)}
+            onIncrement={() => addProduct(product.id, product.maxCount)}
+            onDecrement={() => removeProduct(product.id)}
+            bundleProgress={bundleProgress}
+            regularPrice={product.displayPrice}
+          />
         )}
       </div>
 
@@ -105,11 +137,13 @@ export function ProductCard({ product, href }: ProductCardProps) {
       {/* Unit quantity */}
       <p className="mb-2 text-xs text-[#5b534e]">{product.unitQuantity}</p>
 
-      {/* Price */}
+      {/* Price — show bundle-discounted price when applicable */}
       <div className="mb-2">
         <PriceDisplay
-          displayPrice={product.displayPrice}
-          originalPrice={product.originalPrice}
+          displayPrice={effectiveDisplayPrice}
+          originalPrice={
+            bundleOriginalPrice ?? product.originalPrice
+          }
         />
       </div>
 
@@ -138,4 +172,77 @@ export function ProductCard({ product, href }: ProductCardProps) {
   }
 
   return cardContent;
+}
+
+// ─── Bundle price helper ──────────────────────────────────────────────────────
+
+/** Returns the per-unit price in cents if a bundle threshold is active, or null. */
+function getActiveBundlePrice(
+  bp: BundleProgress | null,
+  quantity: number,
+): number | null {
+  if (!bp || bp.thresholds.length === 0 || quantity === 0) return null;
+
+  const active = bp.thresholds
+    .filter((t) => t.quantity <= quantity)
+    .at(-1) ?? null;
+
+  return active ? active.pricePerUnit : null;
+}
+
+// ─── Cart action overlay ──────────────────────────────────────────────────────
+
+type CartActionOverlayProps = {
+  productId: string;
+  quantity: number;
+  maxCount: number;
+  onAdd: () => void;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  bundleProgress: BundleProgress | null;
+  regularPrice: number;
+};
+
+function CartActionOverlay({
+  quantity,
+  maxCount,
+  onAdd,
+  onIncrement,
+  onDecrement,
+  bundleProgress,
+  regularPrice,
+}: CartActionOverlayProps) {
+  // Prevent click from propagating to the Link wrapper
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  if (quantity === 0) {
+    return (
+      <div className="absolute bottom-1 right-1 z-10" onClick={stopPropagation}>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-[#333333] shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
+          aria-label="Toevoegen aan winkelwagen"
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute bottom-1 right-1 z-10" onClick={stopPropagation}>
+      <QuantityStepper
+        quantity={quantity}
+        maxCount={maxCount}
+        onIncrement={onIncrement}
+        onDecrement={onDecrement}
+        bundleProgress={bundleProgress}
+        regularPrice={regularPrice}
+      />
+    </div>
+  );
 }

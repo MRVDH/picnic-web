@@ -6,6 +6,8 @@ import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
 import { SectionNavBar } from "@/components/section-nav-bar";
 import { SharedHeader } from "@/components/shared-header";
+import { CartProvider } from "@/contexts/cart-context";
+import { CartToast } from "@/components/cart-toast";
 import type {
   Product,
   SearchSection,
@@ -40,6 +42,9 @@ function SearchPage() {
   const [searchState, setSearchState] = useState<SearchState>({
     status: "idle",
   });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const dismissToast = useCallback(() => setToastMessage(null), []);
 
   const handleSearch = useCallback(
     async (query: string) => {
@@ -102,44 +107,48 @@ function SearchPage() {
   }, []);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <SharedHeader
-        bottomBar={
-          searchState.status === "success" && searchState.sections.length > 0 ? (
-            <SectionNavBar sections={searchState.sections} />
-          ) : undefined
-        }
-      >
-        <SearchBar
-          key={urlQuery}
-          onSearch={handleSearch}
-          isLoading={isLoading}
-          initialQuery={urlQuery}
-        />
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+    <CartProvider showToast={setToastMessage}>
+      <div className="flex min-h-full flex-1 flex-col">
+        <SharedHeader
+          bottomBar={
+            searchState.status === "success" && searchState.sections.length > 0 ? (
+              <SectionNavBar sections={searchState.sections} />
+            ) : undefined
+          }
         >
-          Uitloggen
-        </button>
-      </SharedHeader>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-        {searchState.status === "idle" && <LandingView />}
-        {searchState.status === "loading" && <LoadingView />}
-        {searchState.status === "error" && (
-          <ErrorView message={searchState.message} />
-        )}
-        {searchState.status === "success" && (
-          <ResultsView
-            query={searchState.query}
-            products={searchState.products}
-            sections={searchState.sections}
+          <SearchBar
+            key={urlQuery}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+            initialQuery={urlQuery}
           />
-        )}
-      </main>
-    </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+          >
+            Uitloggen
+          </button>
+        </SharedHeader>
+
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          {searchState.status === "idle" && <LandingView />}
+          {searchState.status === "loading" && <LoadingView />}
+          {searchState.status === "error" && (
+            <ErrorView message={searchState.message} />
+          )}
+          {searchState.status === "success" && (
+            <ResultsView
+              query={searchState.query}
+              products={searchState.products}
+              sections={searchState.sections}
+            />
+          )}
+        </main>
+
+        <CartToast message={toastMessage} onDismiss={dismissToast} />
+      </div>
+    </CartProvider>
   );
 }
 
