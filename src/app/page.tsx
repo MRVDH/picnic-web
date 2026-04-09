@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
 import { SectionNavBar } from "@/components/section-nav-bar";
+import { SharedHeader } from "@/components/shared-header";
 import type {
   Product,
   SearchSection,
@@ -102,27 +103,27 @@ function SearchPage() {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-4">
-          <PicnicLogo />
-          <SearchBar
-            key={urlQuery}
-            onSearch={handleSearch}
-            isLoading={isLoading}
-            initialQuery={urlQuery}
-          />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
-          >
-            Uitloggen
-          </button>
-        </div>
-        {searchState.status === "success" && searchState.sections.length > 0 && (
-          <SectionNavBar sections={searchState.sections} />
-        )}
-      </header>
+      <SharedHeader
+        bottomBar={
+          searchState.status === "success" && searchState.sections.length > 0 ? (
+            <SectionNavBar sections={searchState.sections} />
+          ) : undefined
+        }
+      >
+        <SearchBar
+          key={urlQuery}
+          onSearch={handleSearch}
+          isLoading={isLoading}
+          initialQuery={urlQuery}
+        />
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+        >
+          Uitloggen
+        </button>
+      </SharedHeader>
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
         {searchState.status === "idle" && <LandingView />}

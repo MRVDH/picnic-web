@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, LOGIN_PATH } from "@/lib/auth";
 
 /**
- * Next.js middleware — gates all routes behind authentication.
+ * Next.js proxy — gates all routes behind authentication.
  * Redirects unauthenticated users to the login page.
  */
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
   if (!token) {

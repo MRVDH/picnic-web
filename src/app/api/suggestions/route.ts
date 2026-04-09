@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readAuthToken } from "@/lib/auth";
 import { buildPicnicClient } from "@/lib/picnic-client";
+import { isApiAuthError } from "@/lib/api-error";
 import type {
   SuggestionsApiResponse,
   ApiErrorResponse,
@@ -60,19 +61,4 @@ export async function GET(
   }
 }
 
-/**
- * Check if the error indicates an authentication failure (401/403)
- * from the Picnic API, as opposed to a network/timeout error.
- */
-function isApiAuthError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes("401") ||
-      message.includes("403") ||
-      message.includes("unauthorized") ||
-      message.includes("forbidden")
-    );
-  }
-  return false;
-}
+

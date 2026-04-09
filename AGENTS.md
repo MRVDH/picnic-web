@@ -1,6 +1,6 @@
 # picnic-web Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-03-30
+Auto-generated from all feature plans. Last updated: 2026-04-07
 
 ## Active Technologies
 - TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0 (002-search-url-sections)
@@ -8,6 +8,7 @@ Auto-generated from all feature plans. Last updated: 2026-03-30
 - N/A (no persistent storage; all state is ephemeral client-side) (003-section-nav-badges)
 - HTTP-only cookie (`picnic_auth_token`) — browser-managed, server-readable (004-auth-token-gate)
 - N/A (no persistent storage; read-only product data from API) (005-product-detail-page)
+- N/A (no persistent storage; cart state lives in the Picnic API) (006-cart-page)
 
 - TypeScript 5, Node.js 20.9+ + Next.js 16, React 19, Tailwind CSS 4, picnic-api (004-product-search)
 
@@ -28,9 +29,9 @@ npm test && npm run lint
 TypeScript 5, Node.js 20.9+: Follow standard conventions
 
 ## Recent Changes
+- 006-cart-page: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
+- 006-cart-page: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 - 005-product-detail-page: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
-- 004-auth-token-gate: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
-- 003-section-nav-badges: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 
 
 <!-- MANUAL ADDITIONS START -->

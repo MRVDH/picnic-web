@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readAuthToken } from "@/lib/auth";
 import { buildPicnicClient } from "@/lib/picnic-client";
 import { parseProductDetailPage } from "@/lib/parse-fusion-product";
+import { isApiAuthError } from "@/lib/api-error";
 import type { ProductDetail, ApiErrorResponse } from "@/lib/types";
 
 /**
@@ -80,16 +81,4 @@ export async function GET(
   }
 }
 
-/** Check if the error indicates an authentication failure from the Picnic API. */
-function isApiAuthError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes("401") ||
-      message.includes("403") ||
-      message.includes("unauthorized") ||
-      message.includes("forbidden")
-    );
-  }
-  return false;
-}
+

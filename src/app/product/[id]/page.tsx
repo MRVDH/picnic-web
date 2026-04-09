@@ -14,6 +14,7 @@ import { AccordionSection } from "@/components/accordion-section";
 import { ProductSlider } from "@/components/product-slider";
 import { ProductLabels } from "@/components/product-labels";
 import { NutritionTable } from "@/components/nutrition-table";
+import { SharedHeader } from "@/components/shared-header";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -95,23 +96,15 @@ export default function ProductPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-4xl items-center gap-4 px-6 py-4">
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight text-picnic-red"
-          >
-            Picnic Web
-          </Link>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="text-sm text-gray-500 transition-colors hover:text-foreground"
-          >
-            &larr; Terug
-          </button>
-        </div>
-      </header>
+      <SharedHeader>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-sm text-gray-500 transition-colors hover:text-foreground"
+        >
+          &larr; Terug
+        </button>
+      </SharedHeader>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {pageState.status === "loading" && <LoadingView />}

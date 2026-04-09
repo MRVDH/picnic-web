@@ -268,6 +268,73 @@ export type ProductDetail = {
   nutritionRows: NutritionRow[];
 };
 
+// ─── Cart ────────────────────────────────────────────────────────────────────
+
+/** A single line item in the cart, derived from raw order line + article objects. */
+export type CartItem = {
+  /** Order line identifier. */
+  id: string;
+  /** Product/article identifier (used for product detail link). */
+  productId: string;
+  /** Product name. */
+  name: string;
+  /** Unit quantity string (e.g. "500 g"). */
+  unitQuantity: string;
+  /** Primary image ID (first in array, or empty string). */
+  imageId: string;
+  /** Current price in cents (display_price from order line). */
+  displayPrice: number;
+  /** Original price in cents when discounted, or null. */
+  originalPrice: number | null;
+  /** Quantity in cart (from QUANTITY decorator, default 1). */
+  quantity: number;
+  /** Decorator-derived badges (discount labels, freshness, base price, bundle). */
+  badges: Badge[];
+  /** Whether the item is currently unavailable. */
+  isUnavailable: boolean;
+  /** Short unavailability reason, or null. */
+  unavailableExplanation: string | null;
+  /** Replacement product suggestions for unavailable items. */
+  replacements: SliderProduct[];
+};
+
+/** A single deposit category entry in the deposit breakdown. */
+export type DepositEntry = {
+  /** Deposit category (e.g. "BAG", "DEFAULT"). */
+  type: string;
+  /** Price per unit in cents. */
+  value: number;
+  /** Number of deposit units. */
+  count: number;
+  /** Total deposit for this category in cents (value × count). */
+  total: number;
+};
+
+/** Top-level display model returned by the /api/cart route. */
+export type CartData = {
+  /** All cart line items with decorator badges merged. */
+  items: CartItem[];
+  /** Total order price in cents (checkout_total_price, includes fees and deposits). */
+  totalPrice: number;
+  /** Total number of items in cart. */
+  totalCount: number;
+  /** Sum of per-line (price − display_price) savings in cents. */
+  totalDiscount: number;
+  /** Sum of all deposit entries in cents. */
+  depositTotal: number;
+  /** Per-type deposit breakdown. */
+  depositBreakdown: DepositEntry[];
+  /** Membership savings in cents (0 if none). */
+  membershipSavings: number;
+  /** Minimum order value in cents for the selected delivery slot, or null. */
+  minimumOrderValue: number | null;
+  /** "Niets vergeten?" suggestion products; empty array if unavailable. */
+  suggestions: SliderProduct[];
+};
+
+/** Alias: the /api/cart route returns CartData directly. */
+export type CartApiResponse = CartData;
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
