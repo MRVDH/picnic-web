@@ -234,6 +234,10 @@ export default function CartPage() {
     <div className="flex min-h-full flex-1 flex-col">
       <SharedHeader cartBadgeOverride={cartBadgeOverride} />
 
+      <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 text-center text-sm text-amber-900">
+        Bundelkortingen zijn op dit moment niet zichtbaar.
+      </div>
+
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {pageState.status === "loading" && <LoadingView />}
         {pageState.status === "error" && (

@@ -135,26 +135,29 @@ export function ProductCard({ product, href }: ProductCardProps) {
       )}
 
       {/* Unit quantity */}
-      <p className="mb-2 text-xs text-[#5b534e]">{product.unitQuantity}</p>
+      <p className="text-xs text-[#5b534e]">{product.unitQuantity}</p>
 
-      {/* Price — show bundle-discounted price when applicable */}
-      <div className="mb-2">
-        <PriceDisplay
-          displayPrice={effectiveDisplayPrice}
-          originalPrice={
-            bundleOriginalPrice ?? product.originalPrice
-          }
-        />
-      </div>
+      {/* Bottom-anchored: badges + price */}
+      <div className="mt-auto">
+        {/* Badges */}
+        {product.badges.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {product.badges.map((badge, index) => (
+              <Badge key={`${badge.variant}-${index}`} badge={badge} />
+            ))}
+          </div>
+        )}
 
-      {/* Badges */}
-      {product.badges.length > 0 && (
-        <div className="mt-auto flex flex-wrap gap-1">
-          {product.badges.map((badge, index) => (
-            <Badge key={`${badge.variant}-${index}`} badge={badge} />
-          ))}
+        {/* Price — show bundle-discounted price when applicable */}
+        <div className="mt-1.5">
+          <PriceDisplay
+            displayPrice={effectiveDisplayPrice}
+            originalPrice={
+              bundleOriginalPrice ?? product.originalPrice
+            }
+          />
         </div>
-      )}
+      </div>
 
       {/* Full-tile dim overlay for unavailable products (text area) */}
       {product.isUnavailable && (
