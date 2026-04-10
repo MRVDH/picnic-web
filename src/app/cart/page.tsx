@@ -9,7 +9,10 @@ import { ProductSlider } from "@/components/product-slider";
 import { CheckoutCta } from "@/components/checkout-cta";
 import { SharedHeader } from "@/components/shared-header";
 import { CartToast } from "@/components/cart-toast";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { ErrorView } from "@/components/error-view";
 import { createMutationQueue } from "@/lib/mutation-queue";
+import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
 
 type CartPageState =
   | { status: "loading" }
@@ -17,8 +20,6 @@ type CartPageState =
   | { status: "empty" }
   | { status: "error"; message: string };
 
-const TOKEN_EXPIRED_REDIRECT = "/login?expired=true";
-const TOKEN_EXPIRED_MESSAGE = "TOKEN_EXPIRED";
 const CART_MUTATION_ERROR_MESSAGE = "Er ging iets mis. Probeer het opnieuw.";
 
 async function fetchCart(): Promise<CartPageState> {
@@ -239,7 +240,7 @@ export default function CartPage() {
       </div>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
-        {pageState.status === "loading" && <LoadingView />}
+        {pageState.status === "loading" && <LoadingSpinner />}
         {pageState.status === "error" && (
           <ErrorView message={pageState.message} onRetry={handleRetry} />
         )}
@@ -258,14 +259,6 @@ export default function CartPage() {
   );
 }
 
-function LoadingView() {
-  return (
-    <div className="flex items-center justify-center py-20">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-picnic-red" />
-    </div>
-  );
-}
-
 function EmptyView() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -277,28 +270,6 @@ function EmptyView() {
       <Link href="/" className="mt-4 text-sm text-picnic-red hover:underline">
         Naar zoeken
       </Link>
-    </div>
-  );
-}
-
-function ErrorView({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-4 text-5xl">:(</div>
-      <p className="text-lg text-gray-600">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-4 rounded-md bg-picnic-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-      >
-        Opnieuw proberen
-      </button>
     </div>
   );
 }

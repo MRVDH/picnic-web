@@ -5,6 +5,7 @@ import {
   AUTH_COOKIE_MAX_AGE_SECONDS,
 } from "@/lib/auth";
 import type { AuthApiResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/api-error";
 
 /**
  * POST /api/auth/login-credentials
@@ -74,18 +75,4 @@ export async function POST(
 
     return NextResponse.json({ success: false, error: "API_UNREACHABLE" });
   }
-}
-
-function isApiAuthError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes("401") ||
-      message.includes("403") ||
-      message.includes("unauthorized") ||
-      message.includes("forbidden") ||
-      message.includes("login failed")
-    );
-  }
-  return false;
 }

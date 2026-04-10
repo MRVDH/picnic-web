@@ -14,12 +14,24 @@ type ProductGalleryProps = {
 
 export function ProductGallery({ imageIds }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const hasImages = imageIds.length > 0;
   const hasMultipleImages = imageIds.length > 1;
 
-  const mainImageSrc = hasImages
-    ? buildImageUrl(imageIds[selectedIndex], GALLERY_IMAGE_SIZE)
-    : PLACEHOLDER_IMAGE;
+  const selectedId = hasImages ? imageIds[selectedIndex] : null;
+  const mainImageSrc =
+    selectedId && !failedIds.has(selectedId)
+      ? buildImageUrl(selectedId, GALLERY_IMAGE_SIZE)
+      : PLACEHOLDER_IMAGE;
+
+  const handleImageError = (imageId: string) => {
+    setFailedIds((prev) => {
+      if (prev.has(imageId)) return prev;
+      const next = new Set(prev);
+      next.add(imageId);
+      return next;
+    });
+  };
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -33,6 +45,9 @@ export function ProductGallery({ imageIds }: ProductGalleryProps) {
           sizes="(max-width: 640px) 100vw, 448px"
           unoptimized
           priority
+          onError={() => {
+            if (selectedId) handleImageError(selectedId);
+          }}
         />
       </div>
 
@@ -51,12 +66,17 @@ export function ProductGallery({ imageIds }: ProductGalleryProps) {
               }`}
             >
               <Image
-                src={buildImageUrl(imageId, THUMBNAIL_IMAGE_SIZE)}
+                src={
+                  failedIds.has(imageId)
+                    ? PLACEHOLDER_IMAGE
+                    : buildImageUrl(imageId, THUMBNAIL_IMAGE_SIZE)
+                }
                 alt={`Thumbnail ${index + 1}`}
                 fill
                 className="rounded-md object-contain p-1"
                 sizes="64px"
                 unoptimized
+                onError={() => handleImageError(imageId)}
               />
             </button>
           ))}

@@ -5,6 +5,7 @@ import {
   AUTH_COOKIE_MAX_AGE_SECONDS,
 } from "@/lib/auth";
 import type { AuthApiResponse } from "@/lib/types";
+import { is2FAError } from "@/lib/api-error";
 
 /**
  * POST /api/auth/verify-2fa
@@ -65,18 +66,4 @@ export async function POST(
 
     return NextResponse.json({ success: false, error: "API_UNREACHABLE" });
   }
-}
-
-function is2FAError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes("2fa") ||
-      message.includes("401") ||
-      message.includes("403") ||
-      message.includes("unauthorized") ||
-      message.includes("forbidden")
-    );
-  }
-  return false;
 }

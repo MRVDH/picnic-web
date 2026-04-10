@@ -73,6 +73,8 @@ const SectionBadge = forwardRef<HTMLAnchorElement, SectionBadgeProps>(
       <a
         ref={ref}
         href={`#${buildSectionId(index)}`}
+        aria-label={`Ga naar ${title}`}
+        aria-current={isActive ? "true" : undefined}
         className={`shrink-0 cursor-pointer rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors no-underline ${
           isActive
             ? "bg-picnic-red text-white"

@@ -192,6 +192,36 @@ export function findNodeByIdPrefix(
 }
 
 /**
+ * Find the first node whose `id` contains the given substring.
+ * Traverses all object values recursively.
+ */
+export function findNodeByIdSubstring(
+  obj: unknown,
+  idSubstring: string,
+): PmlNode | null {
+  if (typeof obj !== "object" || obj === null) return null;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findNodeByIdSubstring(item, idSubstring);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  const record = obj as PmlNode;
+  if (typeof record.id === "string" && record.id.includes(idSubstring)) {
+    return record;
+  }
+
+  for (const value of Object.values(record)) {
+    const result = findNodeByIdSubstring(value, idSubstring);
+    if (result) return result;
+  }
+  return null;
+}
+
+/**
  * Recursively collect all values for a given property name.
  * Replaces JSONPath `$..key` pattern without adding a dependency.
  */

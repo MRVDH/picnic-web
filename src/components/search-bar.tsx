@@ -9,6 +9,7 @@ import type {
   ApiErrorResponse,
 } from "@/lib/types";
 import { DEBOUNCE_DELAY_MS, MIN_SUGGESTION_LENGTH } from "@/lib/types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
 
 type SearchBarProps = {
   onSearch: (query: string) => void;
@@ -47,7 +48,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
           if (response.status === 401) {
             const data: ApiErrorResponse = await response.json();
             if (data.code === "TOKEN_EXPIRED") {
-              window.location.href = "/login?expired=true";
+              window.location.href = TOKEN_EXPIRED_REDIRECT;
               return;
             }
           }

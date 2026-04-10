@@ -65,7 +65,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
         {/* Unavailability overlay on image area */}
         {product.isUnavailable && product.unavailableReason && (
           <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[rgba(231,236,215,0.55)]">
-            <span className="text-sm font-medium text-[#5b534e]">
+            <span className="text-sm font-medium text-text-muted">
               {product.unavailableReason}
             </span>
           </div>
@@ -88,15 +88,15 @@ export function ProductCard({ product, href }: ProductCardProps) {
 
       {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino") */}
       {product.subtitle && (
-        <p className="mb-0.5 truncate text-xs text-[#5b534e]">
+        <p className="mb-0.5 truncate text-xs text-text-muted">
           {product.subtitle}
         </p>
       )}
 
       {/* Product name */}
-      <h3 className="mb-0.5 text-sm font-medium leading-snug text-[#333333] line-clamp-2">
+      <h3 className="mb-0.5 text-sm font-medium leading-snug text-text-dark line-clamp-2">
         {product.namePrefix && (
-          <span className="font-bold text-[#628003]">
+          <span className="font-bold text-text-bio-green">
             {product.namePrefix}{" "}
           </span>
         )}
@@ -121,7 +121,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
             </span>
           )}
           {product.brand && (
-            <span className="text-sm text-[#333333]">{product.brand}</span>
+            <span className="text-sm text-text-dark">{product.brand}</span>
           )}
           {product.highlight && (
             <span
@@ -135,7 +135,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
       )}
 
       {/* Unit quantity */}
-      <p className="text-xs text-[#5b534e]">{product.unitQuantity}</p>
+      <p className="text-xs text-text-muted">{product.unitQuantity}</p>
 
       {/* Bottom-anchored: badges + price */}
       <div className="mt-auto">
@@ -227,7 +227,7 @@ function CartActionOverlay({
         <button
           type="button"
           onClick={onAdd}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-[#333333] shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-text-dark shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
           aria-label="Toevoegen aan winkelwagen"
         >
           +

@@ -7,6 +7,9 @@ import { SectionNavBar } from "@/components/section-nav-bar";
 import { SharedHeader } from "@/components/shared-header";
 import { CartProvider } from "@/contexts/cart-context";
 import { CartToast } from "@/components/cart-toast";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { ErrorView } from "@/components/error-view";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
 import type {
   Product,
   SearchSection,
@@ -27,7 +30,7 @@ type SearchState =
 
 export default function Home() {
   return (
-    <Suspense fallback={<LoadingView />}>
+    <Suspense fallback={<LoadingSpinner />}>
       <SearchPage />
     </Suspense>
   );
@@ -66,7 +69,7 @@ function SearchPage() {
 
         if ("error" in data) {
           if ("code" in data && data.code === "TOKEN_EXPIRED") {
-            window.location.href = "/login?expired=true";
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
             return;
           }
           setSearchState({ status: "error", query: trimmed, message: data.error });
@@ -111,7 +114,7 @@ function SearchPage() {
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
           {searchState.status === "idle" && <LandingView />}
-          {searchState.status === "loading" && <LoadingView />}
+          {searchState.status === "loading" && <LoadingSpinner />}
           {searchState.status === "error" && (
             <ErrorView message={searchState.message} />
           )}
@@ -146,22 +149,6 @@ function LandingView() {
   );
 }
 
-function LoadingView() {
-  return (
-    <div className="flex items-center justify-center py-20">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-picnic-red" />
-    </div>
-  );
-}
-
-function ErrorView({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-4 text-5xl">:(</div>
-      <p className="text-lg text-gray-600">{message}</p>
-    </div>
-  );
-}
 
 function ResultsView({
   query,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { renderMarkdownBold } from "@/lib/render-markdown-bold";
 
 type AccordionSectionProps = {
   title: string;
@@ -9,22 +10,6 @@ type AccordionSectionProps = {
   /** Custom React children rendered instead of text content. */
   children?: React.ReactNode;
 };
-
-/** Render text content with basic markdown bold support. */
-function renderContent(content: string): React.ReactNode {
-  const parts = content.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, index) => {
-    const boldMatch = part.match(/^\*\*(.+)\*\*$/);
-    if (boldMatch) {
-      return (
-        <strong key={index} className="font-semibold">
-          {boldMatch[1]}
-        </strong>
-      );
-    }
-    return part;
-  });
-}
 
 export function AccordionSection({ title, content, children }: AccordionSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,7 +37,7 @@ export function AccordionSection({ title, content, children }: AccordionSectionP
         <div className="pb-4 text-sm text-gray-600">
           {children ?? (
             <p className="whitespace-pre-line">
-              {renderContent(content ?? "")}
+              {renderMarkdownBold(content ?? "")}
             </p>
           )}
         </div>

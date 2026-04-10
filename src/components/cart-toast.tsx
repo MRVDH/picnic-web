@@ -30,7 +30,7 @@ export function CartToast({ message, onDismiss }: CartToastProps) {
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-      <div className="flex items-center gap-3 rounded-lg bg-[#333333] px-4 py-3 text-sm text-white shadow-lg">
+      <div className="flex items-center gap-3 rounded-lg bg-text-dark px-4 py-3 text-sm text-white shadow-lg">
         <span>{message}</span>
         <button
           type="button"

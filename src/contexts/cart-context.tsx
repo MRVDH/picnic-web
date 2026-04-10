@@ -15,6 +15,7 @@ import {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
 } from "react";
 import type { ReactNode } from "react";
 import type { CartData, BundleProgress, BundleThreshold } from "@/lib/types";
@@ -111,7 +112,7 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
   );
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [bundleData] = useState<Map<string, BundleThreshold[]>>(new Map());
+  const [bundleData, setBundleData] = useState<Map<string, BundleThreshold[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   // Track the last server-confirmed quantities for rollback.
@@ -174,12 +175,11 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
 
   // Initial cart fetch.
   useEffect(() => {
-    let isCancelled = false;
+    const controller = new AbortController();
 
-    fetch("/api/cart")
+    fetch("/api/cart", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CartData) => {
-        if (isCancelled) return;
         if ("error" in data) {
           setIsLoading(false);
           return;
@@ -187,12 +187,13 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
         reconcileFromServer(data);
         setIsLoading(false);
       })
-      .catch(() => {
-        if (!isCancelled) setIsLoading(false);
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setIsLoading(false);
       });
 
     return () => {
-      isCancelled = true;
+      controller.abort();
     };
   }, [reconcileFromServer]);
 
@@ -260,25 +261,42 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
   const registerBundleData = useCallback(
     (productId: string, thresholds: BundleThreshold[]) => {
       if (thresholds.length === 0) return;
-      if (!bundleData.has(productId)) {
-        bundleData.set(productId, thresholds);
-      }
+      setBundleData((prev) => {
+        if (prev.has(productId)) return prev;
+        const next = new Map(prev);
+        next.set(productId, thresholds);
+        return next;
+      });
     },
-    [bundleData],
+    [],
   );
 
-  const value: CartContextValue = {
-    quantities,
-    totalPrice,
-    totalCount,
-    bundleData,
-    isLoading,
-    addProduct,
-    removeProduct,
-    getQuantity,
-    getBundleProgress,
-    registerBundleData,
-  };
+  const value = useMemo<CartContextValue>(
+    () => ({
+      quantities,
+      totalPrice,
+      totalCount,
+      bundleData,
+      isLoading,
+      addProduct,
+      removeProduct,
+      getQuantity,
+      getBundleProgress,
+      registerBundleData,
+    }),
+    [
+      quantities,
+      totalPrice,
+      totalCount,
+      bundleData,
+      isLoading,
+      addProduct,
+      removeProduct,
+      getQuantity,
+      getBundleProgress,
+      registerBundleData,
+    ],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -29,6 +29,9 @@
   --price-color: var(--picnic-gray-900);
   --price-discount: var(--picnic-red);
   --price-original: var(--picnic-gray-500);
+  --text-dark: #333333;
+  --text-muted: #5b534e;
+  --text-bio-green: #628003;
 }
 
 @theme inline {
@@ -47,6 +50,9 @@
   --color-price: var(--price-color);
   --color-price-discount: var(--price-discount);
   --color-price-original: var(--price-original);
+  --color-text-dark: var(--text-dark);
+  --color-text-muted: var(--text-muted);
+  --color-text-bio-green: var(--text-bio-green);
   --color-gray-50: var(--picnic-gray-50);
   --color-gray-100: var(--picnic-gray-100);
   --color-gray-200: var(--picnic-gray-200);

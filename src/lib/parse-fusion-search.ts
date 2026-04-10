@@ -4,6 +4,7 @@ import {
   findSellingUnitContainers,
   collectMarkdowns,
   stripColorTags,
+  findNodeByIdSubstring,
 } from "./pml-helpers";
 import {
   extractPromotionLabel,
@@ -11,7 +12,7 @@ import {
   extractTextStackInfo,
   extractUnavailabilityFromPml,
   extractOriginalPriceFromPml,
-} from "./extract-tile-data";
+} from "./extract-card-data";
 
 /** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
 function parsePriceRangesFromRaw(
@@ -85,27 +86,6 @@ function containerToProduct(container: SellingUnitTileContainer): Product | null
 
 type PmlRecord = Record<string, unknown>;
 
-/** Recursively find the first node whose `id` contains the given substring. */
-function findNodeById(obj: unknown, idSubstring: string): PmlRecord | null {
-  if (typeof obj !== "object" || obj === null) return null;
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const r = findNodeById(item, idSubstring);
-      if (r) return r;
-    }
-    return null;
-  }
-  const record = obj as PmlRecord;
-  if (typeof record.id === "string" && record.id.includes(idSubstring)) {
-    return record;
-  }
-  for (const value of Object.values(record)) {
-    const r = findNodeById(value, idSubstring);
-    if (r) return r;
-  }
-  return null;
-}
-
 /** Extract the section title from a header-wrapper node's PML markdown. */
 function extractSectionTitle(headerNode: PmlRecord): string {
   const markdowns = collectMarkdowns(headerNode);
@@ -154,7 +134,7 @@ export function parseFusionSearchSections(
   const sections: SearchSection[] = [];
 
   // Find the structured-selling-unit-search-result container
-  const resultNode = findNodeById(rawPage, "structured-selling-unit-search-result");
+  const resultNode = findNodeByIdSubstring(rawPage, "structured-selling-unit-search-result");
   if (!resultNode) {
     // Fallback: no section structure found, extract all products flat
     return fallbackFlatParse(rawPage);
@@ -191,7 +171,7 @@ export function parseFusionSearchSections(
           break; // Reached another section or visual-sections — stop searching
         } else {
           // Layout 2: search inside intermediate container for nested wrapper
-          const nested = findNodeById(sibling, WRAPPER_PREFIX + sectionKey);
+          const nested = findNodeByIdSubstring(sibling, WRAPPER_PREFIX + sectionKey);
           if (nested) wrappers.push(nested as PmlRecord);
         }
       }

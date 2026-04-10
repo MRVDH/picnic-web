@@ -94,12 +94,11 @@ export function SharedHeader({
   useEffect(() => {
     if (!shouldFetchIndependently) return;
 
-    let isCancelled = false;
+    const controller = new AbortController();
 
-    fetch("/api/cart")
+    fetch("/api/cart", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CartData | ApiErrorResponse) => {
-        if (isCancelled) return;
         if ("error" in data) {
           setFetchedState({ status: "error" });
           return;
@@ -110,12 +109,13 @@ export function SharedHeader({
           totalCount: data.totalCount,
         });
       })
-      .catch(() => {
-        if (!isCancelled) setFetchedState({ status: "error" });
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setFetchedState({ status: "error" });
       });
 
     return () => {
-      isCancelled = true;
+      controller.abort();
     };
   }, [shouldFetchIndependently]);
 
