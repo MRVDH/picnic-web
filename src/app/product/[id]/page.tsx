@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ProductDetail, ApiErrorResponse } from "@/lib/types";
 import { ProductGallery } from "@/components/product-gallery";
@@ -66,7 +65,6 @@ export default function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: productId } = use(params);
-  const router = useRouter();
   const [pageState, setPageState] = useState<ProductPageState>({
     status: "loading",
   });
@@ -96,15 +94,7 @@ export default function ProductPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <SharedHeader>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-sm text-gray-500 transition-colors hover:text-foreground"
-        >
-          &larr; Terug
-        </button>
-      </SharedHeader>
+      <SharedHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {pageState.status === "loading" && <LoadingView />}

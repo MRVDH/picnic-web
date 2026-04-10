@@ -1,4 +1,4 @@
-import { CENTS_DIVISOR } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 import type { DepositEntry } from "@/lib/types";
 
 type OrderSummaryProps = {
@@ -8,14 +8,8 @@ type OrderSummaryProps = {
   depositTotal: number;
   depositBreakdown: DepositEntry[];
   membershipSavings: number;
+  minimumOrderValue: number | null;
 };
-
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / CENTS_DIVISOR);
-}
 
 function depositLabel(type: string): string {
   switch (type.toUpperCase()) {
@@ -39,6 +33,7 @@ export function OrderSummary({
   totalDiscount,
   depositBreakdown,
   membershipSavings,
+  minimumOrderValue,
 }: OrderSummaryProps) {
   if (totalCount === 0) return null;
 
@@ -79,6 +74,23 @@ export function OrderSummary({
           <div className="flex justify-between text-picnic-green">
             <span>Picnic-lidmaatschapsbesparing</span>
             <span>−{formatPrice(membershipSavings)}</span>
+          </div>
+        )}
+
+        {/* Minimum order value row */}
+        {minimumOrderValue !== null && minimumOrderValue > 0 && (
+          <div className="flex justify-between text-gray-700">
+            <span>Minimale bestelwaarde</span>
+            <span
+              className={
+                totalPrice >= minimumOrderValue ? "text-picnic-green" : ""
+              }
+            >
+              {totalPrice >= minimumOrderValue && (
+                <span className="mr-1">&#10003;</span>
+              )}
+              {formatPrice(minimumOrderValue)}
+            </span>
           </div>
         )}
 

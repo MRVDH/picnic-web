@@ -364,6 +364,7 @@ function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
     displayPrice,
     originalPrice,
     quantity,
+    maxCount: firstArticle ? asNumber(firstArticle["max_count"], 99) : 99,
     badges,
     isUnavailable: unavailable.isUnavailable,
     unavailableExplanation: unavailable.unavailableExplanation,

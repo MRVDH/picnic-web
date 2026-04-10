@@ -127,13 +127,13 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
             }}
             placeholder="Zoek producten..."
             aria-label="Zoek producten"
-            className="w-full rounded-full border border-input-border bg-white px-6 py-3.5 pr-14 text-base text-foreground shadow-sm outline-none transition-shadow placeholder:text-gray-400 focus:border-input-focus focus:ring-2 focus:ring-input-focus/20"
+            className="w-full rounded-full border border-input-border bg-white px-4 py-2 pr-12 text-sm text-foreground shadow-sm outline-none transition-shadow placeholder:text-gray-400 focus:border-input-focus focus:ring-2 focus:ring-input-focus/20"
           />
           <button
             type="submit"
             disabled={isLoading}
             aria-label="Zoeken"
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-picnic-red p-2.5 text-white transition-colors hover:bg-picnic-red-dark disabled:opacity-50"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full bg-picnic-red p-1.5 text-white transition-colors hover:bg-picnic-red-dark disabled:opacity-50"
           >
             <SearchIcon />
           </button>

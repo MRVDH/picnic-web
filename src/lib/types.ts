@@ -290,6 +290,8 @@ export type CartItem = {
   originalPrice: number | null;
   /** Quantity in cart (from QUANTITY decorator, default 1). */
   quantity: number;
+  /** Maximum allowed quantity for this product (from API max_count). */
+  maxCount: number;
   /** Decorator-derived badges (discount labels, freshness, base price, bundle). */
   badges: Badge[];
   /** Whether the item is currently unavailable. */

@@ -1,18 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { SliderProduct } from "@/lib/types";
-import { CENTS_DIVISOR } from "@/lib/types";
 import { buildImageUrl } from "@/lib/image-url";
+import { formatPrice } from "@/lib/format-price";
 
 type ProductSliderCardProps = {
   product: SliderProduct;
   href: string;
 };
-
-/** Format a price in cents to a euro display string. */
-function formatPrice(cents: number): string {
-  return `\u20AC${(cents / CENTS_DIVISOR).toFixed(2)}`;
-}
 
 export function ProductSliderCard({ product, href }: ProductSliderCardProps) {
   return (

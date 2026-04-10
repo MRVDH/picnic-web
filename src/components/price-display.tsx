@@ -1,4 +1,4 @@
-import { CENTS_DIVISOR } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 
 type PriceDisplayProps = {
   /** Current price in cents. */
@@ -6,14 +6,6 @@ type PriceDisplayProps = {
   /** Original price in cents (before discount), or null. */
   originalPrice: number | null;
 };
-
-function formatPrice(cents: number): string {
-  const euros = cents / CENTS_DIVISOR;
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(euros);
-}
 
 export function PriceDisplay({ displayPrice, originalPrice }: PriceDisplayProps) {
   const hasDiscount = originalPrice !== null;

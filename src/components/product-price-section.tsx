@@ -1,5 +1,5 @@
 import type { ProductPromotion, BundleOption } from "@/lib/types";
-import { CENTS_DIVISOR } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 
 type ProductPriceSectionProps = {
   displayPrice: number;
@@ -7,14 +7,6 @@ type ProductPriceSectionProps = {
   promotion: ProductPromotion | null;
   bundles: BundleOption[];
 };
-
-/** Format a price in cents to a euro display string. */
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / CENTS_DIVISOR);
-}
 
 export function ProductPriceSection({
   displayPrice,

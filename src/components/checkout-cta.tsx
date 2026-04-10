@@ -1,17 +1,14 @@
 /**
- * Static banner directing users to complete their order in the Picnic app.
+ * Checkout button linking to the Picnic app deeplink for the cart.
  * Only shown when the cart has items (rendered conditionally by the cart page).
  */
 export function CheckoutCta() {
   return (
-    <div className="rounded-xl border border-picnic-red/20 bg-picnic-red/5 p-6 text-center">
-      <div className="mb-2 text-3xl">&#128722;</div>
-      <p className="text-lg font-semibold text-foreground">
-        Afrekenen kan via de Picnic app
-      </p>
-      <p className="mt-1 text-sm text-gray-500">
-        Download de app om je bestelling af te ronden.
-      </p>
-    </div>
+    <a
+      href="https://picnic.app/nl/deeplink/?path=cart"
+      className="block w-full rounded-xl bg-picnic-red py-4 text-center text-base font-semibold text-white transition-colors hover:bg-red-700"
+    >
+      Naar de kassa
+    </a>
   );
 }

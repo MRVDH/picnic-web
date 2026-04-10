@@ -226,6 +226,15 @@ export function parseProductDetailPage(
     mainUnit.displayPrice,
   );
 
+  const promotion = extractPromotion(rawPage);
+
+  // Filter out promotion badges from labels — the promotion is already
+  // rendered separately in ProductPriceSection, so showing it in labels
+  // too would duplicate it.
+  const labels = extractLabels(page).filter(
+    (l) => !promotion || l.text !== promotion.label,
+  );
+
   return {
     id: productId,
     name: mainInfo.name,
@@ -237,12 +246,12 @@ export function parseProductDetailPage(
     originalPrice: extractOriginalPrice(page),
     maxCount: mainUnit.maxCount,
     imageIds: extractImageIds(page, mainUnit.imageId),
-    labels: extractLabels(page),
+    labels,
     description: extractDescription(page),
     highlights: extractHighlights(page),
     allergens: extractAllergens(page),
     infoSections: extractInfoSections(page),
-    promotion: extractPromotion(rawPage),
+    promotion,
     bundles: extractBundles(page),
     similarProducts: extractSimilarProducts(page),
     nutritionRows: extractNutritionRows(page),

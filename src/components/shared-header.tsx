@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { CartData, ApiErrorResponse } from "@/lib/types";
-import { CENTS_DIVISOR } from "@/lib/types";
 import { useCartOptional } from "@/contexts/cart-context";
+import { formatPrice } from "@/lib/format-price";
+import { SearchBar } from "@/components/search-bar";
 
 // ─── Cart badge state ─────────────────────────────────────────────────────────
 
@@ -12,13 +14,6 @@ type CartBadgeState =
   | { status: "loading" }
   | { status: "ready"; totalPrice: number; totalCount: number }
   | { status: "error" };
-
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / CENTS_DIVISOR);
-}
 
 // ─── Cart icon ────────────────────────────────────────────────────────────────
 
@@ -30,7 +25,7 @@ function CartIcon() {
       viewBox="0 0 24 24"
       strokeWidth={1.75}
       stroke="currentColor"
-      className="h-6 w-6"
+      className="h-5 w-5"
       aria-hidden="true"
     >
       <path
@@ -67,17 +62,27 @@ function CartBadge({ state }: { state: CartBadgeState }) {
 // ─── Shared header ────────────────────────────────────────────────────────────
 
 type SharedHeaderProps = {
-  children?: React.ReactNode;
   bottomBar?: React.ReactNode;
+  cartBadgeOverride?: {
+    totalPrice: number;
+    totalCount: number;
+  } | null;
 };
 
 /**
  * Sticky header shared across all authenticated pages.
+ * Always renders the search bar and logout button.
  * Fetches /api/cart on mount and shows a price badge on the cart icon.
  * Badge is hidden while loading, on error, or when the cart is empty.
- * `children` is rendered in the centre slot (e.g. search bar, back button).
  */
-export function SharedHeader({ children, bottomBar }: SharedHeaderProps) {
+export function SharedHeader({
+  bottomBar,
+  cartBadgeOverride = null,
+}: SharedHeaderProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
+
   const cartContext = useCartOptional();
   const [fetchedState, setFetchedState] = useState<CartBadgeState>({
     status: "loading",
@@ -115,35 +120,62 @@ export function SharedHeader({ children, bottomBar }: SharedHeaderProps) {
   }, [shouldFetchIndependently]);
 
   // Derive badge state: prefer context (reactive), fall back to own fetch.
-  const cartState: CartBadgeState = cartContext
-    ? cartContext.isLoading
-      ? { status: "loading" }
-      : {
-          status: "ready",
-          totalPrice: cartContext.totalPrice,
-          totalCount: cartContext.totalCount,
-        }
-    : fetchedState;
+  const cartState: CartBadgeState = cartBadgeOverride
+    ? {
+        status: "ready",
+        totalPrice: cartBadgeOverride.totalPrice,
+        totalCount: cartBadgeOverride.totalCount,
+      }
+    : cartContext
+      ? cartContext.isLoading
+        ? { status: "loading" }
+        : {
+            status: "ready",
+            totalPrice: cartContext.totalPrice,
+            totalCount: cartContext.totalCount,
+          }
+      : fetchedState;
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      router.push(`/?q=${encodeURIComponent(query)}`);
+    },
+    [router],
+  );
+
+  const handleSignOut = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }, []);
 
   return (
     <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-4">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-2">
         {/* Logo */}
         <Link
           href="/"
-          className="shrink-0 text-2xl font-bold tracking-tight text-picnic-red select-none"
+          className="shrink-0 text-xl font-bold tracking-tight text-picnic-red select-none"
           aria-label="Picnic Web"
         >
           Picnic Web
         </Link>
 
-        {/* Centre slot */}
-        {children && (
-          <div className="flex flex-1 items-center gap-4">{children}</div>
-        )}
-
-        {/* Spacer when no children */}
-        {!children && <div className="flex-1" />}
+        {/* Search bar + logout */}
+        <div className="flex flex-1 items-center gap-4">
+          <SearchBar
+            key={urlQuery}
+            onSearch={handleSearch}
+            isLoading={false}
+            initialQuery={urlQuery}
+          />
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+          >
+            Uitloggen
+          </button>
+        </div>
 
         {/* Cart icon */}
         <CartBadge state={cartState} />

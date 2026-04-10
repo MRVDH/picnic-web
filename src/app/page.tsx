@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
 import { SectionNavBar } from "@/components/section-nav-bar";
 import { SharedHeader } from "@/components/shared-header";
@@ -99,13 +98,6 @@ function SearchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQuery]);
 
-  const isLoading = searchState.status === "loading";
-
-  const handleSignOut = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
-  }, []);
-
   return (
     <CartProvider showToast={setToastMessage}>
       <div className="flex min-h-full flex-1 flex-col">
@@ -115,21 +107,7 @@ function SearchPage() {
               <SectionNavBar sections={searchState.sections} />
             ) : undefined
           }
-        >
-          <SearchBar
-            key={urlQuery}
-            onSearch={handleSearch}
-            isLoading={isLoading}
-            initialQuery={urlQuery}
-          />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
-          >
-            Uitloggen
-          </button>
-        </SharedHeader>
+        />
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
           {searchState.status === "idle" && <LandingView />}

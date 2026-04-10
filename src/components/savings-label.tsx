@@ -5,7 +5,7 @@
  * threshold is met. Only renders when savingsInCents > 0.
  */
 
-import { CENTS_DIVISOR } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 
 type SavingsLabelProps = {
   /** Total savings amount in cents. */
@@ -15,10 +15,7 @@ type SavingsLabelProps = {
 export function SavingsLabel({ savingsInCents }: SavingsLabelProps) {
   if (savingsInCents <= 0) return null;
 
-  const formatted = new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(savingsInCents / CENTS_DIVISOR);
+  const formatted = formatPrice(savingsInCents);
 
   return (
     <span className="text-xs font-semibold text-picnic-red">
