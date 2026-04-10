@@ -1,6 +1,6 @@
 # picnic-web Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-09
+Auto-generated from all feature plans. Last updated: 2026-04-10
 
 ## Active Technologies
 - TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0 (002-search-url-sections)
@@ -30,9 +30,9 @@ npm test && npm run lint
 TypeScript 5, Node.js 20.9+: Follow standard conventions
 
 ## Recent Changes
+- 009-reorder-search-results: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 - 008-cart-page-actions: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 - 007-plp-cart-actions: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
-- 006-cart-page: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -172,12 +172,28 @@ export function parseFusionSearchSections(
       const sectionKey = childId.slice(HEADER_PREFIX.length);
       const title = extractSectionTitle(child);
 
-      // Collect following wrapper nodes for this section
+      // Collect wrapper nodes for this section. Two known API layouts:
+      // 1. Wrapper is a direct sibling: header → wrapper-SectionKey → ...
+      // 2. Wrapper is nested in an intermediate container (e.g. vertical-rfy):
+      //    header → vertical-rfy { wrapper-SectionKey } → visual-sections
       const wrappers: PmlRecord[] = [];
       for (let j = i + 1; j < resultChildren.length; j++) {
-        const nextId = (resultChildren[j].id as string) ?? "";
-        if (!nextId.startsWith(WRAPPER_PREFIX + sectionKey)) break;
-        wrappers.push(resultChildren[j]);
+        const sibling = resultChildren[j];
+        const nextId = (sibling.id as string) ?? "";
+        if (nextId.startsWith(WRAPPER_PREFIX + sectionKey)) {
+          // Layout 1: direct wrapper sibling
+          wrappers.push(sibling);
+        } else if (
+          nextId.startsWith(HEADER_PREFIX) ||
+          nextId === VISUAL_SECTIONS_ID ||
+          nextId.includes(VISUAL_SECTIONS_ID)
+        ) {
+          break; // Reached another section or visual-sections — stop searching
+        } else {
+          // Layout 2: search inside intermediate container for nested wrapper
+          const nested = findNodeById(sibling, WRAPPER_PREFIX + sectionKey);
+          if (nested) wrappers.push(nested as PmlRecord);
+        }
       }
 
       const products = extractProductsFromWrappers(wrappers, seenIds);
