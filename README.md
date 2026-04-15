@@ -5,7 +5,7 @@ Unofficial web interface for the online supermarket Picnic. Uses the npm library
 
 Live version: [picnic.maartenvandenhoven.com](http://picnic.maartenvandenhoven.com)
 
-<img width="2560" height="1277" alt="image" src="https://github.com/user-attachments/assets/3bd3df58-d5cd-4b27-b408-3ae3ae8115c6" />
+<img alt="image" src="https://github.com/user-attachments/assets/774c2fd5-4c0e-4bcf-b789-a51c5b93a996" />
 
 ### FAQ
 Frequently asked questions.
