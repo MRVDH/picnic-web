@@ -73,3 +73,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, sans-serif);
 }
+
+button,
+[role="button"],
+summary {
+  cursor: pointer;
+}

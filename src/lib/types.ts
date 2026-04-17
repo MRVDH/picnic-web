@@ -1,6 +1,9 @@
 // Application-level type definitions for the Picnic web client.
 // These are our own domain types, decoupled from the upstream picnic-api types.
 
+import type { SelectedSlotData } from "@/lib/delivery-slot-types";
+export type { SelectedSlotData } from "@/lib/delivery-slot-types";
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 export const CENTS_DIVISOR = 100;
@@ -108,6 +111,12 @@ export type SearchApiResponse = {
 export type SuggestionsApiResponse = {
   suggestions: SearchSuggestion[];
   query: string;
+};
+
+export type CategoryProductsApiResponse = {
+  title: string | null;
+  products: Product[];
+  sections: SearchSection[];
 };
 
 export type ApiErrorResponse = {
@@ -314,6 +323,16 @@ export type DepositEntry = {
   total: number;
 };
 
+/** A fee or credit line from the cart API (e.g. Picnic credit settlement). */
+export type FeeEntry = {
+  /** Fee type identifier from the API (e.g. "SALDO"). */
+  type: string;
+  /** Display label from the API (e.g. "Verrekening Picnic-tegoed"). */
+  name: string;
+  /** Amount in cents. Negative values represent deductions/credits. */
+  amount: number;
+};
+
 /** Top-level display model returned by the /api/cart route. */
 export type CartData = {
   /** All cart line items with decorator badges merged. */
@@ -330,10 +349,16 @@ export type CartData = {
   depositBreakdown: DepositEntry[];
   /** Membership savings in cents (0 if none). */
   membershipSavings: number;
+  /** Fee/credit lines from the API (e.g. Picnic credit settlement). */
+  fees: FeeEntry[];
   /** Minimum order value in cents for the selected delivery slot, or null. */
   minimumOrderValue: number | null;
   /** "Niets vergeten?" suggestion products; empty array if unavailable. */
   suggestions: SliderProduct[];
+  /** Selected delivery slot summary for the banner. Null when no slot data. */
+  selectedSlot: SelectedSlotData | null;
+  /** Pre-formatted banner text: prompt or formatted time window. */
+  deliveryBannerText: string;
 };
 
 /** Alias: the /api/cart route returns CartData directly. */

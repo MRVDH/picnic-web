@@ -8,6 +8,8 @@
 
 import type { CartData, CartItem, DepositEntry, Badge, SliderProduct } from "@/lib/types";
 import { isObject, asString, asNumber, asArray } from "@/lib/type-guards";
+import { parseSelectedSlot } from "@/lib/parse-delivery-slots";
+import { formatBannerText, NO_SLOT_TEXT } from "@/lib/format-delivery-window";
 
 // ─── Decorator helpers ────────────────────────────────────────────────────────
 
@@ -385,6 +387,16 @@ export function parseCartResponse(rawData: unknown): CartData {
   const totalCount = asNumber(rawData["total_count"]);
   const membershipSavings = asNumber(rawData["membership_savings"]);
 
+  // Fees (e.g. Picnic credit settlement)
+  const fees = asArray(rawData["fees"])
+    .filter(isObject)
+    .map((f) => ({
+      type: asString(f["type"]),
+      name: asString(f["name"]),
+      amount: asNumber(f["amount"]),
+    }))
+    .filter((f) => f.amount !== 0);
+
   // Calculate total discount: sum of (price - effectiveDisplayPrice) per line.
   // The line scalar display_price may not reflect a PRICE decorator discount,
   // so we replicate the same fallback used in mapOrderLineToCartItem.
@@ -420,6 +432,12 @@ export function parseCartResponse(rawData: unknown): CartData {
   // Suggestions
   const suggestions = extractSuggestions(rawData);
 
+  // Delivery slot
+  const selectedSlot = parseSelectedSlot(rawData["selected_slot"], asArray(rawData["delivery_slots"]));
+  const deliveryBannerText = selectedSlot?.isExplicitSelection
+    ? formatBannerText(selectedSlot.windowStart, selectedSlot.windowEnd)
+    : NO_SLOT_TEXT;
+
   return {
     items,
     totalPrice,
@@ -428,8 +446,11 @@ export function parseCartResponse(rawData: unknown): CartData {
     depositTotal,
     depositBreakdown,
     membershipSavings,
+    fees,
     minimumOrderValue,
     suggestions,
+    selectedSlot,
+    deliveryBannerText,
   };
 }
 
@@ -442,7 +463,10 @@ function emptyCartData(): CartData {
     depositTotal: 0,
     depositBreakdown: [],
     membershipSavings: 0,
+    fees: [],
     minimumOrderValue: null,
     suggestions: [],
+    selectedSlot: null,
+    deliveryBannerText: NO_SLOT_TEXT,
   };
 }

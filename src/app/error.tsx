@@ -1,5 +1,7 @@
 "use client";
 
+import { usePageTitle } from "@/hooks/use-page-title";
+
 export default function Error({
   error,
   reset,
@@ -7,6 +9,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  usePageTitle();
+
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center p-8 text-center">
       <h2 className="text-2xl font-bold text-foreground">

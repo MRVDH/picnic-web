@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -14,6 +15,8 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  usePageTitle("Inloggen");
+
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? DEFAULT_REDIRECT;
   const isExpired = searchParams.get("expired") === "true";
@@ -325,7 +328,7 @@ const PICNIC_API_NPM_URL = "https://www.npmjs.com/package/picnic-api";
 function TokenInstructions() {
   return (
     <details className="mt-6 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="cursor-pointer font-medium text-foreground">
+      <summary className="font-medium text-foreground">
         Hoe krijg ik een auth token?
       </summary>
       <div className="mt-3 space-y-3">
@@ -358,7 +361,7 @@ function TokenInstructions() {
 function WhyAuthToken() {
   return (
     <details className="mt-3 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="cursor-pointer font-medium text-foreground">
+      <summary className="font-medium text-foreground">
         Waarom heb ik een auth token nodig?
       </summary>
       <div className="mt-3 space-y-3">
@@ -380,7 +383,7 @@ const GITHUB_PROJECT_URL = "https://github.com/MRVDH/picnic-web";
 function Disclaimer() {
   return (
     <details className="mt-3 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="cursor-pointer font-medium text-foreground">
+      <summary className="font-medium text-foreground">
         Is dit de officiële Picnic website?
       </summary>
       <div className="mt-3 space-y-3">

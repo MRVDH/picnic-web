@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Picnic Web — Product Search",
+  title: "Picnic Web",
   description:
     "Search products from the Picnic online supermarket on your desktop.",
 };
