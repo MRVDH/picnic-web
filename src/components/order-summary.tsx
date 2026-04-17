@@ -1,5 +1,5 @@
 import { formatPrice } from "@/lib/format-price";
-import type { DepositEntry } from "@/lib/types";
+import type { DepositEntry, FeeEntry } from "@/lib/types";
 
 type OrderSummaryProps = {
   totalPrice: number;
@@ -8,6 +8,7 @@ type OrderSummaryProps = {
   depositTotal: number;
   depositBreakdown: DepositEntry[];
   membershipSavings: number;
+  fees: FeeEntry[];
   minimumOrderValue: number | null;
 };
 
@@ -33,6 +34,7 @@ export function OrderSummary({
   totalDiscount,
   depositBreakdown,
   membershipSavings,
+  fees,
   minimumOrderValue,
 }: OrderSummaryProps) {
   if (totalCount === 0) return null;
@@ -76,6 +78,19 @@ export function OrderSummary({
             <span>−{formatPrice(membershipSavings)}</span>
           </div>
         )}
+
+        {/* Fee rows (e.g. Picnic credit settlement) */}
+        {fees.map((fee) => (
+          <div
+            key={fee.type}
+            className={`flex justify-between ${fee.amount < 0 ? "text-picnic-green" : "text-gray-700"}`}
+          >
+            <span>{fee.name}</span>
+            <span>
+              {fee.amount < 0 ? `−${formatPrice(Math.abs(fee.amount))}` : formatPrice(fee.amount)}
+            </span>
+          </div>
+        ))}
 
         {/* Minimum order value row */}
         {minimumOrderValue !== null && minimumOrderValue > 0 && (

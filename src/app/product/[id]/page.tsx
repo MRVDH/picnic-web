@@ -17,6 +17,7 @@ import { SharedHeader } from "@/components/shared-header";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { ErrorView } from "@/components/error-view";
 import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,10 @@ export default function ProductPage({
     status: "loading",
   });
   const [retryCount, setRetryCount] = useState(0);
+
+  const pageContext =
+    pageState.status === "success" ? pageState.product.name : undefined;
+  usePageTitle(pageContext);
 
   useEffect(() => {
     let isCancelled = false;

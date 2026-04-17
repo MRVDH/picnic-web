@@ -2,14 +2,19 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ProductGrid } from "@/components/product-grid";
+import { ResultsView } from "@/components/results-view";
 import { SectionNavBar } from "@/components/section-nav-bar";
 import { SharedHeader } from "@/components/shared-header";
 import { CartProvider } from "@/contexts/cart-context";
 import { CartToast } from "@/components/cart-toast";
+import { CategoryGrid } from "@/components/category-grid";
+import { ShortcutList } from "@/components/shortcut-list";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { ErrorView } from "@/components/error-view";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { parsePageIdFromDeepLink } from "@/lib/parse-deep-link";
+import type { CategoryItem, ShortcutItem } from "@/lib/category-types";
 import type {
   Product,
   SearchSection,
@@ -28,6 +33,12 @@ type SearchState =
     }
   | { status: "error"; query: string; message: string };
 
+type CategoriesState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; categories: CategoryItem[]; shortcuts: ShortcutItem[] }
+  | { status: "error"; message: string };
+
 export default function Home() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
@@ -45,6 +56,14 @@ function SearchPage() {
     status: "idle",
   });
 
+  const [categoriesState, setCategoriesState] = useState<CategoriesState>({
+    status: "idle",
+  });
+
+  const titleContext =
+    searchState.status !== "idle" ? `"${searchState.query}"` : undefined;
+  usePageTitle(titleContext);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const dismissToast = useCallback(() => setToastMessage(null), []);
 
@@ -58,7 +77,13 @@ function SearchPage() {
         return;
       }
 
-      router.push(`/?q=${encodeURIComponent(trimmed)}`);
+      // Only push when the URL doesn't already carry this query —
+      // avoids a redundant navigation that can cause useSearchParams
+      // to transiently return stale/empty values during the transition.
+      const currentQ = new URLSearchParams(window.location.search).get("q") ?? "";
+      if (currentQ !== trimmed) {
+        router.push(`/?q=${encodeURIComponent(trimmed)}`);
+      }
       setSearchState({ status: "loading", query: trimmed });
 
       try {
@@ -97,9 +122,60 @@ function SearchPage() {
   useEffect(() => {
     if (urlQuery) {
       handleSearch(urlQuery);
+    } else {
+      setSearchState({ status: "idle" });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQuery]);
+
+  // Fetch categories when in idle state (no search query active)
+  useEffect(() => {
+    if (searchState.status !== "idle") return;
+    if (categoriesState.status !== "idle") return;
+
+    setCategoriesState({ status: "loading" });
+
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data: { categories?: CategoryItem[]; shortcuts?: ShortcutItem[] } & Partial<ApiErrorResponse>) => {
+        if ("error" in data && data.error) {
+          if (data.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
+            return;
+          }
+          setCategoriesState({ status: "error", message: data.error });
+          return;
+        }
+        const categories = Array.isArray(data.categories) ? data.categories : [];
+        const shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
+        setCategoriesState({ status: "success", categories, shortcuts });
+      })
+      .catch(() => {
+        setCategoriesState({
+          status: "error",
+          message: "Kan categorieën niet laden.",
+        });
+      });
+  }, [searchState.status, categoriesState.status]);
+
+  const handleCategoryTap = useCallback(
+    (category: CategoryItem) => {
+      router.push(`/categories/${encodeURIComponent(category.id)}`);
+    },
+    [router],
+  );
+
+  const handleShortcutTap = useCallback(
+    (shortcut: ShortcutItem) => {
+      const pageId = parsePageIdFromDeepLink(shortcut.deepLinkTarget);
+      if (!pageId) {
+        return;
+      }
+      const params = new URLSearchParams({ pageId, title: shortcut.name });
+      router.push(`/pages?${params.toString()}`);
+    },
+    [router],
+  );
 
   return (
     <CartProvider showToast={setToastMessage}>
@@ -113,7 +189,13 @@ function SearchPage() {
         />
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-          {searchState.status === "idle" && <LandingView />}
+          {searchState.status === "idle" && (
+            <CategoryBrowser
+              categoriesState={categoriesState}
+              onCategoryTap={handleCategoryTap}
+              onShortcutTap={handleShortcutTap}
+            />
+          )}
           {searchState.status === "loading" && <LoadingSpinner />}
           {searchState.status === "error" && (
             <ErrorView message={searchState.message} />
@@ -133,71 +215,28 @@ function SearchPage() {
   );
 }
 
-// ─── Sub-views ───────────────────────────────────────────────────────────────
+// ─── Category browser sub-view ───────────────────────────────────────────────
 
-function LandingView() {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center py-32 text-center">
-      <PicnicLogo size="large" />
-      <h1 className="mt-6 text-3xl font-bold text-foreground">
-        Welkom bij Picnic Web
-      </h1>
-      <p className="mt-2 text-lg text-gray-500">
-        Zoek je favoriete producten
-      </p>
-    </div>
-  );
-}
+type CategoryBrowserProps = {
+  categoriesState: CategoriesState;
+  onCategoryTap: (category: CategoryItem) => void;
+  onShortcutTap: (shortcut: ShortcutItem) => void;
+};
 
-
-function ResultsView({
-  query,
-  products,
-  sections,
-}: {
-  query: string;
-  products: Product[];
-  sections: SearchSection[];
-}) {
-  if (products.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-lg text-gray-600">
-          Geen resultaten gevonden voor &ldquo;{query}&rdquo;
-        </p>
-        <p className="mt-1 text-sm text-gray-400">
-          Probeer een andere zoekterm
-        </p>
-      </div>
-    );
+function CategoryBrowser({ categoriesState, onCategoryTap, onShortcutTap }: CategoryBrowserProps) {
+  if (categoriesState.status === "loading") return <LoadingSpinner />;
+  if (categoriesState.status === "error") {
+    return <ErrorView message={categoriesState.message} />;
   }
+  if (categoriesState.status !== "success") return null;
 
   return (
-    <div>
-      <p className="mb-4 text-sm text-gray-500">
-        {products.length} {products.length === 1 ? "resultaat" : "resultaten"}{" "}
-        voor &ldquo;{query}&rdquo;
-      </p>
-      {sections.length > 0 ? (
-        <ProductGrid sections={sections} />
-      ) : (
-        <ProductGrid products={products} />
-      )}
-    </div>
-  );
-}
-
-// ─── Picnic Logo ─────────────────────────────────────────────────────────────
-
-function PicnicLogo({ size = "small" }: { size?: "small" | "large" }) {
-  const textSize = size === "large" ? "text-5xl" : "text-2xl";
-
-  return (
-    <span
-      className={`${textSize} font-bold tracking-tight text-picnic-red select-none`}
-      aria-label="Picnic Web"
-    >
-      Picnic Web
-    </span>
+    <>
+      <ShortcutList shortcuts={categoriesState.shortcuts} onShortcutTap={onShortcutTap} />
+      <CategoryGrid
+        categories={categoriesState.categories}
+        onCategoryTap={onCategoryTap}
+      />
+    </>
   );
 }

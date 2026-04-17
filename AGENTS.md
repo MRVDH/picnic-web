@@ -1,6 +1,6 @@
 # picnic-web Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-10
+Auto-generated from all feature plans. Last updated: 2026-04-16
 
 ## Active Technologies
 - TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0 (002-search-url-sections)
@@ -11,6 +11,13 @@ Auto-generated from all feature plans. Last updated: 2026-04-10
 - N/A (no persistent storage; cart state lives in the Picnic API) (006-cart-page)
 - N/A (no persistent storage; cart state is URL + client memory) (007-plp-cart-actions)
 - N/A (no persistent storage; pure CSS layout change) (010-product-card-polish)
+- TypeScript 5.9.3, Node.js 20.9+ + Next.js 16.2.1 (App Router), React 19.2.4, Tailwind CSS 4.2.2, picnic-api ^4.1.0 (011-dynamic-page-title)
+- N/A (no persistent storage; title state is ephemeral client-side) (011-dynamic-page-title)
+- TypeScript 5, Node.js 20.9+ + Next.js 16.2.1 (App Router), React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0 (012-cart-credit-summary)
+- N/A (no persistent storage; cart state comes from Picnic API) (012-cart-credit-summary)
+- N/A (no persistent storage; category data is fetched on demand from Picnic API) (014-search-categories)
+- N/A (no persistent storage; navigation state is ephemeral client-side) (015-subcategory-navigation)
+- N/A (no persistent storage; product data fetched on demand from Picnic API) (016-subcategory-products)
 
 - TypeScript 5, Node.js 20.9+ + Next.js 16, React 19, Tailwind CSS 4, picnic-api (004-product-search)
 
@@ -31,9 +38,9 @@ npm test && npm run lint
 TypeScript 5, Node.js 20.9+: Follow standard conventions
 
 ## Recent Changes
-- 010-product-card-polish: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
-- 009-reorder-search-results: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
-- 008-cart-page-actions: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1, React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
+- 017-snel-naar-navigation: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 016-subcategory-products: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1 (App Router), React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
+- 015-subcategory-navigation: Added TypeScript 5, Node.js 20.9+ + Next.js 16.2.1 (App Router), React 19.2.4, Tailwind CSS 4, picnic-api ^4.1.0
 
 
 <!-- MANUAL ADDITIONS START -->

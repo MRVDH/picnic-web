@@ -1,18 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
 import type { CartData, ApiErrorResponse } from "@/lib/types";
-import { CartItemCard } from "@/components/cart-item";
-import { OrderSummary } from "@/components/order-summary";
-import { ProductSlider } from "@/components/product-slider";
-import { CheckoutCta } from "@/components/checkout-cta";
 import { SharedHeader } from "@/components/shared-header";
 import { CartToast } from "@/components/cart-toast";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { ErrorView } from "@/components/error-view";
+import { DeliverySlotPicker } from "@/components/delivery-slot-picker";
+import { EmptyView, CartPageContent } from "@/components/cart-page-content";
 import { createMutationQueue } from "@/lib/mutation-queue";
 import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 type CartPageState =
   | { status: "loading" }
@@ -66,9 +64,12 @@ async function postCartMutation(
 }
 
 export default function CartPage() {
+  usePageTitle("Winkelwagen");
+
   const [pageState, setPageState] = useState<CartPageState>({ status: "loading" });
   const [retryCount, setRetryCount] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const confirmedCartRef = useRef<CartData | null>(null);
   const queueRef = useRef<ReturnType<typeof createMutationQueue<CartData>> | null>(null);
@@ -250,67 +251,24 @@ export default function CartPage() {
             cart={pageState.cart}
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
+            onOpenPicker={() => setIsPickerOpen(true)}
           />
         )}
       </main>
+
+      {isPickerOpen && (
+        <DeliverySlotPicker
+          onClose={() => setIsPickerOpen(false)}
+          onSlotSelected={(updatedCart) => {
+            reconcileFromServer(updatedCart);
+            setIsPickerOpen(false);
+          }}
+        />
+      )}
 
       <CartToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </div>
   );
 }
 
-function EmptyView() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-4 text-5xl">🛒</div>
-      <p className="text-lg font-semibold text-foreground">Je winkelwagen is leeg</p>
-      <p className="mt-1 text-sm text-gray-500">
-        Voeg producten toe via de Picnic app of zoek iets op.
-      </p>
-      <Link href="/" className="mt-4 text-sm text-picnic-red hover:underline">
-        Naar zoeken
-      </Link>
-    </div>
-  );
-}
 
-function CartPageContent({
-  cart,
-  onIncrement,
-  onDecrement,
-}: {
-  cart: CartData;
-  onIncrement: (productId: string) => void;
-  onDecrement: (productId: string) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Winkelwagen</h1>
-
-      <div>
-        {cart.items.map((item) => (
-          <CartItemCard
-            key={item.id}
-            item={item}
-            onIncrement={item.isUnavailable ? undefined : () => onIncrement(item.productId)}
-            onDecrement={item.isUnavailable ? undefined : () => onDecrement(item.productId)}
-          />
-        ))}
-      </div>
-
-      <OrderSummary
-        totalPrice={cart.totalPrice}
-        totalCount={cart.totalCount}
-        totalDiscount={cart.totalDiscount}
-        depositTotal={cart.depositTotal}
-        depositBreakdown={cart.depositBreakdown}
-        membershipSavings={cart.membershipSavings}
-        minimumOrderValue={cart.minimumOrderValue}
-      />
-
-      <ProductSlider title="Niets vergeten?" products={cart.suggestions} />
-
-      <CheckoutCta />
-    </div>
-  );
-}

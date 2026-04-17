@@ -13,6 +13,7 @@ import {
   extractUnavailabilityFromPml,
   extractOriginalPriceFromPml,
 } from "./extract-card-data";
+import { parseContentPageSections } from "./parse-content-page";
 
 /** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
 function parsePriceRangesFromRaw(
@@ -36,7 +37,7 @@ function parsePriceRangesFromRaw(
 }
 
 /** Convert a selling-unit tile container into a Product. */
-function containerToProduct(container: SellingUnitTileContainer): Product | null {
+export function containerToProduct(container: SellingUnitTileContainer): Product | null {
   const su = container.content?.sellingUnit;
   if (!su) return null;
 
@@ -136,12 +137,12 @@ export function parseFusionSearchSections(
   // Find the structured-selling-unit-search-result container
   const resultNode = findNodeByIdSubstring(rawPage, "structured-selling-unit-search-result");
   if (!resultNode) {
-    // Fallback: no section structure found, extract all products flat
-    return fallbackFlatParse(rawPage);
+    // Not a search page — try content page parsers (campaign, horizontal, flat)
+    return parseContentPageSections(rawPage);
   }
 
   const resultChildren = resultNode.children as PmlRecord[] | undefined;
-  if (!resultChildren) return fallbackFlatParse(rawPage);
+  if (!resultChildren) return parseContentPageSections(rawPage);
 
   // Step 1: Extract "Opnieuw bestellen" section (siblings before visual-sections)
   for (let i = 0; i < resultChildren.length; i++) {
@@ -235,31 +236,74 @@ function parseSectionsFromChildren(
   }
 }
 
-/** Fallback: extract all products flat when no section structure is found. */
-function fallbackFlatParse(
+// ─── Category page parser ────────────────────────────────────────────────────
+
+const CATEGORY_ARTICLES_PREFIX = "category-tree-page-articles-section";
+const CATEGORY_SUB_HEADER_PREFIX = "vertical-article-tiles-sub-header-";
+
+/**
+ * Parse a page into sections with headers and a flat product list.
+ *
+ * Cascades through layout strategies:
+ * 1. Category-tree layout (L2 category pages)
+ * 2. Fusion search layout (search result pages)
+ * 3. Content page layout (campaign, "Nieuw", theme pages)
+ * 4. Flat product extraction (last resort)
+ */
+export function parseCategoryPageSections(
   rawPage: unknown,
 ): { sections: SearchSection[]; products: Product[] } {
-  const containers = findSellingUnitContainers(rawPage);
-  const productMap = new Map<string, Product>();
+  const articleSections = findAllByIdPrefix(rawPage, CATEGORY_ARTICLES_PREFIX);
 
-  for (const container of containers) {
-    const product = containerToProduct(container);
-    if (!product) continue;
+  if (articleSections.length === 0) {
+    return parseFusionSearchSections(rawPage);
+  }
 
-    const existing = productMap.get(product.id);
-    if (
-      !existing ||
-      product.badges.length > existing.badges.length ||
-      product.namePrefix ||
-      product.subtitle ||
-      product.brand
-    ) {
-      productMap.set(product.id, product);
+  const seenIds = new Set<string>();
+  const sections: SearchSection[] = [];
+
+  for (const section of articleSections) {
+    const headerNodes = findAllByIdPrefix(section, CATEGORY_SUB_HEADER_PREFIX);
+    let title = "";
+    for (const h of headerNodes) {
+      title = extractSectionTitle(h);
+      if (title) break;
+    }
+    if (!title) continue;
+
+    const products = extractProductsFromWrappers([section as PmlRecord], seenIds);
+    if (products.length > 0) {
+      sections.push({ title, products });
     }
   }
 
-  const products = Array.from(productMap.values());
-  return { sections: [], products };
+  const products = sections.flatMap((s) => s.products);
+  return { sections, products };
+}
+
+/** Find all nodes whose `id` starts with the given prefix. */
+function findAllByIdPrefix(
+  obj: unknown,
+  prefix: string,
+  results: PmlRecord[] = [],
+): PmlRecord[] {
+  if (typeof obj !== "object" || obj === null) return results;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) findAllByIdPrefix(item, prefix, results);
+    return results;
+  }
+
+  const record = obj as PmlRecord;
+  if (typeof record.id === "string" && record.id.startsWith(prefix)) {
+    results.push(record);
+    return results;
+  }
+
+  for (const value of Object.values(record)) {
+    findAllByIdPrefix(value, prefix, results);
+  }
+  return results;
 }
 
 /**
@@ -267,5 +311,5 @@ function fallbackFlatParse(
  * @deprecated Use parseFusionSearchSections instead.
  */
 export function parseFusionSearchPage(rawPage: unknown): Product[] {
-  return fallbackFlatParse(rawPage).products;
+  return parseContentPageSections(rawPage).products;
 }

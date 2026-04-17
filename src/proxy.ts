@@ -32,7 +32,8 @@ export const config = {
      * - /api/auth/:path* (login/logout API routes)
      * - /_next/:path* (Next.js internals: static files, HMR, etc.)
      * - /favicon.ico (browser icon request)
+     * - /icon (App Router file-based icon, e.g. /icon.png)
      */
-    "/((?!login|api/auth|_next|favicon\\.ico).*)",
+    "/((?!login|api/auth|_next|favicon\\.ico|icon).*)",
   ],
 };

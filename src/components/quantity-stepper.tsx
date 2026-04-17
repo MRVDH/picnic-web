@@ -99,20 +99,20 @@ export function QuantityStepper({
         <SavingsLabel savingsInCents={bundleDisplay.savingsInCents} />
       )}
 
-      <div className="flex items-center gap-0 rounded-full bg-white shadow-md">
+      <div className="flex items-center gap-0 rounded-full border border-gray-200 bg-white">
         {/* Minus button */}
         <button
           type="button"
           onClick={onDecrement}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold text-[#333333] transition-colors hover:bg-gray-100 active:bg-gray-200"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-picnic-red text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-95"
           aria-label="Verwijder 1"
         >
           −
         </button>
 
         {/* Quantity count + optional bundle dots */}
-        <div className="flex min-w-[1.5rem] flex-col items-center">
-          <span className="text-center text-sm font-bold text-[#333333]">
+        <div className="flex min-w-[1.75rem] flex-col items-center">
+          <span className="text-center text-sm font-bold text-foreground">
             {quantity}
           </span>
           {bundleDisplay && bundleDisplay.dotsTotal > 0 && (
@@ -128,10 +128,10 @@ export function QuantityStepper({
           type="button"
           onClick={onIncrement}
           disabled={isAtMax}
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold transition-colors ${
+          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all ${
             isAtMax
-              ? "cursor-not-allowed text-gray-300"
-              : "text-[#333333] hover:bg-gray-100 active:bg-gray-200"
+              ? "cursor-not-allowed bg-gray-200 text-gray-400"
+              : "bg-picnic-red text-white hover:bg-red-700 active:scale-95"
           }`}
           aria-label="Voeg 1 toe"
         >
