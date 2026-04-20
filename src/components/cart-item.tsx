@@ -78,6 +78,7 @@ export function CartItemCard({
         {!item.isUnavailable && onIncrement && onDecrement && (
           <div className="flex shrink-0 flex-col items-end justify-center gap-1">
             <QuantityStepper
+              variant="cart"
               quantity={item.quantity}
               maxCount={item.maxCount}
               onIncrement={onIncrement}

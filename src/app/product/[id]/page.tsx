@@ -18,6 +18,7 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 import { ErrorView } from "@/components/error-view";
 import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { CartProvider, useCart } from "@/contexts/cart-context";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -98,24 +99,22 @@ export default function ProductPage({
   }, []);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <SharedHeader />
+    <CartProvider>
+      <div className="flex min-h-full flex-1 flex-col">
+        <SharedHeader />
 
-      <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 text-center text-sm text-amber-900">
-        Bundelkortingen zijn op dit moment niet zichtbaar.
+        <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+          {pageState.status === "loading" && <LoadingSpinner />}
+          {pageState.status === "not_found" && <NotFoundView />}
+          {pageState.status === "error" && (
+            <ErrorView message={pageState.message} onRetry={handleRetry} />
+          )}
+          {pageState.status === "success" && (
+            <ProductDetailView product={pageState.product} />
+          )}
+        </main>
       </div>
-
-      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
-        {pageState.status === "loading" && <LoadingSpinner />}
-        {pageState.status === "not_found" && <NotFoundView />}
-        {pageState.status === "error" && (
-          <ErrorView message={pageState.message} onRetry={handleRetry} />
-        )}
-        {pageState.status === "success" && (
-          <ProductDetailView product={pageState.product} />
-        )}
-      </main>
-    </div>
+    </CartProvider>
   );
 }
 
@@ -137,6 +136,22 @@ function NotFoundView() {
 }
 
 function ProductDetailView({ product }: { product: ProductDetail }) {
+  const { getQuantity, addProduct, removeProduct } = useCart();
+  const cartQuantity = getQuantity(product.id);
+
+  const handleSetQuantity = useCallback(
+    (target: number) => {
+      const current = getQuantity(product.id);
+      const diff = target - current;
+      if (diff > 0) {
+        for (let i = 0; i < diff; i++) addProduct(product.id, product.maxCount);
+      } else if (diff < 0) {
+        for (let i = 0; i < -diff; i++) removeProduct(product.id);
+      }
+    },
+    [product.id, product.maxCount, getQuantity, addProduct, removeProduct],
+  );
+
   const hasAllergens =
     product.allergens.confirmed.length > 0 ||
     product.allergens.mayContain.length > 0;
@@ -172,6 +187,11 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
             originalPrice={product.originalPrice}
             promotion={product.promotion}
             bundles={product.bundles}
+            cartQuantity={cartQuantity}
+            maxCount={product.maxCount}
+            onIncrement={() => addProduct(product.id, product.maxCount)}
+            onDecrement={() => removeProduct(product.id)}
+            onSetQuantity={handleSetQuantity}
           />
 
           {/* Description */}

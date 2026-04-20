@@ -18,6 +18,8 @@ type QuantityStepperProps = {
   maxCount: number;
   onIncrement: () => void;
   onDecrement: () => void;
+  /** Visual variant: "plp" (compact, transparent) or "cart" (large, pink pill). */
+  variant?: "plp" | "cart";
   /** Bundle progress data. Null when no bundle data is available. */
   bundleProgress?: BundleProgress | null;
   /** Regular (non-discounted) price in cents, for savings calculation. */
@@ -82,6 +84,7 @@ export function QuantityStepper({
   maxCount,
   onIncrement,
   onDecrement,
+  variant = "plp",
   bundleProgress,
   regularPrice,
 }: QuantityStepperProps) {
@@ -92,6 +95,43 @@ export function QuantityStepper({
     ? computeBundleDisplay(bundleProgress, regularPrice)
     : null;
 
+  if (variant === "cart") {
+    return (
+      <div className="flex items-center gap-0 rounded-full bg-gray-100 px-0.5 py-0.5">
+        {/* Minus button */}
+        <button
+          type="button"
+          onClick={onDecrement}
+          className="flex h-8 w-8 items-center justify-center text-base font-semibold text-foreground transition-opacity active:opacity-60"
+          aria-label="Verwijder 1"
+        >
+          −
+        </button>
+
+        {/* Quantity count */}
+        <span className="min-w-[1.5rem] text-center text-sm font-bold text-foreground">
+          {quantity}
+        </span>
+
+        {/* Plus button */}
+        <button
+          type="button"
+          onClick={onIncrement}
+          disabled={isAtMax}
+          className={`flex h-8 w-8 items-center justify-center text-base font-semibold transition-opacity ${
+            isAtMax
+              ? "cursor-not-allowed text-gray-300"
+              : "text-foreground active:opacity-60"
+          }`}
+          aria-label="Voeg 1 toe"
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+
+  // PLP variant (default) — compact, transparent background
   return (
     <div className="flex flex-col items-center gap-1">
       {/* Savings label — above the stepper when a bundle threshold is met */}
@@ -99,19 +139,19 @@ export function QuantityStepper({
         <SavingsLabel savingsInCents={bundleDisplay.savingsInCents} />
       )}
 
-      <div className="flex items-center gap-0 rounded-full border border-gray-200 bg-white">
+      <div className="flex items-center gap-0 rounded-full bg-white shadow-sm">
         {/* Minus button */}
         <button
           type="button"
           onClick={onDecrement}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-picnic-red text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-95"
+          className="flex h-7 w-7 items-center justify-center text-base font-semibold text-text-muted transition-opacity active:opacity-60"
           aria-label="Verwijder 1"
         >
           −
         </button>
 
         {/* Quantity count + optional bundle dots */}
-        <div className="flex min-w-[1.75rem] flex-col items-center">
+        <div className="flex min-w-[1.25rem] flex-col items-center">
           <span className="text-center text-sm font-bold text-foreground">
             {quantity}
           </span>
@@ -128,10 +168,10 @@ export function QuantityStepper({
           type="button"
           onClick={onIncrement}
           disabled={isAtMax}
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all ${
+          className={`flex h-7 w-7 items-center justify-center text-base font-semibold transition-opacity ${
             isAtMax
-              ? "cursor-not-allowed bg-gray-200 text-gray-400"
-              : "bg-picnic-red text-white hover:bg-red-700 active:scale-95"
+              ? "cursor-not-allowed text-gray-300"
+              : "text-text-muted active:opacity-60"
           }`}
           aria-label="Voeg 1 toe"
         >

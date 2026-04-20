@@ -28,7 +28,8 @@ export type BadgeVariant =
   | "freshness"
   | "availability"
   | "info"
-  | "unit-price";
+  | "unit-price"
+  | "bundle";
 
 export type Badge = {
   text: string;
