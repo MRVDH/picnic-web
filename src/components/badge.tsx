@@ -8,6 +8,7 @@ const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   availability: "bg-picnic-yellow text-gray-800",
   info: "bg-picnic-blue text-white",
   "unit-price": "bg-gray-100 text-gray-600",
+  bundle: "bg-picnic-red text-white",
 };
 
 type BadgeProps = {

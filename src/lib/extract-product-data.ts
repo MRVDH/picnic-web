@@ -31,7 +31,7 @@ export function findMainSellingUnit(
 
   return {
     displayPrice: (mainUnit?.display_price as number) ?? 0,
-    maxCount: (mainUnit?.max_count as number) ?? 0,
+    maxCount: (mainUnit?.max_count as number) ?? 99,
     imageId: (mainUnit?.image_id as string) ?? "",
   };
 }
@@ -118,8 +118,29 @@ function findStateBoundarySellingUnits(container: unknown): PmlNode[] {
   return results;
 }
 
-/** Extract bundle options from bundle container nodes. */
+/** Extract bundle options from the page tree.
+ *
+ * The API embeds bundle pricing as expression props (`__ep1`) containing
+ * `{ price, from_quantity }` tier arrays. We recursively search for these
+ * props and extract the longest tier list found — which represents the
+ * product's progressive discount tiers (e.g. "Vanaf 1 → €1.19, Vanaf 2 → €1.17").
+ *
+ * Falls back to the legacy `product-page-bundles-*` container approach.
+ */
 export function extractBundles(page: unknown): BundleOption[] {
+  // Strategy 1: find __ep1.v1 tier arrays in expression props
+  const tiers = findBundleTiers(page);
+  if (tiers.length > 0) {
+    return tiers.map((tier) => ({
+      id: "",
+      quantity: tier.from_quantity,
+      pricePerUnit: tier.price,
+      imageId: "",
+      maxCount: 0,
+    }));
+  }
+
+  // Strategy 2 (legacy): structured selling units under product-page-bundles-*
   const bundleContainer = findNodeByIdPrefix(page, PRODUCT_BUNDLES_PREFIX);
   if (!bundleContainer) return [];
 
@@ -147,6 +168,51 @@ export function extractBundles(page: unknown): BundleOption[] {
   }
 
   return bundles;
+}
+
+type BundleTier = { price: number; from_quantity: number };
+
+/** Recursively search for __ep1.v1 arrays containing bundle tier data. */
+function findBundleTiers(obj: unknown): BundleTier[] {
+  if (typeof obj !== "object" || obj === null) return [];
+
+  if (Array.isArray(obj)) {
+    // Check if this array itself is a tier list
+    if (obj.length > 1 && isBundleTier(obj[0])) {
+      return obj as BundleTier[];
+    }
+    for (const item of obj) {
+      const result = findBundleTiers(item);
+      if (result.length > 0) return result;
+    }
+    return [];
+  }
+
+  const record = obj as Record<string, unknown>;
+
+  // Check __ep1.v1 directly — this is where the API puts bundle tiers
+  const ep1 = record["__ep1"];
+  if (typeof ep1 === "object" && ep1 !== null && !Array.isArray(ep1)) {
+    const v1 = (ep1 as Record<string, unknown>)["v1"];
+    if (Array.isArray(v1) && v1.length > 1 && isBundleTier(v1[0])) {
+      return v1 as BundleTier[];
+    }
+  }
+
+  for (const value of Object.values(record)) {
+    const result = findBundleTiers(value);
+    if (result.length > 0) return result;
+  }
+  return [];
+}
+
+function isBundleTier(obj: unknown): obj is BundleTier {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as Record<string, unknown>)["price"] === "number" &&
+    typeof (obj as Record<string, unknown>)["from_quantity"] === "number"
+  );
 }
 
 // ─── Similar products ────────────────────────────────────────────────────────

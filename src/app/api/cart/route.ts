@@ -28,8 +28,8 @@ export async function GET(
   try {
     const client = buildPicnicClient(token);
 
-    // Use the sendRequest cast pattern — /cart returns structured JSON, not a
-    // Fusion page, so includePicnicHeaders (4th arg) is false.
+    // Use the sendRequest cast pattern — include Picnic headers (4th arg)
+    // so decorator_overrides (bundle discounts, etc.) are returned.
     const rawCart = await (
       client as unknown as {
         sendRequest: (
@@ -39,7 +39,7 @@ export async function GET(
           includeFusion: boolean,
         ) => Promise<unknown>;
       }
-    ).sendRequest("GET", "/cart", null, false);
+    ).sendRequest("GET", "/cart", null, true);
 
     const cartData = parseCartResponse(rawCart);
 
@@ -133,7 +133,7 @@ export async function POST(
     ).sendRequest("POST", endpoint, {
       product_id: body.productId,
       count: body.count,
-    }, false);
+    }, true);
 
     const cartData = parseCartResponse(rawCart);
 

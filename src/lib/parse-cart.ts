@@ -130,7 +130,9 @@ function mapDecoratorsToBadges(decorators: RawDecorator[]): Badge[] {
       case "LABEL":
       case "PROMO": {
         const text = asString(dec["text"]);
-        if (text) badges.push({ text, variant: "promo" });
+        if (!text) break;
+        const isBundleLabel = text.toLowerCase().includes("bundel");
+        badges.push({ text, variant: isBundleLabel ? "bundle" : "promo" });
         break;
       }
       case "FRESH_LABEL": {
@@ -145,7 +147,7 @@ function mapDecoratorsToBadges(decorators: RawDecorator[]): Badge[] {
         break;
       }
       case "BUNDLES_BUTTON":
-        badges.push({ text: "Bundel", variant: "info" });
+        badges.push({ text: "BundelBonus", variant: "bundle" });
         break;
     }
   }
