@@ -37,11 +37,14 @@ export default function CookbookPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all recipes + categories once. Category filtering is done client-side.
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/cookbook", { signal: controller.signal })
+    const url = selectedCategory
+      ? `/api/cookbook?category=${encodeURIComponent(selectedCategory)}`
+      : "/api/cookbook";
+
+    fetch(url, { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CookbookApiResponse & Partial<ApiErrorResponse>) => {
         if ("error" in data && data.error) {
@@ -64,35 +67,27 @@ export default function CookbookPage() {
       });
 
     return () => controller.abort();
-  }, [retryCount, t.cookbookLoadError]);
-
-  // Client-side category filtering: filter all loaded recipes by the selected pill's recipeIds.
-  const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
-  const filteredRecipes = (() => {
-    if (!selectedCategory) return allRecipes;
-    const cat = categories.find((c) => c.id === selectedCategory);
-    if (!cat || cat.recipeIds.length === 0) return allRecipes;
-    const idSet = new Set(cat.recipeIds);
-    return allRecipes.filter((r) => idSet.has(r.id));
-  })();
+  }, [selectedCategory, retryCount, t.cookbookLoadError]);
 
   // Infinite scroll: reveal PAGE_SIZE more recipes when sentinel enters viewport
+  const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
+
   useEffect(() => {
-    if (filteredRecipes.length === 0) return;
+    if (allRecipes.length === 0) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredRecipes.length));
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, allRecipes.length));
         }
       },
       { threshold: 0.1 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [filteredRecipes.length]);
+  }, [allRecipes.length]);
 
   const handleBack = useCallback(() => router.push("/"), [router]);
 
@@ -104,10 +99,11 @@ export default function CookbookPage() {
 
   const handleSelectCategory = useCallback((catId: string | null) => {
     setSelectedCategory(catId);
+    setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const visibleRecipes = filteredRecipes.slice(0, visibleCount);
+  const visibleRecipes = allRecipes.slice(0, visibleCount);
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -130,7 +126,7 @@ export default function CookbookPage() {
           <div className="-mx-6 mb-6 overflow-x-auto px-6">
             <div className="flex gap-2 pb-1" style={{ width: "max-content" }}>
               <CategoryChip
-                label={t.cookbookTitle}
+                label={t.cookbookFeatured}
                 active={selectedCategory === null}
                 onClick={() => handleSelectCategory(null)}
               />
@@ -153,11 +149,11 @@ export default function CookbookPage() {
           <ErrorView message={recipesState.message} onRetry={handleRetry} />
         )}
 
-        {recipesState.status === "success" && filteredRecipes.length === 0 && (
+        {recipesState.status === "success" && allRecipes.length === 0 && (
           <p className="text-text-muted text-sm">{t.noRecipes}</p>
         )}
 
-        {recipesState.status === "success" && filteredRecipes.length > 0 && (
+        {recipesState.status === "success" && allRecipes.length > 0 && (
           <>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {visibleRecipes.map((recipe) => (
@@ -166,7 +162,7 @@ export default function CookbookPage() {
             </div>
 
             {/* Sentinel div: when visible, triggers next batch */}
-            {visibleCount < filteredRecipes.length && (
+            {visibleCount < allRecipes.length && (
               <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
                 <LoadingSpinner />
               </div>
