@@ -56,7 +56,7 @@ export async function GET(
     console.error("[/api/categories] Failed to fetch categories:", message);
 
     return NextResponse.json(
-      { error: "Kan categorieën niet laden. Probeer het later opnieuw." },
+      { error: "Failed to load categories. Please try again later." },
       { status: 502 }
     );
   }
