@@ -1,15 +1,18 @@
 "use client";
 
 import { forwardRef, useEffect, useRef } from "react";
+
+import { useTranslations } from "@/contexts/country-context";
+import { useScrollSpy } from "@/hooks/use-scroll-spy";
 import type { SearchSection } from "@/lib/types";
 import { buildSectionId } from "@/lib/types";
-import { useScrollSpy } from "@/hooks/use-scroll-spy";
 
 type SectionNavBarProps = {
   sections: SearchSection[];
 };
 
 export function SectionNavBar({ sections }: SectionNavBarProps) {
+  const t = useTranslations();
   const activeSectionIndex = useScrollSpy(sections.length);
   const badgeRefs = useRef<Map<number, HTMLAnchorElement>>(new Map());
 
@@ -35,7 +38,7 @@ export function SectionNavBar({ sections }: SectionNavBarProps) {
   return (
     <nav
       aria-label="Section navigation"
-      className="border-t border-card-border bg-white/95 backdrop-blur-sm"
+      className="border-card-border border-t bg-white/95 backdrop-blur-sm"
     >
       <div
         ref={scrollContainerRef}
@@ -54,6 +57,7 @@ export function SectionNavBar({ sections }: SectionNavBarProps) {
             index={index}
             title={section.title}
             isActive={index === activeSectionIndex}
+            goToPrefix={t.sectionNavGoTo}
           />
         ))}
       </div>
@@ -65,24 +69,24 @@ type SectionBadgeProps = {
   index: number;
   title: string;
   isActive: boolean;
+  goToPrefix: string;
 };
 
-const SectionBadge = forwardRef<HTMLAnchorElement, SectionBadgeProps>(
-  function SectionBadge({ index, title, isActive }, ref) {
-    return (
-      <a
-        ref={ref}
-        href={`#${buildSectionId(index)}`}
-        aria-label={`Ga naar ${title}`}
-        aria-current={isActive ? "true" : undefined}
-        className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors no-underline ${
-          isActive
-            ? "bg-picnic-red text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        }`}
-      >
-        {title}
-      </a>
-    );
-  },
-);
+const SectionBadge = forwardRef<HTMLAnchorElement, SectionBadgeProps>(function SectionBadge(
+  { index, title, isActive, goToPrefix },
+  ref
+) {
+  return (
+    <a
+      ref={ref}
+      href={`#${buildSectionId(index)}`}
+      aria-label={`${goToPrefix} ${title}`}
+      aria-current={isActive ? "true" : undefined}
+      className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap no-underline transition-colors ${
+        isActive ? "bg-picnic-red text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      }`}
+    >
+      {title}
+    </a>
+  );
+});

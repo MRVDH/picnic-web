@@ -8,23 +8,24 @@
 "use client";
 
 import Link from "next/link";
-import type { CartData } from "@/lib/types";
+
 import { CartItemCard } from "@/components/cart-item";
-import { OrderSummary } from "@/components/order-summary";
-import { ProductSlider } from "@/components/product-slider";
 import { CheckoutCta } from "@/components/checkout-cta";
 import { DeliverySlotBanner } from "@/components/delivery-slot-banner";
+import { OrderSummary } from "@/components/order-summary";
+import { ProductSlider } from "@/components/product-slider";
+import { useTranslations } from "@/contexts/country-context";
+import type { CartData } from "@/lib/types";
 
 export function EmptyView() {
+  const t = useTranslations();
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="mb-4 text-5xl">🛒</div>
-      <p className="text-lg font-semibold text-foreground">Je winkelwagen is leeg</p>
-      <p className="mt-1 text-sm text-gray-500">
-        Voeg producten toe via de Picnic app of zoek iets op.
-      </p>
-      <Link href="/" className="mt-4 text-sm text-picnic-red hover:underline">
-        Naar zoeken
+      <p className="text-foreground text-lg font-semibold">{t.emptyCartTitle}</p>
+      <p className="mt-1 text-sm text-gray-500">{t.emptyCartText}</p>
+      <Link href="/" className="text-picnic-red mt-4 text-sm hover:underline">
+        {t.goToSearch}
       </Link>
     </div>
   );
@@ -41,9 +42,10 @@ export function CartPageContent({
   onDecrement: (productId: string) => void;
   onOpenPicker: () => void;
 }) {
+  const t = useTranslations();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Winkelwagen</h1>
+      <h1 className="text-foreground text-2xl font-bold">{t.cartTitle}</h1>
 
       <DeliverySlotBanner
         bannerText={cart.deliveryBannerText}
@@ -73,7 +75,7 @@ export function CartPageContent({
         minimumOrderValue={cart.minimumOrderValue}
       />
 
-      <ProductSlider title="Niets vergeten?" products={cart.suggestions} />
+      <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
 
       <CheckoutCta />
     </div>

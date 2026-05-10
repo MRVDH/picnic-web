@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { Product, BundleProgress } from "@/lib/types";
-import { buildImageUrl } from "@/lib/image-url";
-import { PriceDisplay } from "./price-display";
-import { Badge } from "./badge";
-import { QuantityStepper } from "./quantity-stepper";
+
 import { useCart } from "@/contexts/cart-context";
-import { useCountryCode } from "@/contexts/country-context";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import { buildImageUrl } from "@/lib/image-url";
+import type { BundleProgress, Product } from "@/lib/types";
+
+import { Badge } from "./badge";
+import { PriceDisplay } from "./price-display";
+import { QuantityStepper } from "./quantity-stepper";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 const FLAG_SIZE = 14;
@@ -197,6 +200,7 @@ function CartActionOverlay({
   bundleProgress,
   regularPrice,
 }: CartActionOverlayProps) {
+  const t = useTranslations();
   // Prevent click from propagating to the Link wrapper
   const stopPropagation = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -210,7 +214,7 @@ function CartActionOverlay({
           type="button"
           onClick={onAdd}
           className="text-text-dark flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
-          aria-label="Toevoegen aan winkelwagen"
+          aria-label={t.addToCartAriaLabel}
         >
           +
         </button>
