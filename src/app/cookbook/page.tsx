@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { CategoryDropdown } from "@/components/category-dropdown";
 import { ErrorView } from "@/components/error-view";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { RecipeCard } from "@/components/recipe-card";
@@ -11,12 +12,7 @@ import { SharedHeader } from "@/components/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type {
-  ApiErrorResponse,
-  CookbookApiResponse,
-  RecipeCategory,
-  RecipeItem,
-} from "@/lib/types";
+import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/types";
 
 const PAGE_SIZE = 24;
 
@@ -30,7 +26,7 @@ export default function CookbookPage() {
   const router = useRouter();
   usePageTitle(t.cookbookTitle);
 
-  const [categories, setCategories] = useState<RecipeCategory[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
@@ -121,24 +117,17 @@ export default function CookbookPage() {
           <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
         </div>
 
-        {/* Category filter bar */}
+        {/* Category dropdown */}
         {categories.length > 0 && (
-          <div className="-mx-6 mb-6 overflow-x-auto px-6">
-            <div className="flex gap-2 pb-1" style={{ width: "max-content" }}>
-              <CategoryChip
-                label={t.cookbookFeatured}
-                active={selectedCategory === null}
-                onClick={() => handleSelectCategory(null)}
-              />
-              {categories.map((cat) => (
-                <CategoryChip
-                  key={cat.id}
-                  label={cat.name}
-                  active={selectedCategory === cat.id}
-                  onClick={() => handleSelectCategory(cat.id)}
-                />
-              ))}
-            </div>
+          <div className="mb-6">
+            <CategoryDropdown
+              options={[
+                { id: null, name: t.cookbookFeatured },
+                ...categories.map((c) => ({ id: c.id as string | null, name: c.name })),
+              ]}
+              value={selectedCategory}
+              onChange={handleSelectCategory}
+            />
           </div>
         )}
 
@@ -171,29 +160,5 @@ export default function CookbookPage() {
         )}
       </main>
     </div>
-  );
-}
-
-function CategoryChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-        active
-          ? "bg-picnic-red text-white"
-          : "border border-gray-200 bg-white text-gray-800 hover:border-gray-400"
-      }`}
-    >
-      {label}
-    </button>
   );
 }
