@@ -1,12 +1,13 @@
-import { IMAGE_CDN_BASE, DEFAULT_IMAGE_SIZE } from "./types";
+import { type CountryCode, getImageCdnBase, DEFAULT_IMAGE_SIZE } from "./types";
 
 /**
- * Builds a Picnic CDN image URL for a given image ID.
+ * Builds a Picnic CDN image URL for a given image ID and country.
  * Always uses .png format per FR-013.
  */
 export function buildImageUrl(
   imageId: string,
-  size: string = DEFAULT_IMAGE_SIZE,
+  countryCode: CountryCode,
+  size: string = DEFAULT_IMAGE_SIZE
 ): string {
-  return `${IMAGE_CDN_BASE}/${imageId}/${size}.png`;
+  return `${getImageCdnBase(countryCode)}/${imageId}/${size}.png`;
 }

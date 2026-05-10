@@ -1,4 +1,10 @@
 import { NextRequest } from "next/server";
+import {
+  type CountryCode,
+  SUPPORTED_COUNTRY_CODES,
+  DEFAULT_COUNTRY_CODE,
+  COUNTRY_COOKIE_NAME,
+} from "./types";
 
 // ─── Auth Constants ──────────────────────────────────────────────────────────
 
@@ -23,4 +29,16 @@ export function readAuthToken(request: NextRequest): string | null {
     return null;
   }
   return value;
+}
+
+/**
+ * Read the selected country code from the request's cookies.
+ * Falls back to DEFAULT_COUNTRY_CODE if the cookie is missing or invalid.
+ */
+export function readCountryCode(request: NextRequest): CountryCode {
+  const value = request.cookies.get(COUNTRY_COOKIE_NAME)?.value?.toUpperCase();
+  if (value && (SUPPORTED_COUNTRY_CODES as readonly string[]).includes(value)) {
+    return value as CountryCode;
+  }
+  return DEFAULT_COUNTRY_CODE;
 }

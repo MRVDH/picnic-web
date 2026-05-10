@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken } from "@/lib/auth";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
 import { buildPicnicClient } from "@/lib/picnic-client";
 import { isApiAuthError } from "@/lib/api-error";
 import { parseDeliverySlotsPicker } from "@/lib/parse-delivery-slots";
@@ -14,7 +14,7 @@ type SendRequestClient = {
     method: string,
     path: string,
     body: Record<string, unknown> | null,
-    includeFusion: boolean,
+    includeFusion: boolean
   ) => Promise<unknown>;
 };
 
@@ -25,23 +25,28 @@ type SendRequestClient = {
  * by day with green-choice identification. Used by the slot picker modal.
  */
 export async function GET(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<DeliverySlotPickerData | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
 
-  try {
-    const client = buildPicnicClient(token);
+  const countryCode = readCountryCode(request);
 
-    const rawResult = await (
-      client as unknown as SendRequestClient
-    ).sendRequest("GET", "/cart/delivery_slots", null, false);
+  try {
+    const client = buildPicnicClient(token, countryCode);
+
+    const rawResult = await (client as unknown as SendRequestClient).sendRequest(
+      "GET",
+      "/cart/delivery_slots",
+      null,
+      false
+    );
 
     const pickerData = parseDeliverySlotsPicker(rawResult);
 
@@ -50,19 +55,18 @@ export async function GET(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/cart/delivery-slots] Failed to fetch slots:", message);
 
     return NextResponse.json(
       {
         error: "Kan bezorgmomenten niet ophalen. Probeer het later opnieuw.",
       },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }
@@ -74,42 +78,41 @@ export async function GET(
  * GET /api/cart) so the cart page can reconcile all state in one shot.
  */
 export async function POST(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<CartData | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
+
+  const countryCode = readCountryCode(request);
 
   let body: { slotId?: string };
   try {
     body = (await request.json()) as { slotId?: string };
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   if (!body.slotId || typeof body.slotId !== "string") {
-    return NextResponse.json(
-      { error: "Missing required field: slotId" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Missing required field: slotId" }, { status: 400 });
   }
 
   try {
-    const client = buildPicnicClient(token);
+    const client = buildPicnicClient(token, countryCode);
 
-    const rawCart = await (
-      client as unknown as SendRequestClient
-    ).sendRequest("POST", "/cart/set_delivery_slot", {
-      slot_id: body.slotId,
-    }, false);
+    const rawCart = await (client as unknown as SendRequestClient).sendRequest(
+      "POST",
+      "/cart/set_delivery_slot",
+      {
+        slot_id: body.slotId,
+      },
+      false
+    );
 
     const cartData = parseCartResponse(rawCart);
 
@@ -118,19 +121,18 @@ export async function POST(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/cart/delivery-slots] Failed to set slot:", message);
 
     return NextResponse.json(
       {
         error: "Kan bezorgmoment niet instellen. Probeer het opnieuw.",
       },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }
