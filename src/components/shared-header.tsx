@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { CartData, ApiErrorResponse } from "@/lib/types";
 import { SUPPORTED_COUNTRY_CODES } from "@/lib/types";
 import { useCartOptional } from "@/contexts/cart-context";
-import { useCountryCode, useSwitchCountry } from "@/contexts/country-context";
+import { useCountryCode, useSwitchCountry, useTranslations } from "@/contexts/country-context";
 import { formatPrice } from "@/lib/format-price";
 import { SearchBar } from "@/components/search-bar";
 
@@ -143,6 +143,7 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
 
   const countryCode = useCountryCode();
   const switchCountry = useSwitchCountry();
+  const t = useTranslations();
 
   const handleSignOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -193,7 +194,7 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
             onClick={handleSignOut}
             className="hover:text-foreground shrink-0 text-sm text-gray-500 transition-colors"
           >
-            Uitloggen
+            {t.signOut}
           </button>
         </div>
 
