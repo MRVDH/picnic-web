@@ -175,6 +175,10 @@ function SearchPage() {
       if (!pageId) {
         return;
       }
+      if (pageId.startsWith("meals-page-root")) {
+        router.push("/cookbook");
+        return;
+      }
       const params = new URLSearchParams({ pageId, title: shortcut.name });
       router.push(`/pages?${params.toString()}`);
     },

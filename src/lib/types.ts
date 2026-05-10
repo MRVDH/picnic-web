@@ -414,6 +414,19 @@ export type BundleProgress = {
   currentQuantity: number;
 };
 
+// ─── Cookbook / Recipes ──────────────────────────────────────────────────────
+
+export type RecipeItem = {
+  id: string;
+  name: string;
+  imageId: string | null;
+  cookingTimeMinutes: number | null;
+};
+
+export type CookbookApiResponse = {
+  recipes: RecipeItem[];
+};
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
