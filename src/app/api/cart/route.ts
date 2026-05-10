@@ -60,7 +60,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Kan winkelwagen niet ophalen. Probeer het later opnieuw.",
+        error: "Failed to fetch cart. Please try again later.",
       },
       { status: 502 }
     );
@@ -152,7 +152,7 @@ export async function POST(
 
     return NextResponse.json(
       {
-        error: "Kan winkelwagen niet bijwerken. Probeer het opnieuw.",
+        error: "Failed to update cart. Please try again.",
       },
       { status: 502 }
     );
