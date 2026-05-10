@@ -1,5 +1,5 @@
 import { cleanMarkdown, collectMarkdowns } from "./pml-helpers";
-import type { RecipeCategory, RecipeItem } from "./types";
+import type { RecipeItem } from "./types";
 
 type PmlRecord = Record<string, unknown>;
 
@@ -92,64 +92,6 @@ function extractFromAnalytics(
     return { recipeId: data.recipe_id, name, cookingTimeMinutes };
   }
   return null;
-}
-
-/**
- * Parse recipe category pills from the cookbook homepage Fusion page.
- *
- * The Picnic app represents categories as TOUCHABLE nodes with an EXPRESSION
- * onPress of type "onPillPress". Each pill carries its display name in
- * props.v13 and the recipe IDs for that category in props.__ep2.v4.
- */
-export function parseRecipeCategories(rawPage: unknown): RecipeCategory[] {
-  const results: RecipeCategory[] = [];
-  const seenIds = new Set<string>();
-  collectPillCategories(rawPage, results, seenIds);
-  return results;
-}
-
-function collectPillCategories(
-  obj: unknown,
-  results: RecipeCategory[],
-  seenIds: Set<string>
-): void {
-  if (typeof obj !== "object" || obj === null) return;
-  if (Array.isArray(obj)) {
-    for (const item of obj) collectPillCategories(item, results, seenIds);
-    return;
-  }
-  const record = obj as PmlRecord;
-
-  if (record.type === "TOUCHABLE") {
-    const onPress = record.onPress as PmlRecord | undefined;
-    if (
-      onPress?.type === "EXPRESSION" &&
-      typeof onPress.expression === "string" &&
-      onPress.expression.startsWith("onPillPress")
-    ) {
-      const props = onPress.props as PmlRecord | undefined;
-      if (props) {
-        const name = typeof props.v13 === "string" ? props.v13 : "";
-        const themeId = typeof props.v1 === "string" ? props.v1 : "";
-        const ep2 = props.__ep2 as PmlRecord | undefined;
-        const recipeIds = Array.isArray(ep2?.v4)
-          ? (ep2.v4 as unknown[]).filter(
-              (id): id is string => typeof id === "string" && RECIPE_ID_RE.test(id)
-            )
-          : [];
-
-        if (name && themeId && !seenIds.has(themeId)) {
-          seenIds.add(themeId);
-          results.push({ id: themeId, name, recipeIds });
-        }
-        return; // don't recurse into this touchable
-      }
-    }
-  }
-
-  for (const value of Object.values(record)) {
-    collectPillCategories(value, results, seenIds);
-  }
 }
 
 /**

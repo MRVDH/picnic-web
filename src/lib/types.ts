@@ -426,8 +426,6 @@ export type RecipeItem = {
 export type RecipeCategory = {
   id: string;
   name: string;
-  /** Recipe IDs belonging to this category pill, for client-side filtering. */
-  recipeIds: string[];
 };
 
 export type CookbookApiResponse = {

@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCookbookPage, parseRecipeCategories } from "@/lib/parse-cookbook";
+import { parseCookbookPage } from "@/lib/parse-cookbook";
 import { buildPicnicClient } from "@/lib/picnic-client";
+import { getRecipeCategories } from "@/lib/recipe-categories";
 import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/types";
+
+const CATEGORY_ID_RE = /^recipe-cattree-[\w-]+$/;
 
 export async function GET(
   request: NextRequest
@@ -19,12 +22,24 @@ export async function GET(
   }
 
   const countryCode = readCountryCode(request);
+  const categoryId = request.nextUrl.searchParams.get("category");
 
   try {
     const client = buildPicnicClient(token, countryCode);
+
+    if (categoryId) {
+      if (!CATEGORY_ID_RE.test(categoryId)) {
+        return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
+      }
+      const rawPage = await client.app.getPage(categoryId);
+      const recipes = parseCookbookPage(rawPage);
+      return NextResponse.json({ categories: [], recipes });
+    }
+
+    // Default: editorial homepage + full hardcoded category list
     const rawPage = await client.recipe.getRecipesPage();
     const recipes = parseCookbookPage(rawPage);
-    const categories = parseRecipeCategories(rawPage);
+    const categories = getRecipeCategories(countryCode);
     return NextResponse.json({ categories, recipes });
   } catch (error) {
     if (isApiAuthError(error)) {
