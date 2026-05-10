@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CategoryDropdown } from "@/components/category-dropdown";
+import { RecipeSearchInput } from "@/components/recipe-search-input";
 import { ErrorView } from "@/components/error-view";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { RecipeCard } from "@/components/recipe-card";
@@ -12,6 +13,7 @@ import { SharedHeader } from "@/components/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import { DEBOUNCE_DELAY_MS } from "@/lib/types";
 import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/types";
 
 const PAGE_SIZE = 24;
@@ -28,17 +30,28 @@ export default function CookbookPage() {
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchInput.trim()), DEBOUNCE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Fetch recipes: search takes priority over category
   useEffect(() => {
     const controller = new AbortController();
 
-    const url = selectedCategory
-      ? `/api/cookbook?category=${encodeURIComponent(selectedCategory)}`
-      : "/api/cookbook";
+    const url = debouncedQuery
+      ? `/api/cookbook/search?q=${encodeURIComponent(debouncedQuery)}`
+      : selectedCategory
+        ? `/api/cookbook?category=${encodeURIComponent(selectedCategory)}`
+        : "/api/cookbook";
 
     fetch(url, { signal: controller.signal })
       .then((res) => res.json())
@@ -63,7 +76,7 @@ export default function CookbookPage() {
       });
 
     return () => controller.abort();
-  }, [selectedCategory, retryCount, t.cookbookLoadError]);
+  }, [debouncedQuery, selectedCategory, retryCount, t.cookbookLoadError]);
 
   // Infinite scroll: reveal PAGE_SIZE more recipes when sentinel enters viewport
   const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
@@ -117,9 +130,9 @@ export default function CookbookPage() {
           <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
         </div>
 
-        {/* Category dropdown */}
-        {categories.length > 0 && (
-          <div className="mb-6">
+        {/* Controls row: category dropdown + search */}
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          {categories.length > 0 && (
             <CategoryDropdown
               options={[
                 { id: null, name: t.cookbookFeatured },
@@ -127,9 +140,24 @@ export default function CookbookPage() {
               ]}
               value={selectedCategory}
               onChange={handleSelectCategory}
+              disabled={!!debouncedQuery}
             />
-          </div>
-        )}
+          )}
+          <RecipeSearchInput
+            value={searchInput}
+            placeholder={t.cookbookSearchPlaceholder}
+            onChange={(val) => {
+              setSearchInput(val);
+              setRecipesState({ status: "loading" });
+              setVisibleCount(PAGE_SIZE);
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setRecipesState({ status: "loading" });
+              setVisibleCount(PAGE_SIZE);
+            }}
+          />
+        </div>
 
         {/* Content */}
         {recipesState.status === "loading" && <LoadingSpinner />}
