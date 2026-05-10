@@ -1,11 +1,6 @@
 "use client";
 
-import { useCountryCode } from "@/contexts/country-context";
-
-const CHECKOUT_LABELS: Record<string, string> = {
-  NL: "Naar de kassa",
-  DE: "Zur Kasse",
-};
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
 
 /**
  * Checkout button linking to the Picnic app deeplink for the cart.
@@ -13,13 +8,13 @@ const CHECKOUT_LABELS: Record<string, string> = {
  */
 export function CheckoutCta() {
   const countryCode = useCountryCode();
-  const label = CHECKOUT_LABELS[countryCode] ?? CHECKOUT_LABELS["NL"];
+  const t = useTranslations();
   return (
     <a
       href={`https://picnic.app/${countryCode.toLowerCase()}/deeplink/?path=cart`}
       className="bg-picnic-red block w-full rounded-xl py-4 text-center text-base font-semibold text-white transition-colors hover:bg-red-700"
     >
-      {label}
+      {t.checkoutLabel}
     </a>
   );
 }

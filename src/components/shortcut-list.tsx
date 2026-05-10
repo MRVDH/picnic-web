@@ -1,11 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { buildImageUrl } from "@/lib/image-url";
-import type { ShortcutItem } from "@/lib/category-types";
-import { useCountryCode } from "@/contexts/country-context";
 
-const SHORTCUT_SECTION_TITLE = "Snel naar";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import type { ShortcutItem } from "@/lib/category-types";
+import { buildImageUrl } from "@/lib/image-url";
 
 type ShortcutListProps = {
   shortcuts: ShortcutItem[];
@@ -13,11 +12,12 @@ type ShortcutListProps = {
 };
 
 export function ShortcutList({ shortcuts, onShortcutTap }: ShortcutListProps) {
+  const t = useTranslations();
   if (shortcuts.length === 0) return null;
 
   return (
     <div className="mb-6">
-      <h2 className="text-foreground mb-3 text-lg font-semibold">{SHORTCUT_SECTION_TITLE}</h2>
+      <h2 className="text-foreground mb-3 text-lg font-semibold">{t.shortcutSectionTitle}</h2>
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         {shortcuts.map((shortcut, index) => (
           <ShortcutRow

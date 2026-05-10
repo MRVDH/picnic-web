@@ -8,22 +8,19 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { CartData, ApiErrorResponse } from "@/lib/types";
-import type { DeliverySlotPickerData } from "@/lib/delivery-slot-types";
+import { useCallback, useEffect, useState } from "react";
+
 import {
   CloseIcon,
   DayTabs,
-  SelectedDayView,
   DefaultDayView,
+  SelectedDayView,
   findSlotInDay,
   getAllSlots,
-  PICKER_TITLE,
-  FREE_DELIVERY_LABEL,
-  NO_SLOTS_LABEL,
-  CLOSE_ARIA_LABEL,
-  RETRY_LABEL,
 } from "@/components/slot-picker-parts";
+import { useTranslations } from "@/contexts/country-context";
+import type { DeliverySlotPickerData } from "@/lib/delivery-slot-types";
+import type { ApiErrorResponse, CartData } from "@/lib/types";
 
 // ─── Props & state ───────────────────────────────────────────────────────────
 
@@ -60,10 +57,7 @@ async function selectSlot(slotId: string): Promise<CartData> {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function DeliverySlotPicker({
-  onClose,
-  onSlotSelected,
-}: DeliverySlotPickerProps) {
+export function DeliverySlotPicker({ onClose, onSlotSelected }: DeliverySlotPickerProps) {
   const [state, setState] = useState<PickerState>({ status: "loading" });
 
   // Fetch fresh slot data on mount (component is only mounted when picker is open)
@@ -79,7 +73,9 @@ export function DeliverySlotPicker({
         setState({ status: "error", message: err.message });
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSelectSlot = useCallback(
@@ -106,7 +102,7 @@ export function DeliverySlotPicker({
           });
         });
     },
-    [onSlotSelected],
+    [onSlotSelected]
   );
 
   const handleDayChange = useCallback((index: number) => {
@@ -131,9 +127,7 @@ export function DeliverySlotPicker({
         <PickerHeader onClose={onClose} />
 
         {state.status === "loading" && <LoadingBody />}
-        {state.status === "error" && (
-          <ErrorBody message={state.message} onRetry={handleRetry} />
-        )}
+        {state.status === "error" && <ErrorBody message={state.message} onRetry={handleRetry} />}
         {(state.status === "ready" || state.status === "selecting") && (
           <SlotListBody
             data={state.data}
@@ -152,18 +146,19 @@ export function DeliverySlotPicker({
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function PickerHeader({ onClose }: { onClose: () => void }) {
+  const t = useTranslations();
   return (
-    <div className="border-b border-gray-200 px-4 pb-3 pt-4">
+    <div className="border-b border-gray-200 px-4 pt-4 pb-3">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground">{PICKER_TITLE}</h2>
-          <p className="text-sm text-green-700">{FREE_DELIVERY_LABEL}</p>
+          <h2 className="text-foreground text-lg font-bold">{t.pickerTitle}</h2>
+          <p className="text-sm text-green-700">{t.freeDeliveryLabel}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
-          aria-label={CLOSE_ARIA_LABEL}
+          aria-label={t.closeAriaLabel}
         >
           <CloseIcon />
         </button>
@@ -175,21 +170,22 @@ function PickerHeader({ onClose }: { onClose: () => void }) {
 function LoadingBody() {
   return (
     <div className="flex min-h-[200px] flex-1 items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-picnic-red" />
+      <div className="border-t-picnic-red h-8 w-8 animate-spin rounded-full border-4 border-gray-200" />
     </div>
   );
 }
 
 function ErrorBody({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const t = useTranslations();
   return (
     <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
       <p className="text-sm text-gray-600">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-lg bg-picnic-red px-4 py-2 text-sm font-medium text-white"
+        className="bg-picnic-red rounded-lg px-4 py-2 text-sm font-medium text-white"
       >
-        {RETRY_LABEL}
+        {t.retryLabel}
       </button>
     </div>
   );
@@ -210,10 +206,12 @@ function SlotListBody({
   onDayChange: (index: number) => void;
   onSelectSlot: (slotId: string) => void;
 }) {
+  const t = useTranslations();
+
   if (data.dayGroups.length === 0) {
     return (
       <div className="flex min-h-[200px] flex-1 items-center justify-center px-6 text-center">
-        <p className="text-sm text-gray-500">{NO_SLOTS_LABEL}</p>
+        <p className="text-sm text-gray-500">{t.noSlotsLabel}</p>
       </div>
     );
   }
@@ -235,7 +233,9 @@ function SlotListBody({
         {selectedOnThisDay ? (
           <SelectedDayView
             selectedSlot={selectedOnThisDay}
-            otherSlots={getAllSlots(currentDay).filter((s) => s.slotId !== selectedOnThisDay.slotId)}
+            otherSlots={getAllSlots(currentDay).filter(
+              (s) => s.slotId !== selectedOnThisDay.slotId
+            )}
             selectingSlotId={selectingSlotId}
             onSelectSlot={onSelectSlot}
           />

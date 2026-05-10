@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import type { CartData, ApiErrorResponse } from "@/lib/types";
-import { SharedHeader } from "@/components/shared-header";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { CartPageContent, EmptyView } from "@/components/cart-page-content";
 import { CartToast } from "@/components/cart-toast";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ErrorView } from "@/components/error-view";
 import { DeliverySlotPicker } from "@/components/delivery-slot-picker";
-import { EmptyView, CartPageContent } from "@/components/cart-page-content";
-import { createMutationQueue } from "@/lib/mutation-queue";
-import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
+import { ErrorView } from "@/components/error-view";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { SharedHeader } from "@/components/shared-header";
+import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import { createMutationQueue } from "@/lib/mutation-queue";
+import type { ApiErrorResponse, CartData } from "@/lib/types";
 
 type CartPageState =
   | { status: "loading" }
@@ -18,9 +20,7 @@ type CartPageState =
   | { status: "empty" }
   | { status: "error"; message: string };
 
-const CART_MUTATION_ERROR_MESSAGE = "Er ging iets mis. Probeer het opnieuw.";
-
-async function fetchCart(): Promise<CartPageState> {
+async function fetchCart(loadErrorMessage: string): Promise<CartPageState> {
   try {
     const response = await fetch("/api/cart");
     const data: CartData | ApiErrorResponse = await response.json();
@@ -38,17 +38,11 @@ async function fetchCart(): Promise<CartPageState> {
 
     return { status: "success", cart: data };
   } catch {
-    return {
-      status: "error",
-      message: "Er is iets misgegaan. Probeer het later opnieuw.",
-    };
+    return { status: "error", message: loadErrorMessage };
   }
 }
 
-async function postCartMutation(
-  productId: string,
-  action: "add" | "remove",
-): Promise<CartData> {
+async function postCartMutation(productId: string, action: "add" | "remove"): Promise<CartData> {
   const response = await fetch("/api/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -64,9 +58,11 @@ async function postCartMutation(
 }
 
 export default function CartPage() {
-  usePageTitle("Winkelwagen");
+  const t = useTranslations();
+  usePageTitle(t.cartTitle);
 
   const [pageState, setPageState] = useState<CartPageState>({ status: "loading" });
+  const cartMutationErrorRef = useRef(t.cartMutationError);
   const [retryCount, setRetryCount] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -105,7 +101,7 @@ export default function CartPage() {
     queueRef.current = createMutationQueue<CartData>((productId, result, error) => {
       if (error) {
         rollbackProduct(productId);
-        setToastMessage(CART_MUTATION_ERROR_MESSAGE);
+        setToastMessage(cartMutationErrorRef.current);
         return;
       }
 
@@ -118,7 +114,7 @@ export default function CartPage() {
   useEffect(() => {
     let isCancelled = false;
 
-    fetchCart().then((result) => {
+    fetchCart(t.cartLoadError).then((result) => {
       if (isCancelled) return;
 
       if (result.status === "error" && result.message === TOKEN_EXPIRED_MESSAGE) {
@@ -136,7 +132,7 @@ export default function CartPage() {
     return () => {
       isCancelled = true;
     };
-  }, [retryCount]);
+  }, [retryCount, t.cartLoadError]);
 
   const handleRetry = useCallback(() => {
     setPageState({ status: "loading" });
@@ -165,9 +161,7 @@ export default function CartPage() {
             ...prev.cart,
             totalCount: prev.cart.totalCount + 1,
             items: prev.cart.items.map((line) =>
-              line.productId === productId
-                ? { ...line, quantity: line.quantity + 1 }
-                : line,
+              line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line
             ),
           },
         };
@@ -175,7 +169,7 @@ export default function CartPage() {
 
       enqueueMutation(productId, "add");
     },
-    [enqueueMutation, pageState],
+    [enqueueMutation, pageState]
   );
 
   const handleDecrement = useCallback(
@@ -197,9 +191,7 @@ export default function CartPage() {
           nextQuantity === 0
             ? prev.cart.items.filter((line) => line.productId !== productId)
             : prev.cart.items.map((line) =>
-                line.productId === productId
-                  ? { ...line, quantity: nextQuantity }
-                  : line,
+                line.productId === productId ? { ...line, quantity: nextQuantity } : line
               );
         const nextCount = Math.max(0, prev.cart.totalCount - 1);
 
@@ -219,7 +211,7 @@ export default function CartPage() {
 
       enqueueMutation(productId, "remove");
     },
-    [enqueueMutation, pageState],
+    [enqueueMutation, pageState]
   );
 
   const cartBadgeOverride =
@@ -266,5 +258,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-

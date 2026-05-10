@@ -50,7 +50,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Kan subcategorieën niet laden. Probeer het later opnieuw.",
+        error: "Subcategories are not loading. Please try again later.",
       },
       { status: 502 }
     );

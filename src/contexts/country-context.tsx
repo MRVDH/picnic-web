@@ -1,7 +1,9 @@
 "use client";
 
-import { createContext, useContext, useCallback, type ReactNode } from "react";
-import { type CountryCode, DEFAULT_COUNTRY_CODE, COUNTRY_COOKIE_NAME } from "@/lib/types";
+import { type ReactNode, createContext, useCallback, useContext } from "react";
+
+import { type Translations, getTranslations } from "@/lib/i18n";
+import { COUNTRY_COOKIE_NAME, type CountryCode, DEFAULT_COUNTRY_CODE } from "@/lib/types";
 
 const COUNTRY_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
 
@@ -35,4 +37,8 @@ export function useCountryCode(): CountryCode {
 
 export function useSwitchCountry(): (code: CountryCode) => void {
   return useContext(SwitchCountryContext);
+}
+
+export function useTranslations(): Translations {
+  return getTranslations(useContext(CountryCodeContext));
 }
