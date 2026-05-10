@@ -1,5 +1,5 @@
 import { cleanMarkdown, collectMarkdowns } from "./pml-helpers";
-import type { RecipeItem } from "./types";
+import type { RecipeCategory, RecipeItem } from "./types";
 
 type PmlRecord = Record<string, unknown>;
 
@@ -92,6 +92,55 @@ function extractFromAnalytics(
     return { recipeId: data.recipe_id, name, cookingTimeMinutes };
   }
   return null;
+}
+
+/**
+ * Parse recipe categories from the cookbook homepage Fusion page.
+ *
+ * Looks for TOUCHABLE nodes whose onPress is an OPEN action targeting a
+ * recipe category page (id starts with "recipe-cattree-"). The display name
+ * is taken from the first non-trivial markdown string inside the touchable.
+ */
+export function parseRecipeCategories(rawPage: unknown): RecipeCategory[] {
+  const results: RecipeCategory[] = [];
+  const seenIds = new Set<string>();
+  collectCategories(rawPage, results, seenIds);
+  return results;
+}
+
+function collectCategories(
+  obj: unknown,
+  results: RecipeCategory[],
+  seenIds: Set<string>
+): void {
+  if (typeof obj !== "object" || obj === null) return;
+  if (Array.isArray(obj)) {
+    for (const item of obj) collectCategories(item, results, seenIds);
+    return;
+  }
+  const record = obj as PmlRecord;
+
+  if (record.type === "TOUCHABLE") {
+    const onPress = record.onPress as PmlRecord | undefined;
+    if (
+      onPress?.actionType === "OPEN" &&
+      typeof onPress.target === "string" &&
+      onPress.target.startsWith("recipe-cattree-") &&
+      !seenIds.has(onPress.target)
+    ) {
+      const markdowns = collectMarkdowns(record);
+      const name = markdowns.map(cleanMarkdown).find((m) => m.length > 1) ?? "";
+      if (name) {
+        seenIds.add(onPress.target);
+        results.push({ id: onPress.target, name });
+      }
+      return; // don't recurse further into this touchable
+    }
+  }
+
+  for (const value of Object.values(record)) {
+    collectCategories(value, results, seenIds);
+  }
 }
 
 /**
