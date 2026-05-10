@@ -95,27 +95,27 @@ function extractFromAnalytics(
 }
 
 /**
- * Parse recipe categories from the cookbook homepage Fusion page.
+ * Parse recipe category pills from the cookbook homepage Fusion page.
  *
- * Looks for TOUCHABLE nodes whose onPress is an OPEN action targeting a
- * recipe category page (id starts with "recipe-cattree-"). The display name
- * is taken from the first non-trivial markdown string inside the touchable.
+ * The Picnic app represents categories as TOUCHABLE nodes with an EXPRESSION
+ * onPress of type "onPillPress". Each pill carries its display name in
+ * props.v13 and the recipe IDs for that category in props.__ep2.v4.
  */
 export function parseRecipeCategories(rawPage: unknown): RecipeCategory[] {
   const results: RecipeCategory[] = [];
   const seenIds = new Set<string>();
-  collectCategories(rawPage, results, seenIds);
+  collectPillCategories(rawPage, results, seenIds);
   return results;
 }
 
-function collectCategories(
+function collectPillCategories(
   obj: unknown,
   results: RecipeCategory[],
   seenIds: Set<string>
 ): void {
   if (typeof obj !== "object" || obj === null) return;
   if (Array.isArray(obj)) {
-    for (const item of obj) collectCategories(item, results, seenIds);
+    for (const item of obj) collectPillCategories(item, results, seenIds);
     return;
   }
   const record = obj as PmlRecord;
@@ -123,23 +123,32 @@ function collectCategories(
   if (record.type === "TOUCHABLE") {
     const onPress = record.onPress as PmlRecord | undefined;
     if (
-      onPress?.actionType === "OPEN" &&
-      typeof onPress.target === "string" &&
-      onPress.target.startsWith("recipe-cattree-") &&
-      !seenIds.has(onPress.target)
+      onPress?.type === "EXPRESSION" &&
+      typeof onPress.expression === "string" &&
+      onPress.expression.startsWith("onPillPress")
     ) {
-      const markdowns = collectMarkdowns(record);
-      const name = markdowns.map(cleanMarkdown).find((m) => m.length > 1) ?? "";
-      if (name) {
-        seenIds.add(onPress.target);
-        results.push({ id: onPress.target, name });
+      const props = onPress.props as PmlRecord | undefined;
+      if (props) {
+        const name = typeof props.v13 === "string" ? props.v13 : "";
+        const themeId = typeof props.v1 === "string" ? props.v1 : "";
+        const ep2 = props.__ep2 as PmlRecord | undefined;
+        const recipeIds = Array.isArray(ep2?.v4)
+          ? (ep2.v4 as unknown[]).filter(
+              (id): id is string => typeof id === "string" && RECIPE_ID_RE.test(id)
+            )
+          : [];
+
+        if (name && themeId && !seenIds.has(themeId)) {
+          seenIds.add(themeId);
+          results.push({ id: themeId, name, recipeIds });
+        }
+        return; // don't recurse into this touchable
       }
-      return; // don't recurse further into this touchable
     }
   }
 
   for (const value of Object.values(record)) {
-    collectCategories(value, results, seenIds);
+    collectPillCategories(value, results, seenIds);
   }
 }
 

@@ -37,16 +37,11 @@ export default function CookbookPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch recipes (and categories on first load). State is reset by the
-  // event handlers below so we never call setState synchronously here.
+  // Fetch all recipes + categories once. Category filtering is done client-side.
   useEffect(() => {
     const controller = new AbortController();
 
-    const url = selectedCategory
-      ? `/api/cookbook?category=${encodeURIComponent(selectedCategory)}`
-      : "/api/cookbook";
-
-    fetch(url, { signal: controller.signal })
+    fetch("/api/cookbook", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CookbookApiResponse & Partial<ApiErrorResponse>) => {
         if ("error" in data && data.error) {
@@ -69,26 +64,35 @@ export default function CookbookPage() {
       });
 
     return () => controller.abort();
-  }, [selectedCategory, retryCount, t.cookbookLoadError]);
+  }, [retryCount, t.cookbookLoadError]);
+
+  // Client-side category filtering: filter all loaded recipes by the selected pill's recipeIds.
+  const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
+  const filteredRecipes = (() => {
+    if (!selectedCategory) return allRecipes;
+    const cat = categories.find((c) => c.id === selectedCategory);
+    if (!cat || cat.recipeIds.length === 0) return allRecipes;
+    const idSet = new Set(cat.recipeIds);
+    return allRecipes.filter((r) => idSet.has(r.id));
+  })();
 
   // Infinite scroll: reveal PAGE_SIZE more recipes when sentinel enters viewport
-  const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
   useEffect(() => {
-    if (allRecipes.length === 0) return;
+    if (filteredRecipes.length === 0) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, allRecipes.length));
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredRecipes.length));
         }
       },
       { threshold: 0.1 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [allRecipes.length]);
+  }, [filteredRecipes.length]);
 
   const handleBack = useCallback(() => router.push("/"), [router]);
 
@@ -100,11 +104,10 @@ export default function CookbookPage() {
 
   const handleSelectCategory = useCallback((catId: string | null) => {
     setSelectedCategory(catId);
-    setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const visibleRecipes = allRecipes.slice(0, visibleCount);
+  const visibleRecipes = filteredRecipes.slice(0, visibleCount);
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -150,11 +153,11 @@ export default function CookbookPage() {
           <ErrorView message={recipesState.message} onRetry={handleRetry} />
         )}
 
-        {recipesState.status === "success" && allRecipes.length === 0 && (
+        {recipesState.status === "success" && filteredRecipes.length === 0 && (
           <p className="text-text-muted text-sm">{t.noRecipes}</p>
         )}
 
-        {recipesState.status === "success" && allRecipes.length > 0 && (
+        {recipesState.status === "success" && filteredRecipes.length > 0 && (
           <>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {visibleRecipes.map((recipe) => (
@@ -163,7 +166,7 @@ export default function CookbookPage() {
             </div>
 
             {/* Sentinel div: when visible, triggers next batch */}
-            {visibleCount < allRecipes.length && (
+            {visibleCount < filteredRecipes.length && (
               <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
                 <LoadingSpinner />
               </div>
