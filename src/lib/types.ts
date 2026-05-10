@@ -423,7 +423,13 @@ export type RecipeItem = {
   cookingTimeMinutes: number | null;
 };
 
+export type RecipeCategory = {
+  id: string;
+  name: string;
+};
+
 export type CookbookApiResponse = {
+  categories: RecipeCategory[];
   recipes: RecipeItem[];
 };
 
