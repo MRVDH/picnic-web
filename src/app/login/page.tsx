@@ -3,6 +3,12 @@
 import { useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
+import {
+  type CountryCode,
+  SUPPORTED_COUNTRY_CODES,
+  DEFAULT_COUNTRY_CODE,
+  COUNTRY_COOKIE_NAME,
+} from "@/lib/types";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -21,6 +27,17 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirect") ?? DEFAULT_REDIRECT;
   const isExpired = searchParams.get("expired") === "true";
 
+  const [countryCode, setCountryCode] = useState<CountryCode>(() => {
+    // Read existing cookie if present so the selector matches the stored choice.
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${COUNTRY_COOKIE_NAME}=([^;]+)`));
+      const val = match?.[1]?.toUpperCase();
+      if (val && (SUPPORTED_COUNTRY_CODES as readonly string[]).includes(val)) {
+        return val as CountryCode;
+      }
+    }
+    return DEFAULT_COUNTRY_CODE;
+  });
   const [credentialsMode, setCredentialsMode] = useState(false);
   const webClickCount = useRef(0);
   const webClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,7 +49,7 @@ function LoginForm() {
   const [partialToken, setPartialToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(
-    isExpired ? "Je sessie is verlopen. Log opnieuw in." : null,
+    isExpired ? "Je sessie is verlopen. Log opnieuw in." : null
   );
 
   const clearError = useCallback(() => {
@@ -92,7 +109,7 @@ function LoginForm() {
           const response = await fetch("/api/auth/login-credentials", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.trim(), password }),
+            body: JSON.stringify({ email: email.trim(), password, countryCode }),
           });
 
           const data = await response.json();
@@ -130,7 +147,7 @@ function LoginForm() {
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: trimmed }),
+          body: JSON.stringify({ token: trimmed, countryCode }),
         });
 
         const data = await response.json();
@@ -147,18 +164,18 @@ function LoginForm() {
         setIsLoading(false);
       }
     },
-    [partialToken, twoFactorCode, credentialsMode, token, email, password, redirectTo],
+    [partialToken, twoFactorCode, credentialsMode, token, email, password, countryCode, redirectTo]
   );
 
   // Determine which fields to render
   const showTwoFactor = credentialsMode && partialToken !== null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="bg-background flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <span
-            className="text-5xl font-bold tracking-tight text-picnic-red select-none"
+            className="text-picnic-red text-5xl font-bold tracking-tight select-none"
             aria-label="Picnic Web"
           >
             Picnic{" "}
@@ -187,6 +204,25 @@ function LoginForm() {
           </span>
         </div>
 
+        {/* Country selector */}
+        <div className="mb-6 flex justify-center gap-2">
+          {SUPPORTED_COUNTRY_CODES.map((code) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setCountryCode(code)}
+              className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                code === countryCode
+                  ? "bg-picnic-red text-white"
+                  : "border-input-border hover:text-foreground border text-gray-500"
+              }`}
+              aria-pressed={code === countryCode}
+            >
+              {code}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {showTwoFactor ? (
             <div>
@@ -195,7 +231,7 @@ function LoginForm() {
               </p>
               <label
                 htmlFor="two-factor-code"
-                className="mb-1 block text-sm font-medium text-foreground"
+                className="text-foreground mb-1 block text-sm font-medium"
               >
                 Verificatiecode
               </label>
@@ -212,16 +248,13 @@ function LoginForm() {
                 placeholder="Voer de code in"
                 disabled={isLoading}
                 autoFocus
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm text-foreground placeholder:text-gray-400 focus:border-input-focus focus:ring-1 focus:ring-input-focus focus:outline-none disabled:opacity-50"
+                className="border-input-border text-foreground focus:border-input-focus focus:ring-input-focus w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 focus:ring-1 focus:outline-none disabled:opacity-50"
               />
             </div>
           ) : credentialsMode ? (
             <>
               <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1 block text-sm font-medium text-foreground"
-                >
+                <label htmlFor="email" className="text-foreground mb-1 block text-sm font-medium">
                   E-mailadres
                 </label>
                 <input
@@ -235,13 +268,13 @@ function LoginForm() {
                   placeholder="je-email@voorbeeld.nl"
                   disabled={isLoading}
                   autoFocus
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm text-foreground placeholder:text-gray-400 focus:border-input-focus focus:ring-1 focus:ring-input-focus focus:outline-none disabled:opacity-50"
+                  className="border-input-border text-foreground focus:border-input-focus focus:ring-input-focus w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 focus:ring-1 focus:outline-none disabled:opacity-50"
                 />
               </div>
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-1 block text-sm font-medium text-foreground"
+                  className="text-foreground mb-1 block text-sm font-medium"
                 >
                   Wachtwoord
                 </label>
@@ -255,7 +288,7 @@ function LoginForm() {
                   }}
                   placeholder="Je wachtwoord"
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm text-foreground placeholder:text-gray-400 focus:border-input-focus focus:ring-1 focus:ring-input-focus focus:outline-none disabled:opacity-50"
+                  className="border-input-border text-foreground focus:border-input-focus focus:ring-input-focus w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 focus:ring-1 focus:outline-none disabled:opacity-50"
                 />
               </div>
             </>
@@ -263,7 +296,7 @@ function LoginForm() {
             <div>
               <label
                 htmlFor="auth-token"
-                className="mb-1 block text-sm font-medium text-foreground"
+                className="text-foreground mb-1 block text-sm font-medium"
               >
                 Picnic Auth Token
               </label>
@@ -279,7 +312,7 @@ function LoginForm() {
                   placeholder="Plak je token hier"
                   disabled={isLoading}
                   autoFocus
-                  className="w-full rounded-lg border border-input-border px-3 py-2 pr-10 text-sm text-foreground placeholder:text-gray-400 focus:border-input-focus focus:ring-1 focus:ring-input-focus focus:outline-none disabled:opacity-50"
+                  className="border-input-border text-foreground focus:border-input-focus focus:ring-input-focus w-full rounded-lg border px-3 py-2 pr-10 text-sm placeholder:text-gray-400 focus:ring-1 focus:outline-none disabled:opacity-50"
                 />
                 <button
                   type="button"
@@ -303,7 +336,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center rounded-lg bg-picnic-red px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-picnic-red-dark focus:ring-2 focus:ring-picnic-red focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            className="bg-picnic-red hover:bg-picnic-red-dark focus:ring-picnic-red flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
             {isLoading ? <Spinner /> : showTwoFactor ? "Verifiëren" : "Inloggen"}
           </button>
@@ -311,7 +344,7 @@ function LoginForm() {
 
         {!credentialsMode && (
           <>
-            <TokenInstructions />
+            <TokenInstructions countryCode={countryCode} />
             <WhyAuthToken />
           </>
         )}
@@ -325,12 +358,11 @@ function LoginForm() {
 
 const PICNIC_API_NPM_URL = "https://www.npmjs.com/package/picnic-api";
 
-function TokenInstructions() {
+function TokenInstructions({ countryCode }: { countryCode: CountryCode }) {
+  const snippet = `import PicnicClient from "picnic-api";\n\nconst client = new PicnicClient({ countryCode: "${countryCode}" });\nawait client.auth.login("je-email", "je-wachtwoord");\nconsole.log(client.authKey);`;
   return (
-    <details className="mt-6 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="font-medium text-foreground">
-        Hoe krijg ik een auth token?
-      </summary>
+    <details className="border-card-border mt-6 rounded-lg border bg-white p-4 text-sm text-gray-600">
+      <summary className="text-foreground font-medium">Hoe krijg ik een auth token?</summary>
       <div className="mt-3 space-y-3">
         <p>
           Gebruik de{" "}
@@ -338,18 +370,18 @@ function TokenInstructions() {
             href={PICNIC_API_NPM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-picnic-red underline hover:text-picnic-red-dark"
+            className="text-picnic-red hover:text-picnic-red-dark font-medium underline"
           >
             picnic-api
           </a>{" "}
           npm package om in te loggen met je Picnic account:
         </p>
         <pre className="overflow-x-auto rounded-md bg-gray-100 p-3 text-xs leading-relaxed">
-          <code>{TOKEN_CODE_SNIPPET}</code>
+          <code>{snippet}</code>
         </pre>
         <p>
-          Kopieer de <code className="rounded bg-gray-100 px-1">authKey</code>{" "}
-          waarde en plak deze hierboven in.
+          Kopieer de <code className="rounded bg-gray-100 px-1">authKey</code> waarde en plak deze
+          hierboven in.
         </p>
       </div>
     </details>
@@ -360,16 +392,14 @@ function TokenInstructions() {
 
 function WhyAuthToken() {
   return (
-    <details className="mt-3 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="font-medium text-foreground">
-        Waarom heb ik een auth token nodig?
-      </summary>
+    <details className="border-card-border mt-3 rounded-lg border bg-white p-4 text-sm text-gray-600">
+      <summary className="text-foreground font-medium">Waarom heb ik een auth token nodig?</summary>
       <div className="mt-3 space-y-3">
         <p>
-          Om veiligheidsredenen tonen we geen standaard inlogformulier met
-          e-mailadres en wachtwoord. Een auth token zorgt ervoor dat je
-          inloggegevens nooit via deze website worden verstuurd. Het token kan
-          op elk moment worden ingetrokken zonder je wachtwoord te wijzigen.
+          Om veiligheidsredenen tonen we geen standaard inlogformulier met e-mailadres en
+          wachtwoord. Een auth token zorgt ervoor dat je inloggegevens nooit via deze website worden
+          verstuurd. Het token kan op elk moment worden ingetrokken zonder je wachtwoord te
+          wijzigen.
         </p>
       </div>
     </details>
@@ -382,20 +412,17 @@ const GITHUB_PROJECT_URL = "https://github.com/MRVDH/picnic-web";
 
 function Disclaimer() {
   return (
-    <details className="mt-3 rounded-lg border border-card-border bg-white p-4 text-sm text-gray-600">
-      <summary className="font-medium text-foreground">
-        Is dit de officiële Picnic website?
-      </summary>
+    <details className="border-card-border mt-3 rounded-lg border bg-white p-4 text-sm text-gray-600">
+      <summary className="text-foreground font-medium">Is dit de officiële Picnic website?</summary>
       <div className="mt-3 space-y-3">
         <p>
-          Nee, dit is niet de officiële Picnic website. Dit is een onafhankelijk
-          open-source project en is op geen enkele manier verbonden aan Picnic.
-          Bekijk de broncode op{" "}
+          Nee, dit is niet de officiële Picnic website. Dit is een onafhankelijk open-source project
+          en is op geen enkele manier verbonden aan Picnic. Bekijk de broncode op{" "}
           <a
             href={GITHUB_PROJECT_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-picnic-red underline hover:text-picnic-red-dark"
+            className="text-picnic-red hover:text-picnic-red-dark font-medium underline"
           >
             GitHub
           </a>
@@ -405,12 +432,6 @@ function Disclaimer() {
     </details>
   );
 }
-
-const TOKEN_CODE_SNIPPET = `import PicnicClient from "picnic-api";
-
-const client = new PicnicClient({ countryCode: "NL" });
-await client.auth.login("je-email", "je-wachtwoord");
-console.log(client.authKey);`;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -481,8 +502,8 @@ function EyeOffIcon() {
 
 function LoginSkeleton() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-picnic-red" />
+    <div className="bg-background flex min-h-screen items-center justify-center px-4">
+      <div className="border-t-picnic-red h-5 w-5 animate-spin rounded-full border-2 border-gray-200" />
     </div>
   );
 }

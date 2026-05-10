@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken } from "@/lib/auth";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
 import { buildPicnicClient } from "@/lib/picnic-client";
 import { parseProductDetailPage } from "@/lib/parse-fusion-product";
 import { isApiAuthError } from "@/lib/api-error";
@@ -13,28 +13,27 @@ import type { ProductDetail, ApiErrorResponse } from "@/lib/types";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ProductDetail | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
+
+  const countryCode = readCountryCode(request);
 
   const { id: productId } = await params;
 
   if (!productId) {
-    return NextResponse.json(
-      { error: "Product not found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
   try {
-    const client = buildPicnicClient(token);
+    const client = buildPicnicClient(token, countryCode);
 
     const rawPage = await (
       client as unknown as {
@@ -42,23 +41,20 @@ export async function GET(
           method: string,
           path: string,
           body: null,
-          includeFusion: boolean,
+          includeFusion: boolean
         ) => Promise<unknown>;
       }
     ).sendRequest(
       "GET",
       `/pages/product-details-page-root?id=${encodeURIComponent(productId)}`,
       null,
-      true,
+      true
     );
 
     const productDetail = parseProductDetailPage(rawPage, productId);
 
     if (!productDetail.name) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json(productDetail);
@@ -66,19 +62,16 @@ export async function GET(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error(`[/api/product/${productId}] Failed to fetch:`, message);
 
     return NextResponse.json(
       { error: "Failed to fetch product details. Please try again later." },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }
-
-
