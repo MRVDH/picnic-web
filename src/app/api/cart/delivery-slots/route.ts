@@ -65,7 +65,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Kan bezorgmomenten niet ophalen. Probeer het later opnieuw.",
+        error: "Failed to fetch delivery slots. Please try again later.",
       },
       { status: 502 }
     );
@@ -131,7 +131,7 @@ export async function POST(
 
     return NextResponse.json(
       {
-        error: "Kan bezorgmoment niet instellen. Probeer het opnieuw.",
+        error: "Failed to set delivery slot. Please try again.",
       },
       { status: 502 }
     );
