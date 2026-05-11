@@ -434,6 +434,36 @@ export type CookbookApiResponse = {
   recipes: RecipeItem[];
 };
 
+export type RecipeIngredient = {
+  /** selling_unit_id — used for cart mutations */
+  id: string;
+  name: string;
+  imageId: string | null;
+  /** Price in cents */
+  displayPrice: number;
+  /** Package size description, e.g. "500 g" */
+  unitQuantity: string;
+  maxCount: number;
+  /** Number of packages the recipe needs (for default portion count) */
+  quantity: number;
+  /** True for staples the user likely already has (salt, oil, spices) */
+  isCondiment: boolean;
+};
+
+export type RecipeDetail = {
+  id: string;
+  name: string;
+  imageId: string | null;
+  cookingTimeMinutes: number | null;
+  /** Default serving size this recipe is written for */
+  portions: number;
+  ingredients: RecipeIngredient[];
+  /** Step-by-step instructions; empty when not available in the API response */
+  steps: string[];
+};
+
+export type RecipeDetailApiResponse = RecipeDetail;
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */

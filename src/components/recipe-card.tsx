@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { buildImageUrl } from "@/lib/image-url";
@@ -22,7 +23,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   );
 
   return (
-    <div className="border-card-border bg-card-bg flex flex-col overflow-hidden rounded-lg border shadow-sm">
+    <Link
+      href={`/recipe/${recipe.id}`}
+      className="border-card-border bg-card-bg flex flex-col overflow-hidden rounded-lg border shadow-sm transition-shadow hover:shadow-md"
+    >
       <div className="relative h-40 w-full bg-gray-50">
         <Image
           src={imageSrc}
@@ -48,6 +52,6 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           </p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
