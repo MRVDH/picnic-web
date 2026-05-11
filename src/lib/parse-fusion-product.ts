@@ -204,6 +204,66 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
+ * Extract the minimal fields needed to display a product as a recipe ingredient tile:
+ * name, unitQuantity, imageId, displayPrice, maxCount.
+ *
+ * Used by the recipe detail route to enrich ingredient stubs with product data.
+ */
+export function extractProductTileData(
+  rawPage: unknown,
+  productId: string
+): { name: string; unitQuantity: string; imageId: string; displayPrice: number; maxCount: number } {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+
+  // Name and unit quantity from the main container's markdown nodes
+  const mainContainer = findNodeById(page, PRODUCT_MAIN_CONTAINER_ID);
+  const texts = collectMarkdowns(mainContainer).map(stripColorTags);
+  const name = cleanMarkdown(texts[0] ?? "");
+  const unitQuantity = cleanMarkdown(texts[2] ?? "");
+
+  // Find the selling unit by ID — don't require max_count to be set (unlike
+  // findMainSellingUnit which gates on max_count !== undefined and misses some units)
+  const allUnits = collectPropertyValues(rawPage, "sellingUnit").filter(
+    (u): u is Record<string, unknown> => typeof u === "object" && u !== null
+  );
+  const unit = allUnits.find((u) => u.id === productId) ?? allUnits[0] ?? null;
+
+  const rawPrice = (unit?.display_price as number | undefined) ?? 0;
+  const maxCount = (unit?.max_count as number | undefined) ?? 99;
+  const unitImageId = (unit?.image_id as string | undefined) ?? "";
+
+  // Image fallback: gallery container (same as parseProductDetailPage uses)
+  const imageId = unitImageId || (() => {
+    const gallery = findNodeById(page, PRODUCT_GALLERY_CONTAINER_ID);
+    const ids = collectPropertyValues(gallery, "source")
+      .filter((s): s is Record<string, unknown> => typeof s === "object" && s !== null)
+      .map((s) => s.id)
+      .filter((id): id is string => typeof id === "string");
+    return ids[0] ?? "";
+  })();
+
+  // Price resolution with multiple fallbacks
+  let displayPrice = resolveDisplayPrice(page, productId, rawPrice);
+
+  // Fallback: scan ALL PRICE-type nodes in the full page tree. Covers promotional
+  // products where display_price=0 but the rendered price is in a PRICE node.
+  if (!displayPrice) {
+    const allPriceNodes = collectPriceNodes(rawPage);
+    const active = allPriceNodes.find((p) => !p.isCrossed && p.price > 0);
+    if (active) displayPrice = active.price;
+  }
+
+  // Last resort: parse the display price from the markdown text at position 3,
+  // e.g. "€ 1.99" or "€1,99" → 199
+  if (!displayPrice && texts[3]) {
+    const m = texts[3].match(/(\d+)[.,](\d{2})/);
+    if (m) displayPrice = parseInt(m[1]) * 100 + parseInt(m[2]);
+  }
+
+  return { name, unitQuantity, imageId, displayPrice, maxCount };
+}
+
+/**
  * Parse a raw product-details-page-root Fusion page into a ProductDetail.
  *
  * Navigates the PML tree using known node IDs and positional markdown

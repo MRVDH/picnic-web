@@ -134,6 +134,16 @@ const translations = {
     // Auth
     signOut: "Uitloggen",
 
+    // Recipe detail
+    recipeIngredients: "Ingrediënten",
+    recipeSteps: "Bereiding",
+    recipePortions: "Personen",
+    recipeAddToCart: "Alle ingrediënten toevoegen",
+    recipeAddingToCart: "Wordt toegevoegd...",
+    recipeAddedToCart: "Toegevoegd!",
+    recipeCondiments: "Heb je waarschijnlijk al",
+    recipeLoadError: "Recept kon niet worden geladen.",
+
     // Toast / error view
     dismissAriaLabel: "Sluiten",
     retryButton: "Opnieuw proberen",
@@ -270,6 +280,16 @@ const translations = {
 
     // Auth
     signOut: "Abmelden",
+
+    // Recipe detail
+    recipeIngredients: "Zutaten",
+    recipeSteps: "Zubereitung",
+    recipePortions: "Personen",
+    recipeAddToCart: "Alle Zutaten in den Warenkorb",
+    recipeAddingToCart: "Wird hinzugefügt...",
+    recipeAddedToCart: "Hinzugefügt!",
+    recipeCondiments: "Hast du wahrscheinlich schon",
+    recipeLoadError: "Rezept konnte nicht geladen werden.",
 
     // Toast / error view
     dismissAriaLabel: "Schließen",
