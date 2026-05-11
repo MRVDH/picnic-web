@@ -151,11 +151,6 @@ export default function CookbookPage() {
               setRecipesState({ status: "loading" });
               setVisibleCount(PAGE_SIZE);
             }}
-            onClear={() => {
-              setSearchInput("");
-              setRecipesState({ status: "loading" });
-              setVisibleCount(PAGE_SIZE);
-            }}
           />
         </div>
 
