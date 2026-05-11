@@ -29,6 +29,7 @@ export default function CookbookPage() {
   usePageTitle(t.cookbookTitle);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -42,6 +43,18 @@ export default function CookbookPage() {
     const timer = setTimeout(() => setDebouncedQuery(searchInput.trim()), DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Fetch category counts once on mount (non-blocking)
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/cookbook/counts", { signal: controller.signal })
+      .then((res) => res.json())
+      .then((counts: Record<string, number>) => {
+        setCategoryCounts(counts);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   // Fetch recipes: search takes priority over category
   useEffect(() => {
@@ -65,10 +78,11 @@ export default function CookbookPage() {
           return;
         }
         if (data.categories?.length) setCategories(data.categories);
-        setRecipesState({
-          status: "success",
-          recipes: Array.isArray(data.recipes) ? data.recipes : [],
-        });
+        const recipes = Array.isArray(data.recipes) ? data.recipes : [];
+        if (selectedCategory) {
+          setCategoryCounts((prev) => ({ ...prev, [selectedCategory]: recipes.length }));
+        }
+        setRecipesState({ status: "success", recipes });
       })
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -135,8 +149,12 @@ export default function CookbookPage() {
           {categories.length > 0 && (
             <CategoryDropdown
               options={[
-                { id: null, name: t.cookbookFeatured },
-                ...categories.map((c) => ({ id: c.id as string | null, name: c.name })),
+                { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
+                ...categories.map((c) => ({
+                  id: c.id as string | null,
+                  name: c.name,
+                  count: categoryCounts[c.id],
+                })),
               ]}
               value={selectedCategory}
               onChange={handleSelectCategory}

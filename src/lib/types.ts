@@ -426,6 +426,7 @@ export type RecipeItem = {
 export type RecipeCategory = {
   id: string;
   name: string;
+  count?: number;
 };
 
 export type CookbookApiResponse = {
