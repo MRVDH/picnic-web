@@ -193,7 +193,10 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
     const headerTexts = collectMarkdowns(record.header).map(cleanMarkdown);
     const title = headerTexts[0] ?? "";
 
-    if (title.toLowerCase().includes("voedingswaarde")) {
+    if (
+      title.toLowerCase().includes("voedingswaarde") ||
+      title.toLowerCase().includes("nährwert")
+    ) {
       return collectNutritionRows(record.body);
     }
   }
@@ -202,6 +205,18 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
+
+/** Extract allergen info from a product page — used for recipe allergen aggregation. */
+export function extractProductAllergenData(rawPage: unknown): AllergenInfo {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+  return extractAllergens(page);
+}
+
+/** Extract nutrition rows from a product page — used per-ingredient in recipe detail. */
+export function extractProductNutritionRows(rawPage: unknown): NutritionRow[] {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+  return extractNutritionRows(page);
+}
 
 /**
  * Extract the minimal fields needed to display a product as a recipe ingredient tile:
