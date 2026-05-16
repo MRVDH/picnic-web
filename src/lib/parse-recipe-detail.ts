@@ -1,5 +1,5 @@
-import { cleanMarkdown } from "./pml-helpers";
-import type { RecipeDetail, RecipeIngredient } from "./types";
+import { cleanMarkdown, collectMarkdowns } from "./pml-helpers";
+import type { NutritionRow, RecipeDetail, RecipeIngredient } from "./types";
 
 type PmlRecord = Record<string, unknown>;
 
@@ -67,9 +67,6 @@ function findRecipeAnalyticsData(obj: unknown): RecipeAnalyticsData | null {
 /**
  * Walk the entire Fusion page tree and collect all sellingUnit objects,
  * keyed by their id. Works regardless of tile container ID naming convention.
- *
- * A sellingUnit is identified by having: id (string starting with "s"),
- * name (string), display_price (number), unit_quantity (string).
  */
 function collectSellingUnitMap(obj: unknown, map: Map<string, TileData>): void {
   if (typeof obj !== "object" || obj === null) return;
@@ -79,7 +76,6 @@ function collectSellingUnitMap(obj: unknown, map: Map<string, TileData>): void {
   }
   const record = obj as PmlRecord;
 
-  // Detect a sellingUnit object: has id starting with "s", name, display_price
   if (
     typeof record.id === "string" &&
     /^s\d+$/.test(record.id) &&
@@ -127,42 +123,139 @@ function extractImageId(obj: unknown): string | null {
   return null;
 }
 
-/** Collect step strings from numbered RICH_TEXT nodes. */
-function extractSteps(obj: unknown): string[] {
+/**
+ * Extract preparation steps from the flat markdown list.
+ * Pattern: "Schritt N" (DE) or "Stap N" (NL) header immediately followed by the
+ * step content text.
+ */
+function parseStepsFromMarkdowns(markdowns: string[]): string[] {
   const steps: string[] = [];
-  collectSteps(obj, steps);
+  let expectingContent = false;
+  for (const raw of markdowns) {
+    const clean = cleanMarkdown(raw).trim();
+    if (/^(schritt|stap)\s*\d+$/i.test(clean)) {
+      expectingContent = true;
+    } else if (expectingContent && clean && clean !== "Notiz" && clean !== "Hinzufügen...") {
+      steps.push(clean);
+      expectingContent = false;
+    }
+  }
   return steps;
 }
 
-function collectSteps(obj: unknown, steps: string[]): void {
-  if (typeof obj !== "object" || obj === null) return;
-  if (Array.isArray(obj)) {
-    for (const item of obj) collectSteps(item, steps);
-    return;
+/**
+ * Extract per-serving nutrition rows from the flat markdown list.
+ * Reads the section between "**Nährwerte**"/"**Voedingswaarde**" and "**Allergene**".
+ * Pairs non-numeric labels with the following numeric value(s).
+ */
+function parseNutritionFromMarkdowns(markdowns: string[]): NutritionRow[] {
+  const rows: NutritionRow[] = [];
+  let inNutrition = false;
+  let pendingLabel: string | null = null;
+  const pendingValues: string[] = [];
+
+  const flush = () => {
+    if (pendingLabel === null || pendingValues.length === 0) return;
+    // Filter out bare unit labels like "kcal" or "kJ" that appear between values
+    const filtered = pendingValues.filter((v) => !/^(kcal|kJ)$/i.test(v.trim()));
+    if (filtered.length === 0) return;
+    const label = pendingLabel;
+    const value = filtered.join(" / ");
+    const isCategory =
+      !label.toLowerCase().startsWith("davon") && !label.toLowerCase().startsWith("waarvan");
+    rows.push({ label, value, isCategory, backgroundColor: null });
+    pendingLabel = null;
+    pendingValues.length = 0;
+  };
+
+  for (const raw of markdowns) {
+    const clean = cleanMarkdown(raw).trim();
+    if (!clean) continue;
+
+    if (!inNutrition) {
+      if (/nährwert|voedingswaarde/i.test(raw)) inNutrition = true;
+      continue;
+    }
+
+    // Exit when we reach the allergen section
+    if (/allergen/i.test(raw)) {
+      flush();
+      break;
+    }
+
+    // Skip subtitle lines (long descriptive phrases, not nutrient names)
+    if (clean.length > 40 || /portion|ungefähr|bevat|enthält/i.test(clean)) continue;
+
+    const hasDigit = /\d/.test(clean);
+    const isUnitOnly = /^(kcal|kJ)$/i.test(clean);
+
+    if (hasDigit || isUnitOnly) {
+      if (pendingLabel !== null) pendingValues.push(clean);
+    } else {
+      flush();
+      pendingLabel = clean;
+    }
   }
-  const record = obj as PmlRecord;
-  if (
-    record.type === "RICH_TEXT" &&
-    typeof record.markdown === "string" &&
-    /^\d+[.)]\s/.test(record.markdown)
-  ) {
-    steps.push(cleanMarkdown(record.markdown));
-    return;
+  flush();
+  return rows;
+}
+
+/**
+ * Extract recipe-level allergens from the flat markdown list.
+ * The recipe page aggregates allergens across all ingredients, split into
+ * confirmed ("Die ausgewählten Zutaten enthalten:") and may-contain
+ * ("Kann enthalten sein" / "Kan bevatten").
+ */
+function parseAllergensFromMarkdowns(
+  markdowns: string[]
+): { confirmed: string[]; mayContain: string[] } {
+  const confirmed: string[] = [];
+  const mayContain: string[] = [];
+  let inAllergens = false;
+  let afterIngredientHeader = false;
+  let inMayContain = false;
+
+  for (const raw of markdowns) {
+    const clean = cleanMarkdown(raw).trim();
+
+    if (!inAllergens) {
+      if (/allergen/i.test(clean)) inAllergens = true;
+      continue;
+    }
+
+    // Stop when we reach the next major content section
+    if (/^(zutaten|ingrediënten|so wird|bereiding|schritt|stap)\b/i.test(clean)) break;
+
+    // Sub-header marking start of the confirmed allergen list
+    if (/zutaten.*enthalten|ingrediënten.*bevatten/i.test(clean)) {
+      afterIngredientHeader = true;
+      continue;
+    }
+
+    // Separator marking start of the may-contain list
+    if (/kann enthalten|kan bevatten/i.test(clean)) {
+      inMayContain = true;
+      continue;
+    }
+
+    // Skip generic notes (e.g. "Dieses Rezept enthält keine Allergene")
+    if (/keine allergene|geen allergenen|enthält keine|bevat geen/i.test(clean)) continue;
+    if (!clean || clean.length > 40) continue;
+
+    if (inMayContain) mayContain.push(clean);
+    else if (afterIngredientHeader) confirmed.push(clean);
   }
-  for (const value of Object.values(record)) {
-    if (typeof value === "object" && value !== null) collectSteps(value, steps);
-  }
+
+  return { confirmed, mayContain };
 }
 
 /**
  * Parse a selling-group-details-page (DE) or recipe-details-page-root (NL)
  * Fusion page into a typed RecipeDetail.
  *
- * The analytics context on the root BLOCK contains:
- *   recipe_id, recipe_name, portions, selling_units[{selling_unit_id, quantity, checked}]
- *
- * checked=true  → required ingredient (isCondiment=false)
- * checked=false → optional/staple (isCondiment=true)
+ * All section data (steps, nutrition, allergens) is extracted from the recipe
+ * page itself. Ingredient product details (price, image, name) are enriched
+ * separately by the API route.
  */
 export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDetail {
   // ── 1. Recipe metadata from analytics context ─────────────────────────────
@@ -175,7 +268,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
   // ── 2. Hero image ─────────────────────────────────────────────────────────
   const imageId = extractImageId(rawPage);
 
-  // ── 3. Build selling unit map by scanning the entire tree ─────────────────
+  // ── 3. Build selling unit map (may find some stub data) ───────────────────
   const tileMap = new Map<string, TileData>();
   collectSellingUnitMap(rawPage, tileMap);
 
@@ -198,11 +291,15 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
       maxCount: tile?.maxCount ?? 99,
       quantity: unit.quantity ?? 1,
       isCondiment: !unit.checked,
+      nutritionRows: [],
     });
   }
 
-  // ── 5. Steps ──────────────────────────────────────────────────────────────
-  const steps = extractSteps(rawPage);
+  // ── 5. Parse sections from the flat markdown stream ───────────────────────
+  const allMarkdowns = collectMarkdowns(rawPage);
+  const steps = parseStepsFromMarkdowns(allMarkdowns);
+  const recipeNutritionRows = parseNutritionFromMarkdowns(allMarkdowns);
+  const allergens = parseAllergensFromMarkdowns(allMarkdowns);
 
   return {
     id: recipeId,
@@ -212,5 +309,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
     portions,
     ingredients,
     steps,
+    recipeNutritionRows,
+    allergens,
   };
 }

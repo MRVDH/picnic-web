@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
-import { buildImageUrl } from "@/lib/image-url";
+import { buildRecipeImageUrl } from "@/lib/image-url";
 import type { RecipeItem } from "@/lib/types";
 
 const PLACEHOLDER = "/placeholder-product.svg";
@@ -19,7 +19,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const countryCode = useCountryCode();
   const t = useTranslations();
   const [imageSrc, setImageSrc] = useState(
-    recipe.imageId ? buildImageUrl(recipe.imageId, countryCode) : PLACEHOLDER
+    recipe.imageId ? buildRecipeImageUrl(recipe.imageId, countryCode) : PLACEHOLDER
   );
 
   return (

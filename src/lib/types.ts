@@ -448,6 +448,8 @@ export type RecipeIngredient = {
   quantity: number;
   /** True for staples the user likely already has (salt, oil, spices) */
   isCondiment: boolean;
+  /** Nutrition rows from the product detail page; empty when unavailable */
+  nutritionRows: NutritionRow[];
 };
 
 export type RecipeDetail = {
@@ -460,6 +462,10 @@ export type RecipeDetail = {
   ingredients: RecipeIngredient[];
   /** Step-by-step instructions; empty when not available in the API response */
   steps: string[];
+  /** Per-serving nutrition extracted from the recipe page; empty when unavailable */
+  recipeNutritionRows: NutritionRow[];
+  /** Allergen names aggregated across all ingredients, extracted from the recipe page */
+  allergens: { confirmed: string[]; mayContain: string[] };
 };
 
 export type RecipeDetailApiResponse = RecipeDetail;

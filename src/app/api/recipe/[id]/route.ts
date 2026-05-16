@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { extractProductTileData } from "@/lib/parse-fusion-product";
+import { extractProductNutritionRows, extractProductTileData } from "@/lib/parse-fusion-product";
 import { parseRecipeDetail } from "@/lib/parse-recipe-detail";
 import { buildPicnicClient } from "@/lib/picnic-client";
 import type { PicnicClientInstance } from "@/lib/picnic-client";
@@ -19,7 +19,6 @@ async function fetchRecipePage(
   countryCode: string,
   id: string
 ): Promise<unknown> {
-  // DE uses selling-group-details-page; NL uses recipe-details-page-root
   if (countryCode === "DE") {
     return (client as unknown as SendRequestClient).sendRequest(
       "GET",
@@ -31,13 +30,17 @@ async function fetchRecipePage(
   return client.recipe.getRecipeDetailsPage(id);
 }
 
+/** Fetch product detail pages in parallel to enrich ingredient stubs with real data. */
 async function enrichIngredients(
   client: SendRequestClient,
   ingredients: RecipeIngredient[]
 ): Promise<RecipeIngredient[]> {
   const uniqueIds = [...new Set(ingredients.map((i) => i.id))];
 
-  const tileMap = new Map<string, { name: string; unitQuantity: string; imageId: string; displayPrice: number; maxCount: number }>();
+  type TileEntry = ReturnType<typeof extractProductTileData> & {
+    nutritionRows: ReturnType<typeof extractProductNutritionRows>;
+  };
+  const tileMap = new Map<string, TileEntry>();
 
   await Promise.all(
     uniqueIds.map(async (unitId) => {
@@ -48,10 +51,11 @@ async function enrichIngredients(
           null,
           true
         );
-        const data = extractProductTileData(rawPage, unitId);
-        if (data.name) tileMap.set(unitId, data);
+        const tile = extractProductTileData(rawPage, unitId);
+        const nutritionRows = extractProductNutritionRows(rawPage);
+        if (tile.name) tileMap.set(unitId, { ...tile, nutritionRows });
       } catch {
-        // leave ingredient as stub
+        // leave as stub
       }
     })
   );
@@ -66,6 +70,7 @@ async function enrichIngredients(
       displayPrice: data.displayPrice ?? ing.displayPrice,
       unitQuantity: data.unitQuantity || ing.unitQuantity,
       maxCount: data.maxCount || ing.maxCount,
+      nutritionRows: data.nutritionRows,
     };
   });
 }
@@ -89,13 +94,11 @@ export async function GET(
     const client = buildPicnicClient(token, countryCode);
     const rawPage = await fetchRecipePage(client, countryCode, id);
     const detail = parseRecipeDetail(rawPage, id);
-
-    const enrichedIngredients = await enrichIngredients(
+    const ingredients = await enrichIngredients(
       client as unknown as SendRequestClient,
       detail.ingredients
     );
-
-    return NextResponse.json({ ...detail, ingredients: enrichedIngredients });
+    return NextResponse.json({ ...detail, ingredients });
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json({ error: "Your token has expired" }, { status: 401 });

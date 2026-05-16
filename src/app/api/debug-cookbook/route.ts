@@ -27,6 +27,19 @@ function findObjectsWithField(obj: unknown, field: string, results: unknown[] = 
   return results;
 }
 
+/** Collect all primitive values for a given field name across the entire tree. */
+function collectFieldValues(obj: unknown, field: string, results: unknown[] = []): unknown[] {
+  if (typeof obj !== "object" || obj === null) return results;
+  if (Array.isArray(obj)) {
+    for (const item of obj) collectFieldValues(item, field, results);
+    return results;
+  }
+  const record = obj as Record<string, unknown>;
+  if (field in record && typeof record[field] !== "object") results.push(record[field]);
+  for (const value of Object.values(record)) collectFieldValues(value, field, results);
+  return results;
+}
+
 /** Collect all OPEN action targets in a Fusion page tree. */
 function collectOpenTargets(obj: unknown, results: string[] = []): string[] {
   if (typeof obj !== "object" || obj === null) return results;
@@ -62,6 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const rawPath = request.nextUrl.searchParams.get("path");
   const openTargetsCategoryId = request.nextUrl.searchParams.get("open-targets");
   const searchField = request.nextUrl.searchParams.get("search-field");
+  const fieldValues = request.nextUrl.searchParams.get("field-values");
 
   let rawPage: unknown;
   try {
@@ -69,6 +83,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const page = await (client as unknown as PicnicClientInstance).app.getPage(openTargetsCategoryId);
       const targets = [...new Set(collectOpenTargets(page))];
       return NextResponse.json({ targets });
+    } else if (rawPath && fieldValues) {
+      rawPage = await client.sendRequest("GET", rawPath, null, true);
+      const values = collectFieldValues(rawPage, fieldValues);
+      return NextResponse.json({ field: fieldValues, count: values.length, values });
     } else if (rawPath && searchField) {
       rawPage = await client.sendRequest("GET", rawPath, null, true);
       const examples = findObjectsWithField(rawPage, searchField);

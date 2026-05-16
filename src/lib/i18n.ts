@@ -143,6 +143,10 @@ const translations = {
     recipeAddedToCart: "Toegevoegd!",
     recipeCondiments: "Heb je waarschijnlijk al",
     recipeLoadError: "Recept kon niet worden geladen.",
+    recipePricePerServing: "per portie",
+    recipeAllergens: "Bevat",
+    recipeMayContain: "Kan bevatten",
+    recipeNutrition: "Voedingswaarde",
 
     // Toast / error view
     dismissAriaLabel: "Sluiten",
@@ -290,6 +294,10 @@ const translations = {
     recipeAddedToCart: "Hinzugefügt!",
     recipeCondiments: "Hast du wahrscheinlich schon",
     recipeLoadError: "Rezept konnte nicht geladen werden.",
+    recipePricePerServing: "pro Portion",
+    recipeAllergens: "Enthält",
+    recipeMayContain: "Kann enthalten",
+    recipeNutrition: "Nährwerte",
 
     // Toast / error view
     dismissAriaLabel: "Schließen",

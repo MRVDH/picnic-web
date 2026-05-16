@@ -11,13 +11,11 @@ import { SharedHeader } from "@/components/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { buildImageUrl } from "@/lib/image-url";
+import { buildImageUrl, buildRecipeImageUrl } from "@/lib/image-url";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type { ApiErrorResponse, RecipeDetail, RecipeIngredient } from "@/lib/types";
+import type { ApiErrorResponse, CountryCode, NutritionRow, RecipeDetail, RecipeIngredient } from "@/lib/types";
 
 const PLACEHOLDER = "/placeholder-product.svg";
-
-// ─── State ───────────────────────────────────────────────────────────────────
 
 type PageState =
   | { status: "loading" }
@@ -26,21 +24,59 @@ type PageState =
 
 type AddState = "idle" | "adding" | "done";
 
+function formatPrice(cents: number): string {
+  return `€${(cents / 100).toFixed(2).replace(".", ",")}`;
+}
+
+// ─── Nutrition table ──────────────────────────────────────────────────────────
+
+function RecipeNutritionTable({ rows }: { rows: NutritionRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        {rows.map((row, i) => (
+          <tr key={i} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+            <td
+              className={`py-1.5 text-gray-600 ${row.isCategory ? "pl-3 font-medium" : "pl-6 text-xs text-gray-500"}`}
+            >
+              {row.label}
+            </td>
+            <td className="py-1.5 pr-3 text-right font-medium text-gray-800">{row.value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// ─── Hero image ───────────────────────────────────────────────────────────────
+
+function HeroImage({ imageId, countryCode, alt }: { imageId: string; countryCode: CountryCode; alt: string }) {
+  const [show, setShow] = useState(true);
+  if (!show) return <div className="aspect-video w-full bg-gray-100" />;
+  return (
+    <div className="relative aspect-video w-full">
+      <Image
+        src={buildRecipeImageUrl(imageId, countryCode)}
+        alt={alt}
+        fill
+        unoptimized
+        className="object-cover"
+        priority
+        onError={() => setShow(false)}
+      />
+    </div>
+  );
+}
+
 // ─── Ingredient row ───────────────────────────────────────────────────────────
 
-function IngredientRow({
-  ingredient,
-  qty,
-}: {
-  ingredient: RecipeIngredient;
-  qty: number;
-}) {
+function IngredientRow({ ingredient, qty }: { ingredient: RecipeIngredient; qty: number }) {
   const countryCode = useCountryCode();
   const [imgSrc, setImgSrc] = useState(
     ingredient.imageId ? buildImageUrl(ingredient.imageId, countryCode) : PLACEHOLDER
   );
-
-  const priceDisplay = `€${(ingredient.displayPrice / 100).toFixed(2).replace(".", ",")}`;
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -51,9 +87,7 @@ function IngredientRow({
           fill
           unoptimized
           className="object-contain p-1"
-          onError={() => {
-            if (imgSrc !== PLACEHOLDER) setImgSrc(PLACEHOLDER);
-          }}
+          onError={() => { if (imgSrc !== PLACEHOLDER) setImgSrc(PLACEHOLDER); }}
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -61,10 +95,8 @@ function IngredientRow({
         <p className="text-text-muted text-xs">{ingredient.unitQuantity}</p>
       </div>
       <div className="shrink-0 text-right">
-        {qty > 1 && (
-          <p className="text-text-muted text-xs">{qty}×</p>
-        )}
-        <p className="text-text-dark text-sm font-medium">{priceDisplay}</p>
+        {qty > 1 && <p className="text-text-muted text-xs">{qty}×</p>}
+        <p className="text-text-dark text-sm font-medium">{formatPrice(ingredient.displayPrice)}</p>
       </div>
     </div>
   );
@@ -81,9 +113,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
   const [portions, setPortions] = useState(2);
   const [addState, setAddState] = useState<AddState>("idle");
 
-  usePageTitle(
-    pageState.status === "success" ? pageState.recipe.name : t.cookbookTitle
-  );
+  usePageTitle(pageState.status === "success" ? pageState.recipe.name : t.cookbookTitle);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -110,7 +140,6 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
 
   const handleAddToCart = useCallback(async () => {
     if (pageState.status !== "success" || addState !== "idle") return;
-
     setAddState("adding");
     try {
       const res = await fetch(`/api/recipe/${encodeURIComponent(recipeId)}/add-to-cart`, {
@@ -118,10 +147,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ portions }),
       });
-      if (!res.ok) {
-        setAddState("idle");
-        return;
-      }
+      if (!res.ok) { setAddState("idle"); return; }
       refresh();
       setAddState("done");
       setTimeout(() => setAddState("idle"), 2500);
@@ -146,10 +172,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
       <div className="flex min-h-full flex-1 flex-col">
         <SharedHeader />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-          <ErrorView
-            message={pageState.message}
-            onRetry={() => setPageState({ status: "loading" })}
-          />
+          <ErrorView message={pageState.message} onRetry={() => setPageState({ status: "loading" })} />
         </main>
       </div>
     );
@@ -159,12 +182,18 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
   const mainIngredients = recipe.ingredients.filter((i) => !i.isCondiment);
   const condiments = recipe.ingredients.filter((i) => i.isCondiment);
 
+  const totalCents = mainIngredients.reduce((sum, ing) => {
+    const qty = Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions));
+    return sum + ing.displayPrice * qty;
+  }, 0);
+  const pricePerServing = portions > 0 ? formatPrice(Math.round(totalCents / portions)) : null;
+
   const buttonLabel =
-    addState === "adding"
-      ? t.recipeAddingToCart
-      : addState === "done"
-        ? t.recipeAddedToCart
-        : t.recipeAddToCart;
+    addState === "adding" ? t.recipeAddingToCart
+    : addState === "done" ? t.recipeAddedToCart
+    : t.recipeAddToCart;
+
+  const { confirmed, mayContain } = recipe.allergens;
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -178,31 +207,24 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
           ← {t.cookbookTitle}
         </Link>
 
-        {/* Hero */}
+        {/* Hero image */}
         <div className="mb-8 overflow-hidden rounded-2xl bg-gray-50">
           {recipe.imageId ? (
-            <div className="relative aspect-video w-full">
-              <Image
-                src={buildImageUrl(recipe.imageId, countryCode)}
-                alt={recipe.name}
-                fill
-                unoptimized
-                className="object-cover"
-                priority
-              />
-            </div>
+            <HeroImage imageId={recipe.imageId} countryCode={countryCode} alt={recipe.name} />
           ) : (
             <div className="aspect-video w-full bg-gray-100" />
           )}
         </div>
 
-        {/* Title + meta */}
+        {/* Title */}
         <h1 className="text-foreground mb-3 text-2xl font-bold">{recipe.name}</h1>
-        <div className="text-text-muted mb-6 flex items-center gap-4 text-sm">
+
+        {/* Meta: time · portions · price per serving */}
+        <div className="text-text-muted mb-6 flex flex-wrap items-center gap-4 text-sm">
           {recipe.cookingTimeMinutes !== null && (
             <span>⏱ {recipe.cookingTimeMinutes} {t.cookingTimeMinutes}</span>
           )}
-          <span>
+          <span className="flex items-center gap-2">
             {t.recipePortions}:{" "}
             <button
               type="button"
@@ -211,7 +233,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             >
               −
             </button>
-            <span className="mx-2 font-medium text-foreground">{portions}</span>
+            <span className="mx-1 font-medium text-foreground">{portions}</span>
             <button
               type="button"
               onClick={() => setPortions((p) => Math.min(12, p + 1))}
@@ -220,6 +242,12 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
               +
             </button>
           </span>
+          {pricePerServing && (
+            <span className="font-medium text-foreground">
+              {pricePerServing}{" "}
+              <span className="font-normal text-gray-400">{t.recipePricePerServing}</span>
+            </span>
+          )}
         </div>
 
         {/* Add to cart */}
@@ -238,18 +266,16 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
           </button>
         )}
 
-        {/* Ingredients */}
+        {/* Main ingredients */}
         {mainIngredients.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-foreground mb-2 text-base font-semibold">
-              {t.recipeIngredients}
-            </h2>
+            <h2 className="text-foreground mb-2 text-base font-semibold">{t.recipeIngredients}</h2>
             <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white px-4">
               {mainIngredients.map((ing) => (
                 <IngredientRow
                   key={ing.id}
                   ingredient={ing}
-                  qty={Math.max(1, Math.ceil(ing.quantity * portions / recipe.portions))}
+                  qty={Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions))}
                 />
               ))}
             </div>
@@ -259,15 +285,13 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         {/* Condiments */}
         {condiments.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-text-muted mb-2 text-sm font-medium">
-              {t.recipeCondiments}
-            </h2>
+            <h2 className="text-text-muted mb-2 text-sm font-medium">{t.recipeCondiments}</h2>
             <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-gray-50 px-4">
               {condiments.map((ing) => (
                 <IngredientRow
                   key={ing.id}
                   ingredient={ing}
-                  qty={Math.max(1, Math.ceil(ing.quantity * portions / recipe.portions))}
+                  qty={Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions))}
                 />
               ))}
             </div>
@@ -277,10 +301,8 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         {/* Steps */}
         {recipe.steps.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-foreground mb-3 text-base font-semibold">
-              {t.recipeSteps}
-            </h2>
-            <ol className="space-y-3">
+            <h2 className="text-foreground mb-3 text-base font-semibold">{t.recipeSteps}</h2>
+            <ol className="space-y-4">
               {recipe.steps.map((step, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="bg-picnic-red mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
@@ -292,6 +314,53 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             </ol>
           </section>
         )}
+
+        {/* Nutrition */}
+        {recipe.recipeNutritionRows.length > 0 && (
+          <section className="mb-6">
+            <h2 className="text-foreground mb-2 text-base font-semibold">{t.recipeNutrition}</h2>
+            <p className="text-text-muted mb-2 text-xs">{t.recipePricePerServing}</p>
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <RecipeNutritionTable rows={recipe.recipeNutritionRows} />
+            </div>
+          </section>
+        )}
+
+        {/* Allergens */}
+        {(confirmed.length > 0 || mayContain.length > 0) && (
+          <section className="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+            {confirmed.length > 0 && (
+              <div className={mayContain.length > 0 ? "mb-4" : ""}>
+                <p className="text-text-dark mb-2 text-sm font-semibold">{t.recipeAllergens}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {confirmed.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {mayContain.length > 0 && (
+              <div>
+                <p className="text-text-muted mb-2 text-sm font-medium">{t.recipeMayContain}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {mayContain.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
@@ -299,11 +368,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
 
 // ─── Page wrapper ─────────────────────────────────────────────────────────────
 
-export default function RecipeDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
     <CartProvider>
