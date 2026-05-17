@@ -72,11 +72,45 @@ function HeroImage({ imageId, countryCode, alt }: { imageId: string; countryCode
 
 // ─── Ingredient row ───────────────────────────────────────────────────────────
 
-function IngredientRow({ ingredient, qty }: { ingredient: RecipeIngredient; qty: number }) {
+/**
+ * Scale the "(100 g benötigt)" string from the API by the current portion ratio.
+ * Handles integers and decimals; formats back with comma if fractional.
+ */
+function scaleNeededText(text: string, portions: number, basePortion: number): string {
+  if (basePortion === 0) return text;
+  const m = /^\((\d+(?:[.,]\d+)?)\s+(.+)\)$/.exec(text);
+  if (!m) return text;
+  const num = parseFloat(m[1].replace(",", "."));
+  const scaled = (num * portions) / basePortion;
+  const scaledStr = Number.isInteger(scaled)
+    ? String(scaled)
+    : scaled.toFixed(1).replace(".", ",");
+  return `(${scaledStr} ${m[2]})`;
+}
+
+function IngredientRow({
+  ingredient,
+  qty,
+  portions,
+  basePortion,
+}: {
+  ingredient: RecipeIngredient;
+  qty: number;
+  portions: number;
+  basePortion: number;
+}) {
   const countryCode = useCountryCode();
   const [imgSrc, setImgSrc] = useState(
     ingredient.imageId ? buildImageUrl(ingredient.imageId, countryCode) : PLACEHOLDER
   );
+
+  const scaledNeeded = ingredient.recipeQuantityText
+    ? scaleNeededText(ingredient.recipeQuantityText, portions, basePortion)
+    : null;
+
+  const displayPkg = ingredient.recipePackageSize ?? ingredient.unitQuantity;
+  const packageLabel = qty > 1 ? `${qty} × ${displayPkg}` : displayPkg;
+  const subtitle = scaledNeeded ? `${packageLabel} ${scaledNeeded}` : packageLabel;
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -92,11 +126,10 @@ function IngredientRow({ ingredient, qty }: { ingredient: RecipeIngredient; qty:
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-text-dark truncate text-sm font-medium">{ingredient.name}</p>
-        <p className="text-text-muted text-xs">{ingredient.unitQuantity}</p>
+        <p className="text-text-muted text-xs">{subtitle}</p>
       </div>
       <div className="shrink-0 text-right">
-        {qty > 1 && <p className="text-text-muted text-xs">{qty}×</p>}
-        <p className="text-text-dark text-sm font-medium">{formatPrice(ingredient.displayPrice)}</p>
+        <p className="text-text-dark text-sm font-medium">{formatPrice(ingredient.displayPrice * qty)}</p>
       </div>
     </div>
   );
@@ -276,6 +309,8 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                   key={ing.id}
                   ingredient={ing}
                   qty={Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions))}
+                  portions={portions}
+                  basePortion={recipe.portions}
                 />
               ))}
             </div>
@@ -292,6 +327,8 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                   key={ing.id}
                   ingredient={ing}
                   qty={Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions))}
+                  portions={portions}
+                  basePortion={recipe.portions}
                 />
               ))}
             </div>

@@ -94,8 +94,8 @@ export function findSellingUnitContainers(obj: unknown): SellingUnitTileContaine
   if (
     record.type === "PML" &&
     typeof record.id === "string" &&
-    record.id.startsWith("selling-unit-") &&
-    record.id.includes("-tile")
+    record.id.includes("selling-unit") &&
+    record.id.includes("tile")
   ) {
     results.push(record as unknown as SellingUnitTileContainer);
   }
