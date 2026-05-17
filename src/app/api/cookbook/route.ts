@@ -8,6 +8,11 @@ import { getRecipeCategories } from "@/lib/recipe-categories";
 import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/types";
 
 const CATEGORY_ID_RE = /^recipe-cattree-[\w-]+$/;
+const SAVED_PAGE_ID = "saved-deep-dive-page-content";
+
+type SendRequestClient = {
+  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
+};
 
 export async function GET(
   request: NextRequest
@@ -26,6 +31,17 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
+
+    if (categoryId === "__saved__") {
+      const rawPage = await (client as unknown as SendRequestClient).sendRequest(
+        "GET",
+        `/pages/${SAVED_PAGE_ID}`,
+        null,
+        true
+      );
+      const recipes = parseCookbookPage(rawPage);
+      return NextResponse.json({ categories: [], recipes });
+    }
 
     if (categoryId) {
       if (!CATEGORY_ID_RE.test(categoryId)) {

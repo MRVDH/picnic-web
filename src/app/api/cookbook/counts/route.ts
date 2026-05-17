@@ -39,12 +39,17 @@ export async function GET(
     const client = buildPicnicClient(token, countryCode);
     const categories = getRecipeCategories(countryCode);
 
-    const [featuredCount, ...categoryEntries] = await Promise.all([
+    const [featuredCount, savedCount, ...categoryEntries] = await Promise.all([
       fetchCount(client, "meals-page-root"),
+      fetchCount(client, "saved-deep-dive-page-content"),
       ...categories.map(async (cat) => [cat.id, await fetchCount(client, cat.id)] as const),
     ]);
 
-    const counts = { __featured__: featuredCount, ...Object.fromEntries(categoryEntries) };
+    const counts = {
+      __featured__: featuredCount,
+      __saved__: savedCount,
+      ...Object.fromEntries(categoryEntries),
+    };
     cache.set(cacheKey, { counts, expiresAt: Date.now() + CACHE_TTL_MS });
     return NextResponse.json(counts);
   } catch (error) {

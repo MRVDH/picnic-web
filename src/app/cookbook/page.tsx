@@ -146,21 +146,20 @@ export default function CookbookPage() {
 
         {/* Controls row: category dropdown + search */}
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          {categories.length > 0 && (
-            <CategoryDropdown
-              options={[
-                { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
-                ...categories.map((c) => ({
-                  id: c.id as string | null,
-                  name: c.name,
-                  count: categoryCounts[c.id],
-                })),
-              ]}
-              value={selectedCategory}
-              onChange={handleSelectCategory}
-              disabled={!!debouncedQuery}
-            />
-          )}
+          <CategoryDropdown
+            options={[
+              { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
+              { id: "__saved__", name: t.cookbookSaved, count: categoryCounts["__saved__"] },
+              ...categories.map((c) => ({
+                id: c.id as string | null,
+                name: c.name,
+                count: categoryCounts[c.id],
+              })),
+            ]}
+            value={selectedCategory}
+            onChange={handleSelectCategory}
+            disabled={!!debouncedQuery}
+          />
           <RecipeSearchInput
             value={searchInput}
             placeholder={t.cookbookSearchPlaceholder}

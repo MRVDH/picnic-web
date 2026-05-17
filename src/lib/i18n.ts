@@ -126,6 +126,7 @@ const translations = {
     // Cookbook
     cookbookTitle: "Alle recepten",
     cookbookFeatured: "Uitgelicht",
+    cookbookSaved: "Opgeslagen recepten",
     cookbookSearchPlaceholder: "Zoek op recept of ingrediënt...",
     cookbookLoadError: "Recepten konden niet worden geladen.",
     noRecipes: "Geen recepten gevonden.",
@@ -278,6 +279,7 @@ const translations = {
     // Cookbook
     cookbookTitle: "Alle Rezepte",
     cookbookFeatured: "Empfehlungen",
+    cookbookSaved: "Gespeicherte Rezepte",
     cookbookSearchPlaceholder: "Nach Rezept oder Zutat suchen...",
     cookbookLoadError: "Rezepte konnten nicht geladen werden.",
     noRecipes: "Keine Rezepte gefunden.",
