@@ -26,6 +26,7 @@ import {
 import type {
   AllergenBadge,
   AllergenInfo,
+  BundleThreshold,
   NutritionRow,
   ProductDetail,
   ProductHighlightItem,
@@ -227,7 +228,7 @@ export function extractProductNutritionRows(rawPage: unknown): NutritionRow[] {
 export function extractProductTileData(
   rawPage: unknown,
   productId: string
-): { name: string; unitQuantity: string; imageId: string; displayPrice: number; maxCount: number } {
+): { name: string; unitQuantity: string; imageId: string; displayPrice: number; maxCount: number; originalPrice: number | null; priceRanges: BundleThreshold[] | null } {
   const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
 
   // Name and unit quantity from the main container's markdown nodes
@@ -275,7 +276,43 @@ export function extractProductTileData(
     if (m) displayPrice = parseInt(m[1]) * 100 + parseInt(m[2]);
   }
 
-  return { name, unitQuantity, imageId, displayPrice, maxCount };
+  const originalPrice = extractOriginalPrice(page);
+
+  // Bundle pricing comes from extractBundles (via __ep1.v1 tier arrays or legacy bundle container),
+  // not from price_ranges on the selling unit (which doesn't exist in the Picnic API).
+  const bundleOptions = extractBundles(rawPage);
+
+  // When the bundle container uses real IDs (Strategy 2), detect whether this product
+  // is itself one of the bundle SKUs (e.g. s1089939 = 3-pack). In that case the
+  // per-pack price (191) must be multiplied by the bundle count to get the total (573),
+  // and per-quantity tier scaling must NOT be applied — the item is always bought once.
+  const selfBundle = bundleOptions.find((b) => b.id === productId && b.quantity > 1);
+  if (selfBundle) {
+    const baseOption = bundleOptions.find((b) => b.quantity === 1);
+    const singlePackPrice = baseOption?.pricePerUnit ?? 0;
+    const bundleTotal = selfBundle.quantity * selfBundle.pricePerUnit;
+    const originalTotal = singlePackPrice > 0 ? selfBundle.quantity * singlePackPrice : null;
+    return {
+      name,
+      unitQuantity,
+      imageId,
+      displayPrice: bundleTotal,
+      maxCount,
+      originalPrice: originalTotal !== null && originalTotal > bundleTotal ? originalTotal : null,
+      priceRanges: null,
+    };
+  }
+
+  let priceRanges: BundleThreshold[] | null = null;
+  if (bundleOptions.length > 0) {
+    const thresholds: BundleThreshold[] = bundleOptions
+      .filter((b) => b.pricePerUnit > 0)
+      .map((b) => ({ quantity: b.quantity, pricePerUnit: b.pricePerUnit }))
+      .sort((a, b) => a.quantity - b.quantity);
+    if (thresholds.length > 0) priceRanges = thresholds;
+  }
+
+  return { name, unitQuantity, imageId, displayPrice, maxCount, originalPrice, priceRanges };
 }
 
 /**
