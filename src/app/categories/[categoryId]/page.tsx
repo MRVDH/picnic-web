@@ -9,6 +9,7 @@ import { SharedHeader } from "@/components/shared-header";
 import { SubcategoryView } from "@/components/subcategory-view";
 import type { SubcategoriesState } from "@/components/subcategory-view";
 import { CartProvider } from "@/contexts/cart-context";
+import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import type { CategoryItem, SubcategoriesApiResponse } from "@/lib/category-types";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
@@ -23,6 +24,8 @@ export default function CategorySubcategoriesPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const dismissToast = useCallback(() => setToastMessage(null), []);
 
+  const t = useTranslations();
+  const { categoryFallbackTitle, subcategoriesLoadError } = t;
   const categoryName = state.status === "success" ? state.title : undefined;
   usePageTitle(categoryName);
 
@@ -44,7 +47,7 @@ export default function CategorySubcategoriesPage() {
         }
         setState({
           status: "success",
-          title: data.title ?? "Categorie",
+          title: data.title ?? categoryFallbackTitle,
           subcategories: Array.isArray(data.subcategories) ? data.subcategories : [],
         });
       })
@@ -52,12 +55,12 @@ export default function CategorySubcategoriesPage() {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setState({
           status: "error",
-          message: "Kan subcategorieën niet laden.",
+          message: subcategoriesLoadError,
         });
       });
 
     return () => controller.abort();
-  }, [categoryId, retryCount]);
+  }, [categoryId, retryCount, categoryFallbackTitle, subcategoriesLoadError]);
 
   const handleBack = useCallback(() => {
     router.push("/");
@@ -77,7 +80,7 @@ export default function CategorySubcategoriesPage() {
     setRetryCount((c) => c + 1);
   }, []);
 
-  const displayName = state.status === "success" ? state.title : "Categorie";
+  const displayName = state.status === "success" ? state.title : t.categoryFallbackTitle;
 
   return (
     <CartProvider showToast={setToastMessage}>

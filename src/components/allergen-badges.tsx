@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "@/contexts/country-context";
 import type { AllergenInfo } from "@/lib/types";
 
 type AllergenBadgesProps = {
@@ -9,10 +12,14 @@ type AllergenBadgesProps = {
 
 export function AllergenBadges({
   allergens,
-  title = "Allergenen",
-  confirmedLabel = "Bevat",
-  mayContainLabel = "Bevat mogelijk",
+  title,
+  confirmedLabel,
+  mayContainLabel,
 }: AllergenBadgesProps) {
+  const t = useTranslations();
+  const resolvedTitle = title ?? t.allergenTitle;
+  const resolvedConfirmedLabel = confirmedLabel ?? t.recipeAllergens;
+  const resolvedMayContainLabel = mayContainLabel ?? t.recipeMayContain;
   const hasConfirmed = allergens.confirmed.length > 0;
   const hasMayContain = allergens.mayContain.length > 0;
 
@@ -20,11 +27,11 @@ export function AllergenBadges({
 
   return (
     <div className="space-y-3">
-      {title && <h2 className="text-foreground text-lg font-semibold">{title}</h2>}
+      {resolvedTitle && <h2 className="text-foreground text-lg font-semibold">{resolvedTitle}</h2>}
 
       {hasConfirmed && (
         <div>
-          <p className="mb-1.5 text-sm font-medium text-gray-600">{confirmedLabel}</p>
+          <p className="mb-1.5 text-sm font-medium text-gray-600">{resolvedConfirmedLabel}</p>
           <div className="flex flex-wrap gap-2">
             {allergens.confirmed.map((badge) => (
               <span
@@ -41,7 +48,7 @@ export function AllergenBadges({
 
       {hasMayContain && (
         <div>
-          <p className="mb-1.5 text-sm font-medium text-gray-500">{mayContainLabel}</p>
+          <p className="mb-1.5 text-sm font-medium text-gray-500">{resolvedMayContainLabel}</p>
           <div className="flex flex-wrap gap-2">
             {allergens.mayContain.map((badge) => (
               <span

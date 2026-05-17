@@ -301,7 +301,7 @@ function LoginForm() {
                 htmlFor="auth-token"
                 className="text-foreground mb-1 block text-sm font-medium"
               >
-                Picnic Auth Token
+                {t.authTokenLabel}
               </label>
               <div className="relative">
                 <input
@@ -341,7 +341,7 @@ function LoginForm() {
             disabled={isLoading}
             className="bg-picnic-red hover:bg-picnic-red-dark focus:ring-picnic-red flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
-            {isLoading ? <Spinner /> : showTwoFactor ? t.verifyButton : t.loginButton}
+            {isLoading ? <Spinner ariaLabel={t.loadingAriaLabel} /> : showTwoFactor ? t.verifyButton : t.loginButton}
           </button>
         </form>
 
@@ -449,12 +449,12 @@ function mapErrorMessage(code: string | undefined, t: Translations): string {
 
 // ─── Icons & Loading ─────────────────────────────────────────────────────────
 
-function Spinner() {
+function Spinner({ ariaLabel }: { ariaLabel: string }) {
   return (
     <div
       className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
       role="status"
-      aria-label="Laden"
+      aria-label={ariaLabel}
     />
   );
 }
