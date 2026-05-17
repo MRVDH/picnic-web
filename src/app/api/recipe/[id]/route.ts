@@ -17,17 +17,24 @@ const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 async function fetchRecipePage(
   client: PicnicClientInstance,
   countryCode: string,
-  id: string
+  id: string,
+  portions?: number
 ): Promise<unknown> {
+  const portionsParam = portions ? `&portions=${portions}` : "";
   if (countryCode === "DE") {
     return (client as unknown as SendRequestClient).sendRequest(
       "GET",
-      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}`,
+      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`,
       null,
       true
     );
   }
-  return client.recipe.getRecipeDetailsPage(id);
+  return (client as unknown as SendRequestClient).sendRequest(
+    "GET",
+    `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`,
+    null,
+    true
+  );
 }
 
 /** Fetch product detail pages in parallel to enrich ingredient stubs with real data. */
@@ -65,12 +72,15 @@ async function enrichIngredients(
     if (!data) return ing;
     return {
       ...ing,
-      name: data.name || ing.name,
+      // Keep the recipe-page tile name (short display name); fall back to product page name
+      name: ing.name || data.name,
       imageId: data.imageId || ing.imageId,
       displayPrice: data.displayPrice ?? ing.displayPrice,
       unitQuantity: data.unitQuantity || ing.unitQuantity,
       maxCount: data.maxCount || ing.maxCount,
       nutritionRows: data.nutritionRows,
+      originalPrice: data.originalPrice,
+      priceRanges: data.priceRanges,
     };
   });
 }
@@ -92,7 +102,9 @@ export async function GET(
   try {
     const countryCode = readCountryCode(request);
     const client = buildPicnicClient(token, countryCode);
-    const rawPage = await fetchRecipePage(client, countryCode, id);
+    const portionsParam = request.nextUrl.searchParams.get("portions");
+    const portions = portionsParam ? parseInt(portionsParam, 10) : undefined;
+    const rawPage = await fetchRecipePage(client, countryCode, id, portions && portions > 0 ? portions : undefined);
     const detail = parseRecipeDetail(rawPage, id);
     const ingredients = await enrichIngredients(
       client as unknown as SendRequestClient,
