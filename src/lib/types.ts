@@ -450,6 +450,10 @@ export type RecipeIngredient = {
   isCondiment: boolean;
   /** Nutrition rows from the product detail page; empty when unavailable */
   nutritionRows: NutritionRow[];
+  /** Recipe quantity text from the ingredient tile (e.g. "100 g"), for base portions */
+  recipeQuantityText: string | null;
+  /** Package size as shown on the recipe page (e.g. "500g"), may differ from unitQuantity */
+  recipePackageSize: string | null;
 };
 
 export type RecipeDetail = {

@@ -99,6 +99,58 @@ function collectSellingUnitMap(obj: unknown, map: Map<string, TileData>): void {
   }
 }
 
+/**
+ * Matches the "(100 g benötigt)" / "(0.5 EL benötigt)" / "(100 ml nodig)" style
+ * markdown that Picnic embeds inline in the recipe ingredient list.
+ */
+const NEEDED_MD_RE = /^\(\d+(?:[.,]\d+)?\s+\S/;
+const PACKAGE_SIZE_RE = /^\d+\s*(g|ml|kg|l)\b/i;
+
+type RecipeIngredientInfo = { neededText: string | null; packageSize: string | null };
+
+/**
+ * Map each ACTIVE selling unit (in analytics order) to its "(X unit benötigt)"
+ * string and the package size that precedes it in the markdown stream.
+ * Both appear in the same order as the analytics selling_units.
+ */
+function buildRecipeQuantityMap(
+  rawPage: unknown,
+  sellingUnits: RecipeAnalyticsUnit[]
+): Map<string, RecipeIngredientInfo> {
+  const result = new Map<string, RecipeIngredientInfo>();
+
+  const seen = new Set<string>();
+  const activeIds: string[] = [];
+  for (const u of sellingUnits) {
+    if (!u.selling_unit_id || seen.has(u.selling_unit_id)) continue;
+    if (u.status !== "ACTIVE") continue;
+    seen.add(u.selling_unit_id);
+    activeIds.push(u.selling_unit_id);
+  }
+  if (activeIds.length === 0) return result;
+
+  const allMarkdowns = collectMarkdowns(rawPage)
+    .map((md) => cleanMarkdown(md).trim())
+    .filter(Boolean);
+
+  const pairs: RecipeIngredientInfo[] = [];
+  let prevMd: string | null = null;
+
+  for (const md of allMarkdowns) {
+    if (NEEDED_MD_RE.test(md)) {
+      const packageSize = prevMd && PACKAGE_SIZE_RE.test(prevMd) ? prevMd : null;
+      pairs.push({ neededText: md, packageSize });
+    }
+    prevMd = md;
+  }
+
+  for (let i = 0; i < Math.min(activeIds.length, pairs.length); i++) {
+    result.set(activeIds[i], pairs[i]);
+  }
+
+  return result;
+}
+
 /** Extract the first IMAGE source id from a PML subtree. */
 function extractImageId(obj: unknown): string | null {
   if (typeof obj !== "object" || obj === null) return null;
@@ -273,6 +325,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
   collectSellingUnitMap(rawPage, tileMap);
 
   // ── 4. Build ingredient list from analytics selling_units ─────────────────
+  const recipeQtyMap = buildRecipeQuantityMap(rawPage, meta?.selling_units ?? []);
   const ingredients: RecipeIngredient[] = [];
   const seen = new Set<string>();
 
@@ -282,6 +335,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
     seen.add(unit.selling_unit_id);
 
     const tile = tileMap.get(unit.selling_unit_id);
+    const recipeInfo = recipeQtyMap.get(unit.selling_unit_id) ?? null;
     ingredients.push({
       id: unit.selling_unit_id,
       name: tile?.name ?? unit.selling_unit_id,
@@ -292,6 +346,8 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
       quantity: unit.quantity ?? 1,
       isCondiment: !unit.checked,
       nutritionRows: [],
+      recipeQuantityText: recipeInfo?.neededText ?? null,
+      recipePackageSize: recipeInfo?.packageSize ?? null,
     });
   }
 
