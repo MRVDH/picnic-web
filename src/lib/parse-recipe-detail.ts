@@ -1,5 +1,10 @@
 import { cleanMarkdown, collectMarkdowns, stripColorTags } from "./pml-helpers";
-import type { NutritionRow, RecipeDetail, RecipeIngredient } from "./types";
+import type { AllergenInfo, NutritionRow, RecipeDetail, RecipeIngredient } from "./types";
+
+const ALLERGEN_CONFIRMED_BG = "#fef3c7";
+const ALLERGEN_CONFIRMED_TEXT = "#92400e";
+const ALLERGEN_MAY_CONTAIN_BG = "#f3f4f6";
+const ALLERGEN_MAY_CONTAIN_TEXT = "#4b5563";
 
 type PmlRecord = Record<string, unknown>;
 
@@ -292,9 +297,7 @@ function parseNutritionFromMarkdowns(markdowns: string[]): NutritionRow[] {
  * confirmed ("Die ausgewählten Zutaten enthalten:") and may-contain
  * ("Kann enthalten sein" / "Kan bevatten").
  */
-function parseAllergensFromMarkdowns(
-  markdowns: string[]
-): { confirmed: string[]; mayContain: string[] } {
+function parseAllergensFromMarkdowns(markdowns: string[]): AllergenInfo {
   const confirmed: string[] = [];
   const mayContain: string[] = [];
   let inAllergens = false;
@@ -309,22 +312,9 @@ function parseAllergensFromMarkdowns(
       continue;
     }
 
-    // Stop when we reach the next major content section
     if (/^(zutaten|ingrediënten|so wird|bereiding|schritt|stap)\b/i.test(clean)) break;
-
-    // Sub-header marking start of the confirmed allergen list
-    if (/zutaten.*enthalten|ingrediënten.*bevatten/i.test(clean)) {
-      afterIngredientHeader = true;
-      continue;
-    }
-
-    // Separator marking start of the may-contain list
-    if (/kann enthalten|kan bevatten/i.test(clean)) {
-      inMayContain = true;
-      continue;
-    }
-
-    // Skip generic notes (e.g. "Dieses Rezept enthält keine Allergene")
+    if (/zutaten.*enthalten|ingrediënten.*bevatten/i.test(clean)) { afterIngredientHeader = true; continue; }
+    if (/kann enthalten|kan bevatten/i.test(clean)) { inMayContain = true; continue; }
     if (/keine allergene|geen allergenen|enthält keine|bevat geen/i.test(clean)) continue;
     if (!clean || clean.length > 40) continue;
 
@@ -332,7 +322,18 @@ function parseAllergensFromMarkdowns(
     else if (afterIngredientHeader) confirmed.push(clean);
   }
 
-  return { confirmed, mayContain };
+  return {
+    confirmed: confirmed.map((text) => ({
+      text,
+      backgroundColor: ALLERGEN_CONFIRMED_BG,
+      textColor: ALLERGEN_CONFIRMED_TEXT,
+    })),
+    mayContain: mayContain.map((text) => ({
+      text,
+      backgroundColor: ALLERGEN_MAY_CONTAIN_BG,
+      textColor: ALLERGEN_MAY_CONTAIN_TEXT,
+    })),
+  };
 }
 
 /**
