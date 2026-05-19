@@ -66,6 +66,7 @@ const translations = {
     nothingForgotten: "Niets vergeten?",
     cartMutationError: "Er ging iets mis. Probeer het opnieuw.",
     cartLoadError: "Er is iets misgegaan. Probeer het later opnieuw.",
+    cartOtherItems: "Overige producten",
 
     // Checkout
     checkoutLabel: "Naar de kassa",
@@ -242,6 +243,7 @@ const translations = {
     nothingForgotten: "Alles dabei?",
     cartMutationError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
     cartLoadError: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
+    cartOtherItems: "Weitere Produkte",
 
     // Checkout
     checkoutLabel: "Zur Kasse",
@@ -418,6 +420,7 @@ const translations = {
     nothingForgotten: "Rien oublié ?",
     cartMutationError: "Une erreur s'est produite. Veuillez réessayer.",
     cartLoadError: "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    cartOtherItems: "Autres produits",
 
     // Checkout
     checkoutLabel: "Passer à la caisse",

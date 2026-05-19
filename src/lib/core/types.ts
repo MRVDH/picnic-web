@@ -340,6 +340,16 @@ export type ProductDetail = {
 
 // ─── Cart ────────────────────────────────────────────────────────────────────
 
+/** A recipe group extracted from the cart's basket_sections. */
+export type CartRecipeGroup = {
+  /** Recipe / selling-group ID. */
+  id: string;
+  /** Recipe name as returned by the Picnic API. */
+  title: string;
+  /** Recipe image ID for the CDN (path starting with "recipes/…"), or null. */
+  imageId: string | null;
+};
+
 /** A single line item in the cart, derived from raw order line + article objects. */
 export type CartItem = {
   /** Order line identifier. */
@@ -368,6 +378,8 @@ export type CartItem = {
   unavailableExplanation: string | null;
   /** Replacement product suggestions for unavailable items. */
   replacements: SliderProduct[];
+  /** ID of the recipe group (selling group) this item belongs to, or null. */
+  basketGroupId: string | null;
 };
 
 /** A single deposit category entry in the deposit breakdown. */
@@ -418,6 +430,8 @@ export type CartData = {
   selectedSlot: SelectedSlotData | null;
   /** Pre-formatted banner text: prompt or formatted time window. */
   deliveryBannerText: string;
+  /** Recipe groups from basket_sections; empty when no recipes are in the cart. */
+  recipeGroups: CartRecipeGroup[];
 };
 
 /** Alias: the /api/cart route returns CartData directly. */
