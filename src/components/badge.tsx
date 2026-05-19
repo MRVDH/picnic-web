@@ -20,7 +20,7 @@ export function Badge({ badge }: BadgeProps) {
 
   return (
     <span
-      className={`inline-block rounded-sm px-1.5 py-0.5 text-xs font-medium leading-tight ${classes}`}
+      className={`inline-block rounded-sm px-1.5 py-0.5 text-xs leading-tight font-medium ${classes}`}
     >
       {badge.text}
     </span>

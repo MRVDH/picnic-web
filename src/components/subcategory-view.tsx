@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { buildImageUrl } from "@/lib/image-url";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ErrorView } from "@/components/error-view";
+
 import { BackArrowIcon } from "@/components/back-arrow-icon";
-import type { CategoryItem } from "@/lib/category-types";
+import { ErrorView } from "@/components/error-view";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { useCountryCode } from "@/contexts/country-context";
+import type { CategoryItem } from "@/lib/category-types";
+import { buildImageUrl } from "@/lib/image-url";
 
 export type SubcategoriesState =
   | { status: "idle" }

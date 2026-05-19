@@ -6,13 +6,28 @@
  */
 
 const DUTCH_DAY_NAMES = [
-  "Zondag", "Maandag", "Dinsdag", "Woensdag",
-  "Donderdag", "Vrijdag", "Zaterdag",
+  "Zondag",
+  "Maandag",
+  "Dinsdag",
+  "Woensdag",
+  "Donderdag",
+  "Vrijdag",
+  "Zaterdag",
 ] as const;
 
 const DUTCH_MONTH_ABBREVIATIONS = [
-  "jan", "feb", "mrt", "apr", "mei", "jun",
-  "jul", "aug", "sep", "okt", "nov", "dec",
+  "jan",
+  "feb",
+  "mrt",
+  "apr",
+  "mei",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "okt",
+  "nov",
+  "dec",
 ] as const;
 
 /** Prompt text shown when no explicit slot selection exists. */
@@ -22,10 +37,7 @@ export const NO_SLOT_TEXT = "Kies je bezorgmoment";
  * Format a delivery window for the cart banner.
  * Returns e.g. "Morgen 14:40 - 15:40", "Vandaag 08:00 - 09:00".
  */
-export function formatBannerText(
-  windowStart: string | null,
-  windowEnd: string | null,
-): string {
+export function formatBannerText(windowStart: string | null, windowEnd: string | null): string {
   if (!windowStart || !windowEnd) return NO_SLOT_TEXT;
 
   const start = new Date(windowStart);

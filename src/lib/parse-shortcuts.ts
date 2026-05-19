@@ -1,12 +1,7 @@
 // Parser that extracts ShortcutItem[] from the home_page_root
 // FusionPage PML tree. Targets the "Snel naar" (quick-access) section.
-
-import {
-  findNodeByIdSubstring,
-  collectPropertyValues,
-  cleanMarkdown,
-} from "@/lib/pml-helpers";
 import type { ShortcutItem } from "@/lib/category-types";
+import { cleanMarkdown, collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml-helpers";
 
 const SHORTCUT_SECTION_ID = "campaign-category-shortcuts-section";
 const BADGE_TEXT_SIZE = 12;
@@ -62,9 +57,7 @@ function collectTouchables(node: unknown): RecordNode[] {
 }
 
 /** Extract a ShortcutItem from a single TOUCHABLE PML node. */
-function extractShortcutFromTouchable(
-  touchable: RecordNode,
-): ShortcutItem | null {
+function extractShortcutFromTouchable(touchable: RecordNode): ShortcutItem | null {
   const deepLinkTarget = extractDeepLinkTarget(touchable);
   if (!deepLinkTarget) return null;
 
@@ -147,10 +140,7 @@ function extractBadgeText(node: RecordNode): string | null {
   return result.text;
 }
 
-function findBadgeText(
-  node: unknown,
-  result: { text: string | null },
-): void {
+function findBadgeText(node: unknown, result: { text: string | null }): void {
   if (result.text !== null) return;
   if (typeof node !== "object" || node === null) return;
 

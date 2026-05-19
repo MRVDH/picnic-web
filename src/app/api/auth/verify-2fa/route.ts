@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { AUTH_COOKIE_NAME, AUTH_COOKIE_MAX_AGE_SECONDS, readCountryCode } from "@/lib/auth";
-import type { AuthApiResponse } from "@/lib/types";
+
 import { is2FAError } from "@/lib/api-error";
+import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAME, readCountryCode } from "@/lib/auth";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { AuthApiResponse } from "@/lib/types";
 
 /**
  * POST /api/auth/verify-2fa

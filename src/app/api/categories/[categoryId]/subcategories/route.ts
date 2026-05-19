@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { parseSubcategoryPage, extractPageTitle } from "@/lib/parse-subcategories";
+
 import { isApiAuthError } from "@/lib/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
 import type { SubcategoriesApiResponse } from "@/lib/category-types";
+import { extractPageTitle, parseSubcategoryPage } from "@/lib/parse-subcategories";
+import { buildPicnicClient } from "@/lib/picnic-client";
 import type { ApiErrorResponse } from "@/lib/types";
 
 const L1_PAGE_PREFIX = "L1-category-page-root?category_id=";

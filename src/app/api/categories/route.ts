@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { isApiAuthError } from "@/lib/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
+import type { CategoriesApiResponse } from "@/lib/category-types";
 import { parseCategoryPage } from "@/lib/parse-categories";
 import { parseShortcutsPage } from "@/lib/parse-shortcuts";
-import { isApiAuthError } from "@/lib/api-error";
-import type { CategoriesApiResponse } from "@/lib/category-types";
+import { buildPicnicClient } from "@/lib/picnic-client";
 import type { ApiErrorResponse } from "@/lib/types";
 
 const SEARCH_EMPTY_PAGE_ID = "empty-search-page-root";

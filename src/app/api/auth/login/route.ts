@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { AUTH_COOKIE_NAME, AUTH_COOKIE_MAX_AGE_SECONDS, readCountryCode } from "@/lib/auth";
-import type { AuthApiResponse } from "@/lib/types";
-import {
-  COUNTRY_COOKIE_NAME,
-  SUPPORTED_COUNTRY_CODES,
-  type CountryCode,
-} from "@/lib/types";
+
 import { isApiAuthError } from "@/lib/api-error";
+import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAME, readCountryCode } from "@/lib/auth";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { AuthApiResponse } from "@/lib/types";
+import { COUNTRY_COOKIE_NAME, type CountryCode, SUPPORTED_COUNTRY_CODES } from "@/lib/types";
 
 /**
  * POST /api/auth/login

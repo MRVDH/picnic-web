@@ -7,19 +7,19 @@
  * Provides optimistic updates with per-product mutation queuing and rollback
  * on failure. Components consume this via the `useCart` hook.
  */
-
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  useRef,
+  useContext,
   useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
 import type { ReactNode } from "react";
-import type { CartData, BundleProgress, BundleThreshold } from "@/lib/types";
+
 import { createMutationQueue } from "@/lib/mutation-queue";
+import type { BundleProgress, BundleThreshold, CartData } from "@/lib/types";
 
 // ─── Toast callback type ──────────────────────────────────────────────────────
 
@@ -80,10 +80,7 @@ function buildQuantitiesMap(cart: CartData): Map<string, number> {
   return map;
 }
 
-async function postCartMutation(
-  productId: string,
-  action: "add" | "remove",
-): Promise<CartData> {
+async function postCartMutation(productId: string, action: "add" | "remove"): Promise<CartData> {
   const response = await fetch("/api/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -107,9 +104,7 @@ type CartProviderProps = {
 };
 
 export function CartProvider({ children, showToast }: CartProviderProps) {
-  const [quantities, setQuantities] = useState<Map<string, number>>(
-    new Map(),
-  );
+  const [quantities, setQuantities] = useState<Map<string, number>>(new Map());
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [bundleData, setBundleData] = useState<Map<string, BundleThreshold[]>>(new Map());
@@ -157,20 +152,16 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
   const queueRef = useRef<ReturnType<typeof createMutationQueue<CartData>> | null>(null);
 
   useEffect(() => {
-    queueRef.current = createMutationQueue<CartData>(
-      (productId, result, error) => {
-        if (error) {
-          rollbackProduct(productId);
-          showToastRef.current?.(
-            "Er ging iets mis. Probeer het opnieuw.",
-          );
-          return;
-        }
-        if (result) {
-          reconcileFromServer(result);
-        }
-      },
-    );
+    queueRef.current = createMutationQueue<CartData>((productId, result, error) => {
+      if (error) {
+        rollbackProduct(productId);
+        showToastRef.current?.("Er ging iets mis. Probeer het opnieuw.");
+        return;
+      }
+      if (result) {
+        reconcileFromServer(result);
+      }
+    });
   }, [rollbackProduct, reconcileFromServer]);
 
   // Initial cart fetch.
@@ -199,25 +190,20 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
 
   // ─── Actions ──────────────────────────────────────────────────────────
 
-  const addProduct = useCallback(
-    (productId: string, maxCount: number) => {
-      setQuantities((prev) => {
-        const current = prev.get(productId) ?? 0;
-        if (current >= maxCount) return prev;
-        const next = new Map(prev);
-        next.set(productId, current + 1);
-        return next;
-      });
+  const addProduct = useCallback((productId: string, maxCount: number) => {
+    setQuantities((prev) => {
+      const current = prev.get(productId) ?? 0;
+      if (current >= maxCount) return prev;
+      const next = new Map(prev);
+      next.set(productId, current + 1);
+      return next;
+    });
 
-      // Optimistic total bump (+1 item — actual price reconciled on response).
-      setTotalCount((c) => c + 1);
+    // Optimistic total bump (+1 item — actual price reconciled on response).
+    setTotalCount((c) => c + 1);
 
-      queueRef.current?.enqueue(productId, () =>
-        postCartMutation(productId, "add"),
-      );
-    },
-    [],
-  );
+    queueRef.current?.enqueue(productId, () => postCartMutation(productId, "add"));
+  }, []);
 
   const removeProduct = useCallback((productId: string) => {
     setQuantities((prev) => {
@@ -235,14 +221,12 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
 
     setTotalCount((c) => Math.max(0, c - 1));
 
-    queueRef.current?.enqueue(productId, () =>
-      postCartMutation(productId, "remove"),
-    );
+    queueRef.current?.enqueue(productId, () => postCartMutation(productId, "remove"));
   }, []);
 
   const getQuantity = useCallback(
     (productId: string): number => quantities.get(productId) ?? 0,
-    [quantities],
+    [quantities]
   );
 
   const getBundleProgress = useCallback(
@@ -255,21 +239,18 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
         currentQuantity: quantities.get(productId) ?? 0,
       };
     },
-    [bundleData, quantities],
+    [bundleData, quantities]
   );
 
-  const registerBundleData = useCallback(
-    (productId: string, thresholds: BundleThreshold[]) => {
-      if (thresholds.length === 0) return;
-      setBundleData((prev) => {
-        if (prev.has(productId)) return prev;
-        const next = new Map(prev);
-        next.set(productId, thresholds);
-        return next;
-      });
-    },
-    [],
-  );
+  const registerBundleData = useCallback((productId: string, thresholds: BundleThreshold[]) => {
+    if (thresholds.length === 0) return;
+    setBundleData((prev) => {
+      if (prev.has(productId)) return prev;
+      const next = new Map(prev);
+      next.set(productId, thresholds);
+      return next;
+    });
+  }, []);
 
   const value = useMemo<CartContextValue>(
     () => ({
@@ -295,7 +276,7 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
       getQuantity,
       getBundleProgress,
       registerBundleData,
-    ],
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

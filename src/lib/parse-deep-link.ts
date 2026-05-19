@@ -13,9 +13,7 @@
  *
  * Returns the converted page ID string, or null if the target cannot be parsed.
  */
-export function parsePageIdFromDeepLink(
-  target: string,
-): string | null {
+export function parsePageIdFromDeepLink(target: string): string | null {
   const match = /;id=([^,]+)(.*)/.exec(target);
   if (!match) {
     return null;

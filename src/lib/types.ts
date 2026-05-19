@@ -1,7 +1,7 @@
 // Application-level type definitions for the Picnic web client.
 // These are our own domain types, decoupled from the upstream picnic-api types.
-
 import type { SelectedSlotData } from "@/lib/delivery-slot-types";
+
 export type { SelectedSlotData } from "@/lib/delivery-slot-types";
 
 // ─── Constants ───────────────────────────────────────────────────────────────

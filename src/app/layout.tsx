@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import "./globals.css";
+
 import { cookies } from "next/headers";
+
 import { CountryCodeProvider } from "@/contexts/country-context";
 import { parseCountryCode } from "@/lib/types";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Picnic Web",

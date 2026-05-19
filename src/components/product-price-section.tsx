@@ -1,5 +1,5 @@
-import type { ProductPromotion, BundleOption } from "@/lib/types";
 import { formatPrice } from "@/lib/format-price";
+import type { BundleOption, ProductPromotion } from "@/lib/types";
 
 type ProductPriceSectionProps = {
   displayPrice: number;
@@ -40,7 +40,7 @@ export function ProductPriceSection({
             {formatPrice(displayPrice)}
           </span>
           {hasDiscount && (
-            <span className="text-base text-price-original line-through">
+            <span className="text-price-original text-base line-through">
               {formatPrice(originalPrice)}
             </span>
           )}
@@ -95,15 +95,11 @@ function BundleTierGrid({ bundles, cartQuantity, onSetQuantity }: BundleTierGrid
             key={bundle.id || index}
             type="button"
             onClick={() => onSetQuantity?.(bundle.quantity)}
-            className={`flex flex-1 min-w-[70px] cursor-pointer flex-col items-center rounded-lg px-3 py-2 transition-colors ${
-              isActive
-                ? "bg-[#d6e6cd] ring-1 ring-[#b0cfb0]"
-                : "bg-gray-100 hover:bg-gray-200"
+            className={`flex min-w-[70px] flex-1 cursor-pointer flex-col items-center rounded-lg px-3 py-2 transition-colors ${
+              isActive ? "bg-[#d6e6cd] ring-1 ring-[#b0cfb0]" : "bg-gray-100 hover:bg-gray-200"
             }`}
           >
-            <span className="text-xs text-gray-500">
-              Vanaf {bundle.quantity}
-            </span>
+            <span className="text-xs text-gray-500">Vanaf {bundle.quantity}</span>
             <span
               className={`text-sm font-bold ${
                 isActive ? "text-price-discount" : "text-foreground"
@@ -119,10 +115,7 @@ function BundleTierGrid({ bundles, cartQuantity, onSetQuantity }: BundleTierGrid
 }
 
 /** Returns the index of the highest tier whose quantity <= cartQuantity, or -1 if none. */
-function findActiveTierIndex(
-  bundles: BundleOption[],
-  cartQuantity: number,
-): number {
+function findActiveTierIndex(bundles: BundleOption[], cartQuantity: number): number {
   if (cartQuantity === 0) return -1;
 
   let activeIndex = -1;
@@ -148,7 +141,7 @@ function PdpStepper({ quantity, maxCount, onIncrement, onDecrement }: PdpStepper
     return (
       <button
         onClick={onIncrement}
-        className="w-full rounded-lg border border-card-border bg-white py-3 text-center text-sm font-semibold text-foreground transition-colors hover:bg-gray-50"
+        className="border-card-border text-foreground w-full rounded-lg border bg-white py-3 text-center text-sm font-semibold transition-colors hover:bg-gray-50"
       >
         In mandje
       </button>
@@ -156,20 +149,20 @@ function PdpStepper({ quantity, maxCount, onIncrement, onDecrement }: PdpStepper
   }
 
   return (
-    <div className="flex items-center rounded-lg border border-card-border bg-white">
+    <div className="border-card-border flex items-center rounded-lg border bg-white">
       <button
         onClick={onDecrement}
-        className="flex-none px-5 py-3 text-lg font-bold text-foreground transition-colors hover:bg-gray-50"
+        className="text-foreground flex-none px-5 py-3 text-lg font-bold transition-colors hover:bg-gray-50"
       >
         &minus;
       </button>
-      <span className="flex-1 text-center text-sm font-semibold text-foreground">
+      <span className="text-foreground flex-1 text-center text-sm font-semibold">
         {quantity} in mandje
       </span>
       <button
         onClick={onIncrement}
         disabled={quantity >= maxCount}
-        className="flex-none px-5 py-3 text-lg font-bold text-foreground transition-colors hover:bg-gray-50 disabled:opacity-30"
+        className="text-foreground flex-none px-5 py-3 text-lg font-bold transition-colors hover:bg-gray-50 disabled:opacity-30"
       >
         +
       </button>

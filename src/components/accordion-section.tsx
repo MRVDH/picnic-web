@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { renderMarkdownBold } from "@/lib/render-markdown-bold";
 
 type AccordionSectionProps = {
@@ -15,14 +16,14 @@ export function AccordionSection({ title, content, children }: AccordionSectionP
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="border-b border-card-border">
+    <div className="border-card-border border-b">
       <button
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
         className="flex w-full items-center justify-between py-3 text-left"
         aria-expanded={isExpanded}
       >
-        <span className="text-sm font-medium text-foreground">{title}</span>
+        <span className="text-foreground text-sm font-medium">{title}</span>
         <span
           className={`text-gray-400 transition-transform duration-200 ${
             isExpanded ? "rotate-180" : ""
@@ -35,11 +36,7 @@ export function AccordionSection({ title, content, children }: AccordionSectionP
 
       {isExpanded && (
         <div className="pb-4 text-sm text-gray-600">
-          {children ?? (
-            <p className="whitespace-pre-line">
-              {renderMarkdownBold(content ?? "")}
-            </p>
-          )}
+          {children ?? <p className="whitespace-pre-line">{renderMarkdownBold(content ?? "")}</p>}
         </div>
       )}
     </div>

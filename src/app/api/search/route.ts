@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { parseFusionSearchSections } from "@/lib/parse-fusion-search";
+
 import { isApiAuthError } from "@/lib/api-error";
-import type { SearchApiResponse, ApiErrorResponse } from "@/lib/types";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
+import { parseFusionSearchSections } from "@/lib/parse-fusion-search";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { ApiErrorResponse, SearchApiResponse } from "@/lib/types";
 
 /**
  * GET /api/search?q=<query>

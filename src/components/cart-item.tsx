@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import type { CartItem } from "@/lib/types";
-import { buildImageUrl } from "@/lib/image-url";
-import { PriceDisplay } from "@/components/price-display";
+
 import { Badge } from "@/components/badge";
-import { UnavailableOverlay } from "@/components/unavailable-product";
+import { PriceDisplay } from "@/components/price-display";
 import { QuantityStepper } from "@/components/quantity-stepper";
+import { UnavailableOverlay } from "@/components/unavailable-product";
 import { useCountryCode } from "@/contexts/country-context";
+import { buildImageUrl } from "@/lib/image-url";
+import type { CartItem } from "@/lib/types";
 
 type CartItemCardProps = {
   item: CartItem;
