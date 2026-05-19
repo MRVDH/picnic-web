@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { CartData, ApiErrorResponse } from "@/lib/types";
-import { SUPPORTED_COUNTRY_CODES } from "@/lib/types";
+
+import { SearchBar } from "@/components/search-bar";
 import { useCartOptional } from "@/contexts/cart-context";
 import { useCountryCode, useSwitchCountry, useTranslations } from "@/contexts/country-context";
 import { formatPrice } from "@/lib/format-price";
-import { SearchBar } from "@/components/search-bar";
+import type { ApiErrorResponse, CartData } from "@/lib/types";
+import { SUPPORTED_COUNTRY_CODES } from "@/lib/types";
 
 // ─── Cart badge state ─────────────────────────────────────────────────────────
 

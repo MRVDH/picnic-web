@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useCallback, useRef, Suspense } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
+
 import { useSearchParams } from "next/navigation";
+
 import { usePageTitle } from "@/hooks/use-page-title";
 import { type Translations, getTranslations } from "@/lib/i18n";
 import {
-  type CountryCode,
-  SUPPORTED_COUNTRY_CODES,
-  DEFAULT_COUNTRY_CODE,
   COUNTRY_COOKIE_NAME,
+  type CountryCode,
+  DEFAULT_COUNTRY_CODE,
+  SUPPORTED_COUNTRY_CODES,
 } from "@/lib/types";
 
 const DEFAULT_REDIRECT = "/";

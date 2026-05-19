@@ -9,10 +9,8 @@ export function ProductDescription({ description }: ProductDescriptionProps) {
 
   return (
     <div>
-      <h2 className="mb-2 text-lg font-semibold text-foreground">
-        Beschrijving
-      </h2>
-      <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
+      <h2 className="text-foreground mb-2 text-lg font-semibold">Beschrijving</h2>
+      <p className="text-sm leading-relaxed whitespace-pre-line text-gray-600">
         {renderMarkdownBold(description)}
       </p>
     </div>

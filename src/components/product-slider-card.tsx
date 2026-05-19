@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { SliderProduct } from "@/lib/types";
-import { buildImageUrl } from "@/lib/image-url";
-import { formatPrice } from "@/lib/format-price";
+
 import { useCountryCode } from "@/contexts/country-context";
+import { formatPrice } from "@/lib/format-price";
+import { buildImageUrl } from "@/lib/image-url";
+import type { SliderProduct } from "@/lib/types";
 
 type ProductSliderCardProps = {
   product: SliderProduct;

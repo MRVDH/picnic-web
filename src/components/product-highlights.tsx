@@ -1,5 +1,5 @@
-import type { ProductHighlightItem } from "@/lib/types";
 import { renderPmlMarkdown } from "@/lib/parse-pml-markdown";
+import type { ProductHighlightItem } from "@/lib/types";
 
 type ProductHighlightsProps = {
   highlights: ProductHighlightItem[];
@@ -46,9 +46,7 @@ export function ProductHighlights({ highlights }: ProductHighlightsProps) {
   return (
     <div className="divide-y divide-gray-100">
       {highlights.map((item, index) => {
-        const icon = item.iconKey
-          ? (ICON_MAP[item.iconKey] ?? FALLBACK_ICON)
-          : null;
+        const icon = item.iconKey ? (ICON_MAP[item.iconKey] ?? FALLBACK_ICON) : null;
 
         const content = (
           <div className="flex items-center gap-3 py-3">
@@ -57,9 +55,7 @@ export function ProductHighlights({ highlights }: ProductHighlightsProps) {
                 {icon}
               </span>
             )}
-            <span className="text-sm text-foreground">
-              {renderPmlMarkdown(item.text)}
-            </span>
+            <span className="text-foreground text-sm">{renderPmlMarkdown(item.text)}</span>
           </div>
         );
 
@@ -68,20 +64,13 @@ export function ProductHighlights({ highlights }: ProductHighlightsProps) {
         // as styled text
         if (item.linkTarget) {
           return (
-            <div
-              key={`highlight-${index}`}
-              className="cursor-default text-gray-600"
-            >
+            <div key={`highlight-${index}`} className="cursor-default text-gray-600">
               {content}
             </div>
           );
         }
 
-        return (
-          <div key={`highlight-${index}`}>
-            {content}
-          </div>
-        );
+        return <div key={`highlight-${index}`}>{content}</div>;
       })}
     </div>
   );

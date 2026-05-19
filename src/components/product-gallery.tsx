@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+
 import Image from "next/image";
-import { buildImageUrl } from "@/lib/image-url";
+
 import { useCountryCode } from "@/contexts/country-context";
+import { buildImageUrl } from "@/lib/image-url";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 const GALLERY_IMAGE_SIZE = "large";

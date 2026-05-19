@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { parseProductDetailPage } from "@/lib/parse-fusion-product";
+
 import { isApiAuthError } from "@/lib/api-error";
-import type { ProductDetail, ApiErrorResponse } from "@/lib/types";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
+import { parseProductDetailPage } from "@/lib/parse-fusion-product";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { ApiErrorResponse, ProductDetail } from "@/lib/types";
 
 /**
  * GET /api/product/[id]

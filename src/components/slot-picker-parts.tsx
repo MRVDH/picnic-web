@@ -16,7 +16,12 @@ import { formatTime } from "@/lib/format-delivery-window";
 export function CloseIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M5 5l10 10M15 5L5 15"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -38,7 +43,13 @@ export function CheckIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <circle cx="10" cy="10" r="9" fill="#22c55e" />
-      <path d="M6 10l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M6 10l3 3 5-6"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -91,7 +102,7 @@ export function SectionHeader({ text, icon }: { text: string; icon?: "leaf" }) {
   return (
     <div className="mt-4 mb-2 flex items-center gap-1.5">
       {icon === "leaf" && <LeafIcon />}
-      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{text}</span>
+      <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase">{text}</span>
     </div>
   );
 }
@@ -119,7 +130,7 @@ export function SlotRow({
       type="button"
       onClick={() => onSelect(slot.slotId)}
       disabled={isDisabled || !slot.isAvailable}
-      className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 mb-1.5 text-left transition-colors ${
+      className={`mb-1.5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors ${
         isCurrentlySelected
           ? "border-green-500 bg-green-50"
           : "border-gray-200 bg-white hover:bg-gray-50"
@@ -127,14 +138,14 @@ export function SlotRow({
     >
       <div className="flex items-center gap-2">
         {slot.isGreenChoice && <LeafIcon />}
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-foreground text-sm font-medium">
           {startTime} - {endTime}
         </span>
       </div>
 
       <div className="flex items-center">
         {isSelecting && (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-picnic-red" />
+          <div className="border-t-picnic-red h-4 w-4 animate-spin rounded-full border-2 border-gray-300" />
         )}
         {isCurrentlySelected && !isSelecting && <CheckIcon />}
       </div>

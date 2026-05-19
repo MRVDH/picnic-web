@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
+
 import {
-  type CountryCode,
-  SUPPORTED_COUNTRY_CODES,
-  DEFAULT_COUNTRY_CODE,
   COUNTRY_COOKIE_NAME,
+  type CountryCode,
+  DEFAULT_COUNTRY_CODE,
+  SUPPORTED_COUNTRY_CODES,
 } from "./types";
 
 // ─── Auth Constants ──────────────────────────────────────────────────────────

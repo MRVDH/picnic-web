@@ -4,15 +4,14 @@
  * Parses the raw Picnic API response into strongly-typed delivery slot data.
  * All field access is defensive via type guards from src/lib/type-guards.ts.
  */
-
-import { isObject, asString, asArray } from "@/lib/type-guards";
 import type {
   DeliverySlotData,
+  DeliverySlotPickerData,
   SelectedSlotData,
   SlotDayGroup,
-  DeliverySlotPickerData,
 } from "@/lib/delivery-slot-types";
 import { formatDayTabLabel } from "@/lib/format-delivery-window";
+import { asArray, asString, isObject } from "@/lib/type-guards";
 
 // ─── Single slot extraction ──────────────────────────────────────────────────
 
@@ -34,9 +33,8 @@ function parseRawSlot(raw: Record<string, unknown>): DeliverySlotData | null {
     isAvailable: raw["is_available"] === true,
     isSelected: raw["selected"] === true,
     isGreenChoice: false, // Set later by identifyGreenSlotIds
-    minimumOrderValue: typeof raw["minimum_order_value"] === "number"
-      ? raw["minimum_order_value"]
-      : null,
+    minimumOrderValue:
+      typeof raw["minimum_order_value"] === "number" ? raw["minimum_order_value"] : null,
   };
 }
 
@@ -48,7 +46,7 @@ function parseRawSlot(raw: Record<string, unknown>): DeliverySlotData | null {
  */
 export function parseSelectedSlot(
   rawSelectedSlot: unknown,
-  rawDeliverySlots: unknown[],
+  rawDeliverySlots: unknown[]
 ): SelectedSlotData | null {
   if (!isObject(rawSelectedSlot)) return null;
 
@@ -164,10 +162,7 @@ export function parseDeliverySlotsPicker(rawData: unknown): DeliverySlotPickerDa
   const dayGroups = groupSlotsByDay(slots);
 
   // Parse selected slot
-  const selectedSlot = parseSelectedSlot(
-    rawData["selected_slot"],
-    rawSlots,
-  );
+  const selectedSlot = parseSelectedSlot(rawData["selected_slot"], rawSlots);
 
   return { dayGroups, selectedSlot };
 }

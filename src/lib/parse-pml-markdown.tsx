@@ -45,9 +45,7 @@ export function parseMarkdownTokens(markdown: string): MarkdownToken[] {
 }
 
 /** Split markdown into bold and non-bold parts. */
-function splitBoldParts(
-  markdown: string,
-): { text: string; bold: boolean }[] {
+function splitBoldParts(markdown: string): { text: string; bold: boolean }[] {
   const parts: { text: string; bold: boolean }[] = [];
   const regex = new RegExp(BOLD_REGEX.source, "g");
   let lastIndex = 0;
@@ -70,9 +68,7 @@ function splitBoldParts(
 }
 
 /** Extract color-tagged regions from text, handling nesting. */
-function extractColorSegments(
-  text: string,
-): { text: string; color: string | null }[] {
+function extractColorSegments(text: string): { text: string; color: string | null }[] {
   const segments: { text: string; color: string | null }[] = [];
   const regex = new RegExp(COLOR_TAG_REGEX.source, "g");
   let lastIndex = 0;

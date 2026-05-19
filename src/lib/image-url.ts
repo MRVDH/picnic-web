@@ -1,4 +1,4 @@
-import { type CountryCode, getImageCdnBase, DEFAULT_IMAGE_SIZE } from "./types";
+import { type CountryCode, DEFAULT_IMAGE_SIZE, getImageCdnBase } from "./types";
 
 /**
  * Builds a Picnic CDN image URL for a given image ID and country.

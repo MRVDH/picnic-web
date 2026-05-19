@@ -1,24 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { use, useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
-import type { ProductDetail, ApiErrorResponse } from "@/lib/types";
-import { ProductGallery } from "@/components/product-gallery";
-import { ProductInfoHeader } from "@/components/product-info-header";
-import { ProductPriceSection } from "@/components/product-price-section";
-import { ProductDescription } from "@/components/product-description";
-import { ProductHighlights } from "@/components/product-highlights";
-import { AllergenBadges } from "@/components/allergen-badges";
+
 import { AccordionSection } from "@/components/accordion-section";
-import { ProductSlider } from "@/components/product-slider";
-import { ProductLabels } from "@/components/product-labels";
-import { NutritionTable } from "@/components/nutrition-table";
-import { SharedHeader } from "@/components/shared-header";
-import { LoadingSpinner } from "@/components/loading-spinner";
+import { AllergenBadges } from "@/components/allergen-badges";
 import { ErrorView } from "@/components/error-view";
-import { TOKEN_EXPIRED_REDIRECT, TOKEN_EXPIRED_MESSAGE } from "@/lib/constants";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { NutritionTable } from "@/components/nutrition-table";
+import { ProductDescription } from "@/components/product-description";
+import { ProductGallery } from "@/components/product-gallery";
+import { ProductHighlights } from "@/components/product-highlights";
+import { ProductInfoHeader } from "@/components/product-info-header";
+import { ProductLabels } from "@/components/product-labels";
+import { ProductPriceSection } from "@/components/product-price-section";
+import { ProductSlider } from "@/components/product-slider";
+import { SharedHeader } from "@/components/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import type { ApiErrorResponse, ProductDetail } from "@/lib/types";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -30,13 +32,9 @@ type ProductPageState =
 
 // ─── Data fetching ───────────────────────────────────────────────────────────
 
-async function fetchProductDetail(
-  productId: string,
-): Promise<ProductPageState> {
+async function fetchProductDetail(productId: string): Promise<ProductPageState> {
   try {
-    const response = await fetch(
-      `/api/product/${encodeURIComponent(productId)}`,
-    );
+    const response = await fetch(`/api/product/${encodeURIComponent(productId)}`);
     const data: ProductDetail | ApiErrorResponse = await response.json();
 
     if ("error" in data) {
@@ -61,19 +59,14 @@ async function fetchProductDetail(
 
 // ─── Page Component ──────────────────────────────────────────────────────────
 
-export default function ProductPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: productId } = use(params);
   const [pageState, setPageState] = useState<ProductPageState>({
     status: "loading",
   });
   const [retryCount, setRetryCount] = useState(0);
 
-  const pageContext =
-    pageState.status === "success" ? pageState.product.name : undefined;
+  const pageContext = pageState.status === "success" ? pageState.product.name : undefined;
   usePageTitle(pageContext);
 
   useEffect(() => {
@@ -109,9 +102,7 @@ export default function ProductPage({
           {pageState.status === "error" && (
             <ErrorView message={pageState.message} onRetry={handleRetry} />
           )}
-          {pageState.status === "success" && (
-            <ProductDetailView product={pageState.product} />
-          )}
+          {pageState.status === "success" && <ProductDetailView product={pageState.product} />}
         </main>
       </div>
     </CartProvider>
@@ -125,10 +116,7 @@ function NotFoundView() {
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="mb-4 text-5xl">:(</div>
       <p className="text-lg text-gray-600">Product niet gevonden</p>
-      <Link
-        href="/"
-        className="mt-4 text-sm text-picnic-red hover:underline"
-      >
+      <Link href="/" className="text-picnic-red mt-4 text-sm hover:underline">
         Terug naar zoeken
       </Link>
     </div>
@@ -149,12 +137,11 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
         for (let i = 0; i < -diff; i++) removeProduct(product.id);
       }
     },
-    [product.id, product.maxCount, getQuantity, addProduct, removeProduct],
+    [product.id, product.maxCount, getQuantity, addProduct, removeProduct]
   );
 
   const hasAllergens =
-    product.allergens.confirmed.length > 0 ||
-    product.allergens.mayContain.length > 0;
+    product.allergens.confirmed.length > 0 || product.allergens.mayContain.length > 0;
 
   const hasNutritionRows = product.nutritionRows.length > 0;
 
@@ -209,10 +196,9 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
 
       {/* Accordion sections (including Voedingswaarde with structured table) */}
       {product.infoSections.length > 0 && (
-        <div className="border-t border-card-border">
+        <div className="border-card-border border-t">
           {product.infoSections.map((section) => {
-            const isNutrition =
-              section.title.toLowerCase().includes("voedingswaarde");
+            const isNutrition = section.title.toLowerCase().includes("voedingswaarde");
 
             if (isNutrition && hasNutritionRows) {
               return (
@@ -234,10 +220,7 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
       )}
 
       {/* Similar products slider */}
-      <ProductSlider
-        title="Vergelijkbare producten"
-        products={product.similarProducts}
-      />
+      <ProductSlider title="Vergelijkbare producten" products={product.similarProducts} />
     </div>
   );
 }
