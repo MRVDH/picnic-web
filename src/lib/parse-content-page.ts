@@ -1,16 +1,15 @@
 // Parsers for content/promotional pages (campaign pages, "Nieuw" pages,
 // theme pages). Extracts product sections with headers from PML trees
 // that don't follow the standard search or category-tree layouts.
-
-import type { Product, SearchSection } from "./types";
-import {
-  findSellingUnitContainers,
-  collectMarkdowns,
-  stripColorTags,
-  findNodeByIdSubstring,
-  findNodeByIdPrefix,
-} from "./pml-helpers";
 import { containerToProduct } from "./parse-fusion-search";
+import {
+  collectMarkdowns,
+  findNodeByIdPrefix,
+  findNodeByIdSubstring,
+  findSellingUnitContainers,
+  stripColorTags,
+} from "./pml-helpers";
+import type { Product, SearchSection } from "./types";
 
 type PmlRecord = Record<string, unknown>;
 
@@ -19,17 +18,12 @@ type PmlRecord = Record<string, unknown>;
 /** Extract the section title from a header node's PML markdown. */
 function extractSectionTitle(headerNode: PmlRecord): string {
   const markdowns = collectMarkdowns(headerNode);
-  const cleaned = markdowns
-    .map((md) => stripColorTags(md))
-    .filter(Boolean);
+  const cleaned = markdowns.map((md) => stripColorTags(md)).filter(Boolean);
   return cleaned.join(" / ");
 }
 
 /** Extract products from a set of wrapper nodes using tile containers. */
-function extractProductsFromWrappers(
-  wrappers: PmlRecord[],
-  seenIds: Set<string>,
-): Product[] {
+function extractProductsFromWrappers(wrappers: PmlRecord[], seenIds: Set<string>): Product[] {
   const products: Product[] = [];
   for (const wrapper of wrappers) {
     const containers = findSellingUnitContainers(wrapper);
@@ -44,11 +38,7 @@ function extractProductsFromWrappers(
 }
 
 /** Find all nodes whose `id` starts with the given prefix. */
-function findAllByIdPrefix(
-  obj: unknown,
-  prefix: string,
-  results: PmlRecord[] = [],
-): PmlRecord[] {
+function findAllByIdPrefix(obj: unknown, prefix: string, results: PmlRecord[] = []): PmlRecord[] {
   if (typeof obj !== "object" || obj === null) return results;
 
   if (Array.isArray(obj)) {
@@ -69,11 +59,7 @@ function findAllByIdPrefix(
 }
 
 /** Find all nodes whose `id` matches the given regex. */
-function findAllByRegex(
-  obj: unknown,
-  regex: RegExp,
-  results: PmlRecord[] = [],
-): PmlRecord[] {
+function findAllByRegex(obj: unknown, regex: RegExp, results: PmlRecord[] = []): PmlRecord[] {
   if (typeof obj !== "object" || obj === null) return results;
 
   if (Array.isArray(obj)) {
@@ -115,9 +101,10 @@ const CORE_SUB_HEADER_SUFFIX = "-core-sub-header";
  * node contains a `core-sub-header` child with the title (in the PML
  * markdown) and product tiles in sibling subtrees.
  */
-function parseCampaignPageSections(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+function parseCampaignPageSections(rawPage: unknown): {
+  sections: SearchSection[];
+  products: Product[];
+} {
   const campaignSections = findAllByRegex(rawPage, CAMPAIGN_SECTION_RE);
 
   if (campaignSections.length === 0) {
@@ -150,19 +137,18 @@ function parseCampaignPageSections(
 
 // ─── Horizontal selling-unit section parser ──────────────────────────────────
 
-const HORIZONTAL_SECTION_PREFIX =
-  "core-horizontal-selling-unit-section-localized";
-const SUB_HEADER_PML_PREFIX =
-  "horizontal-selling-unit-tiles-sub-header-pml";
+const HORIZONTAL_SECTION_PREFIX = "core-horizontal-selling-unit-section-localized";
+const SUB_HEADER_PML_PREFIX = "horizontal-selling-unit-tiles-sub-header-pml";
 
 /**
  * Parse pages using `core-horizontal-selling-unit-section-localized`
  * containers (e.g. "Nieuw", theme pages). Each section may contain a
  * `horizontal-selling-unit-tiles-sub-header-pml` node with the title.
  */
-function parseHorizontalSellingSections(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+function parseHorizontalSellingSections(rawPage: unknown): {
+  sections: SearchSection[];
+  products: Product[];
+} {
   const hSections = findAllByIdPrefix(rawPage, HORIZONTAL_SECTION_PREFIX);
 
   if (hSections.length === 0) {
@@ -179,10 +165,7 @@ function parseHorizontalSellingSections(
       title = extractSectionTitle(subHeader);
     }
 
-    const products = extractProductsFromWrappers(
-      [section as PmlRecord],
-      seenIds,
-    );
+    const products = extractProductsFromWrappers([section as PmlRecord], seenIds);
     if (products.length === 0) continue;
 
     if (!title) title = "Producten";
@@ -203,9 +186,7 @@ function parseHorizontalSellingSections(
 // ─── Fallback parser ─────────────────────────────────────────────────────────
 
 /** Fallback: extract all products flat when no section structure is found. */
-function fallbackFlatParse(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+function fallbackFlatParse(rawPage: unknown): { sections: SearchSection[]; products: Product[] } {
   const containers = findSellingUnitContainers(rawPage);
   const productMap = new Map<string, Product>();
 
@@ -235,8 +216,9 @@ function fallbackFlatParse(
  * Parse a content/promotional page into sections. Tries campaign layout
  * first, then horizontal-selling-unit layout, then flat product extraction.
  */
-export function parseContentPageSections(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+export function parseContentPageSections(rawPage: unknown): {
+  sections: SearchSection[];
+  products: Product[];
+} {
   return parseCampaignPageSections(rawPage);
 }

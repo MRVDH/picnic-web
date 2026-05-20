@@ -1,14 +1,33 @@
 // Application-level type definitions for the Picnic web client.
 // These are our own domain types, decoupled from the upstream picnic-api types.
-
 import type { SelectedSlotData } from "@/lib/delivery-slot-types";
+
 export type { SelectedSlotData } from "@/lib/delivery-slot-types";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 export const CENTS_DIVISOR = 100;
-export const COUNTRY_CODE = "NL";
-export const IMAGE_CDN_BASE = `https://storefront-prod.${COUNTRY_CODE}.picnicinternational.com/static/images`;
+
+export const SUPPORTED_COUNTRY_CODES = ["NL", "DE"] as const;
+export type CountryCode = (typeof SUPPORTED_COUNTRY_CODES)[number];
+export const DEFAULT_COUNTRY_CODE: CountryCode = "NL";
+
+/** Cookie name for the selected Picnic country. */
+export const COUNTRY_COOKIE_NAME = "picnic_country";
+
+/** Build the Picnic image CDN base URL for a given country. */
+export function getImageCdnBase(countryCode: CountryCode): string {
+  return `https://storefront-prod.${countryCode.toLowerCase()}.picnicinternational.com/static/images`;
+}
+
+/** Validate a raw string value as a CountryCode, falling back to the default. */
+export function parseCountryCode(value: string | undefined): CountryCode {
+  const upper = value?.toUpperCase();
+  if (upper && (SUPPORTED_COUNTRY_CODES as readonly string[]).includes(upper)) {
+    return upper as CountryCode;
+  }
+  return DEFAULT_COUNTRY_CODE;
+}
 export const DEFAULT_IMAGE_SIZE = "medium";
 export const DEBOUNCE_DELAY_MS = 300;
 export const MIN_SUGGESTION_LENGTH = 2;
@@ -128,10 +147,8 @@ export type ApiErrorResponse = {
 // ─── Product Detail ──────────────────────────────────────────────────────
 
 /** Fusion page node IDs used by the product detail parser. */
-export const PRODUCT_MAIN_CONTAINER_ID =
-  "product-details-page-root-main-container";
-export const PRODUCT_GALLERY_CONTAINER_ID =
-  "product-page-image-gallery-main-image-container";
+export const PRODUCT_MAIN_CONTAINER_ID = "product-details-page-root-main-container";
+export const PRODUCT_GALLERY_CONTAINER_ID = "product-page-image-gallery-main-image-container";
 export const PRODUCT_DESCRIPTION_ID = "description";
 export const PRODUCT_HIGHLIGHTS_ID = "product-page-highlights";
 export const PRODUCT_ALLERGIES_ID = "product-page-allergies";
@@ -400,10 +417,7 @@ export type BundleProgress = {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
-export type AuthErrorCode =
-  | "TOKEN_EXPIRED"
-  | "TOKEN_INVALID"
-  | "API_UNREACHABLE";
+export type AuthErrorCode = "TOKEN_EXPIRED" | "TOKEN_INVALID" | "API_UNREACHABLE";
 
 /** Response shape from the /api/auth/login route. */
 export type AuthApiResponse =

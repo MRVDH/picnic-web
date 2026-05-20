@@ -1,19 +1,16 @@
 // Per-tile data extraction for converting PML selling-unit tiles into Product metadata.
-
-import type { BadgeVariant, Highlight } from "./types";
-import type { PmlNode, AnalyticsContext } from "./pml-helpers";
+import type { AnalyticsContext, PmlNode } from "./pml-helpers";
 import {
-  stripColorTags,
   cleanMarkdown,
-  extractInnerColor,
   collectMarkdowns,
+  extractInnerColor,
   findIconNodes,
+  stripColorTags,
 } from "./pml-helpers";
+import type { BadgeVariant, Highlight } from "./types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
-export function extractPromotionLabel(
-  contexts: AnalyticsContext[] | undefined,
-): string | null {
+export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
   if (!contexts) return null;
   for (const ctx of contexts) {
     if (ctx.schema?.includes("promotion")) {
@@ -30,9 +27,7 @@ export function extractPromotionLabel(
  * Navigate to the text-info STACK in the PML and return its children.
  * Path: component > children[1] > ... > STACK(axis=VERTICAL, spacing).
  */
-export function findTextStackChildren(
-  pml: PmlNode | undefined,
-): PmlNode[] | null {
+export function findTextStackChildren(pml: PmlNode | undefined): PmlNode[] | null {
   if (!pml) return null;
 
   const component = pml.component as PmlNode | undefined;
@@ -79,7 +74,7 @@ export const SIZE_LABELS = new Set(["Klein", "XL", "Groot"]);
 export function extractTextStackInfo(
   stackChildren: PmlNode[] | null,
   suName: string,
-  unitQuantity: string,
+  unitQuantity: string
 ): {
   subtitle: string | null;
   displayName: string | null;
@@ -126,7 +121,10 @@ export function extractTextStackInfo(
   if (nameRowIdx > 0) {
     const subtitleRow = stackChildren[0];
     const markdowns = collectMarkdowns(subtitleRow);
-    const text = markdowns.map((m) => cleanMarkdown(m)).filter(Boolean).join(" ");
+    const text = markdowns
+      .map((m) => cleanMarkdown(m))
+      .filter(Boolean)
+      .join(" ");
     if (text) {
       result.subtitle = text;
     }
@@ -144,7 +142,10 @@ export function extractTextStackInfo(
     const boldMatch = stripped.match(/\*\*([^*]+)\*\*\s+(.*)/);
     if (boldMatch) {
       result.namePrefix = boldMatch[1].trim();
-      const remaining = boldMatch[2].replace(/\s+$/, "").replace(/\u00a0/g, "").trim();
+      const remaining = boldMatch[2]
+        .replace(/\s+$/, "")
+        .replace(/\u00a0/g, "")
+        .trim();
       if (remaining) result.displayName = remaining;
     } else {
       const clean = cleanMarkdown(md);
@@ -215,9 +216,10 @@ export function extractTextStackInfo(
  * Extract unavailability info from the PML.
  * Checks the accessibilityLabel ("ProductName,Reason") and known markers.
  */
-export function extractUnavailabilityFromPml(
-  pml: PmlNode | undefined,
-): { isUnavailable: boolean; reason: string | null } {
+export function extractUnavailabilityFromPml(pml: PmlNode | undefined): {
+  isUnavailable: boolean;
+  reason: string | null;
+} {
   if (!pml) return { isUnavailable: false, reason: null };
 
   const component = pml.component as PmlNode | undefined;
@@ -261,25 +263,21 @@ export function extractUnavailabilityFromPml(
  */
 export function extractOriginalPriceFromPml(
   stackChildren: PmlNode[] | null,
-  displayPrice: number,
+  displayPrice: number
 ): number | null {
   if (!stackChildren) return null;
 
   // Look for a price row that has a strikethrough price
   for (const child of stackChildren) {
     const markdowns = collectMarkdowns(child);
-    const cleanTexts = markdowns
-      .map((m) => cleanMarkdown(m))
-      .filter((t) => t !== "" && t !== ">");
+    const cleanTexts = markdowns.map((m) => cleanMarkdown(m)).filter((t) => t !== "" && t !== ">");
 
     // Look for two price-like values (current + original)
     const prices: number[] = [];
     for (const text of cleanTexts) {
       const priceMatch = text.match(/^(\d+[.,]\d{2})$/);
       if (priceMatch) {
-        prices.push(
-          Math.round(parseFloat(priceMatch[1].replace(",", ".")) * 100),
-        );
+        prices.push(Math.round(parseFloat(priceMatch[1].replace(",", ".")) * 100));
       }
     }
 

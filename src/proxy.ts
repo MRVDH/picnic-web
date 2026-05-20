@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { AUTH_COOKIE_NAME, LOGIN_PATH } from "@/lib/auth";
 
 /**

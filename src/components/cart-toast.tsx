@@ -6,8 +6,9 @@
  * Shows a fixed-position toast at the bottom of the screen that auto-dismisses
  * after 3 seconds. Controlled via the `message` and `onDismiss` props.
  */
-
 import { useEffect } from "react";
+
+import { useTranslations } from "@/contexts/country-context";
 
 const AUTO_DISMISS_MS = 3000;
 
@@ -19,6 +20,7 @@ type CartToastProps = {
 };
 
 export function CartToast({ message, onDismiss }: CartToastProps) {
+  const t = useTranslations();
   useEffect(() => {
     if (!message) return;
 
@@ -30,13 +32,13 @@ export function CartToast({ message, onDismiss }: CartToastProps) {
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-      <div className="flex items-center gap-3 rounded-lg bg-text-dark px-4 py-3 text-sm text-white shadow-lg">
+      <div className="bg-text-dark flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg">
         <span>{message}</span>
         <button
           type="button"
           onClick={onDismiss}
           className="ml-2 font-bold text-white/70 transition-colors hover:text-white"
-          aria-label="Sluiten"
+          aria-label={t.dismissAriaLabel}
         >
           ×
         </button>

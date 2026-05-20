@@ -1,13 +1,8 @@
 // PML traversal helpers specific to product detail page extraction.
 // Extracts PRICE nodes, highlight rows, label badges, allergen badges,
 // and nutrition rows.
-
 import type { PmlNode } from "./pml-helpers";
-import {
-  collectMarkdowns,
-  stripColorTags,
-  collectPropertyValues,
-} from "./pml-helpers";
+import { collectMarkdowns, collectPropertyValues, stripColorTags } from "./pml-helpers";
 
 // ─── Price nodes ─────────────────────────────────────────────────────────────
 
@@ -67,14 +62,12 @@ export function collectHighlightRows(node: unknown): HighlightRow[] {
   if (record.type === "STACK" && record.axis === "HORIZONTAL") {
     const rowChildren = Array.isArray(children) ? children : [];
     const richText = rowChildren.find(
-      (c: unknown) =>
-        typeof c === "object" && c !== null && (c as PmlNode).type === "RICH_TEXT",
+      (c: unknown) => typeof c === "object" && c !== null && (c as PmlNode).type === "RICH_TEXT"
     ) as PmlNode | undefined;
 
     if (richText?.markdown && typeof richText.markdown === "string") {
       const icon = rowChildren.find(
-        (c: unknown) =>
-          typeof c === "object" && c !== null && (c as PmlNode).type === "ICON",
+        (c: unknown) => typeof c === "object" && c !== null && (c as PmlNode).type === "ICON"
       ) as PmlNode | undefined;
 
       results.push({
@@ -89,8 +82,7 @@ export function collectHighlightRows(node: unknown): HighlightRow[] {
   // If this is a TOUCHABLE wrapping a highlight row
   if (record.type === "TOUCHABLE") {
     const onPress = record.onPress as PmlNode | undefined;
-    const target =
-      onPress?.actionType === "OPEN" ? (onPress.target as string) ?? null : null;
+    const target = onPress?.actionType === "OPEN" ? ((onPress.target as string) ?? null) : null;
     const innerRows = collectHighlightRows(record.child);
     for (const row of innerRows) {
       row.linkTarget = target;
@@ -204,7 +196,7 @@ export function collectNutritionRows(node: unknown): NutritionRowData[] {
     const texts = rowChildren
       .filter(
         (c: unknown): c is PmlNode =>
-          typeof c === "object" && c !== null && (c as PmlNode).type === "RICH_TEXT",
+          typeof c === "object" && c !== null && (c as PmlNode).type === "RICH_TEXT"
       )
       .map((c: PmlNode) => ({
         text: stripColorTags((c.markdown as string) ?? ""),
@@ -215,9 +207,7 @@ export function collectNutritionRows(node: unknown): NutritionRowData[] {
       const label = texts[0].text;
       const value = texts.length > 1 ? texts[1].text : null;
       const isCategory = texts[0].textType === "HEADLINE2";
-      const bg = typeof record.backgroundColor === "string"
-        ? record.backgroundColor
-        : null;
+      const bg = typeof record.backgroundColor === "string" ? record.backgroundColor : null;
 
       results.push({ label, value, isCategory, backgroundColor: bg });
       return results;
@@ -270,9 +260,7 @@ export function collectAllergenGroups(node: unknown): AllergenGroup[] {
     if (childRecord.type === "RICH_TEXT" && typeof childRecord.markdown === "string") {
       const text = stripColorTags(childRecord.markdown as string).trim();
       if (ALLERGEN_HEADING_PATTERN.test(text)) {
-        currentCategory = text.toLowerCase().includes("mogelijk")
-          ? "mayContain"
-          : "confirmed";
+        currentCategory = text.toLowerCase().includes("mogelijk") ? "mayContain" : "confirmed";
         continue;
       }
     }

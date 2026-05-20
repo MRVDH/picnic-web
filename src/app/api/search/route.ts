@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { parseFusionSearchSections } from "@/lib/parse-fusion-search";
+
 import { isApiAuthError } from "@/lib/api-error";
-import type { SearchApiResponse, ApiErrorResponse } from "@/lib/types";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
+import { parseFusionSearchSections } from "@/lib/parse-fusion-search";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { ApiErrorResponse, SearchApiResponse } from "@/lib/types";
 
 /**
  * GET /api/search?q=<query>
@@ -13,16 +14,18 @@ import type { SearchApiResponse, ApiErrorResponse } from "@/lib/types";
  * (promotions, size labels, Bio prefix, unavailability) from the PML structure.
  */
 export async function GET(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<SearchApiResponse | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Authentication required", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
+
+  const countryCode = readCountryCode(request);
 
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
 
@@ -31,7 +34,7 @@ export async function GET(
   }
 
   try {
-    const client = buildPicnicClient(token);
+    const client = buildPicnicClient(token, countryCode);
 
     // Fetch the raw Fusion page to access the full PML structure.
     // The picnic-api catalog.search() method loses PML-embedded metadata
@@ -42,14 +45,14 @@ export async function GET(
           method: string,
           path: string,
           body: null,
-          includeFusion: boolean,
+          includeFusion: boolean
         ) => Promise<unknown>;
       }
     ).sendRequest(
       "GET",
       `/pages/search-page-results?search_term=${encodeURIComponent(query)}`,
       null,
-      true,
+      true
     );
 
     const { products, sections } = parseFusionSearchSections(rawPage);
@@ -59,17 +62,16 @@ export async function GET(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/search] Failed to search:", message);
 
     return NextResponse.json(
       { error: "Failed to search for products. Please try again later." },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }

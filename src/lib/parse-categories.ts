@@ -1,11 +1,7 @@
 // Parser that extracts CategoryItem[] from the empty-search-page-root
 // FusionPage PML tree. Uses existing pml-helpers for tree traversal.
-
-import {
-  findNodeByIdSubstring,
-  collectPropertyValues,
-} from "@/lib/pml-helpers";
 import type { CategoryItem } from "@/lib/category-types";
+import { collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml-helpers";
 
 const CATEGORY_LIST_BLOCK_ID = "category-tree-wrapper-list";
 export const CATEGORY_ITEM_PREFIX = "core-list-item-category-";
@@ -47,7 +43,7 @@ export function parseCategoryPage(rawPage: unknown): CategoryItem[] {
  */
 export function extractCategoryFromPmlItem(
   item: Record<string, unknown>,
-  itemId: string,
+  itemId: string
 ): CategoryItem | null {
   const id = itemId.slice(CATEGORY_ITEM_PREFIX.length);
   if (!id) return null;

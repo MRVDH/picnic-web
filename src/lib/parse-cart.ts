@@ -5,11 +5,10 @@
  * validates/extracts fields at runtime, returning a strongly-typed CartData.
  * No picnic-api types are imported for casting — all field access is defensive.
  */
-
-import type { CartData, CartItem, DepositEntry, Badge, SliderProduct } from "@/lib/types";
-import { isObject, asString, asNumber, asArray } from "@/lib/type-guards";
+import { NO_SLOT_TEXT, formatBannerText } from "@/lib/format-delivery-window";
 import { parseSelectedSlot } from "@/lib/parse-delivery-slots";
-import { formatBannerText, NO_SLOT_TEXT } from "@/lib/format-delivery-window";
+import { asArray, asNumber, asString, isObject } from "@/lib/type-guards";
+import type { Badge, CartData, CartItem, DepositEntry, SliderProduct } from "@/lib/types";
 
 // ─── Decorator helpers ────────────────────────────────────────────────────────
 
@@ -23,17 +22,12 @@ function getDecorators(item: Record<string, unknown>): RawDecorator[] {
  * Merge decorator_overrides into an item's decorators array.
  * Overrides replace matching-type decorators; new types are appended.
  */
-function mergeOverrides(
-  decorators: RawDecorator[],
-  overrides: RawDecorator[],
-): RawDecorator[] {
+function mergeOverrides(decorators: RawDecorator[], overrides: RawDecorator[]): RawDecorator[] {
   if (overrides.length === 0) return decorators;
   const result = [...decorators];
   for (const override of overrides) {
     const overrideType = asString(override["type"]);
-    const existingIdx = result.findIndex(
-      (d) => asString(d["type"]) === overrideType,
-    );
+    const existingIdx = result.findIndex((d) => asString(d["type"]) === overrideType);
     if (existingIdx >= 0) {
       result[existingIdx] = override;
     } else {
@@ -49,17 +43,14 @@ function mergeOverrides(
  */
 function applyDecoratorOverrides(
   items: unknown[],
-  overridesMap: Record<string, unknown>,
+  overridesMap: Record<string, unknown>
 ): unknown[] {
   return items.map((rawLine) => {
     if (!isObject(rawLine)) return rawLine;
 
     const lineId = asString(rawLine["id"]);
     const lineOverrides = asArray(overridesMap[lineId]).filter(isObject);
-    const mergedLineDecorators = mergeOverrides(
-      getDecorators(rawLine),
-      lineOverrides,
-    );
+    const mergedLineDecorators = mergeOverrides(getDecorators(rawLine), lineOverrides);
 
     // Collect display_price / price from PRICE decorator overrides at both the
     // line level and the article level, so the reconstructed line carries the
@@ -142,8 +133,7 @@ function mapDecoratorsToBadges(decorators: RawDecorator[]): Badge[] {
       }
       case "BASE_PRICE": {
         const basePriceText = asString(dec["base_price_text"]);
-        if (basePriceText)
-          badges.push({ text: basePriceText, variant: "unit-price" });
+        if (basePriceText) badges.push({ text: basePriceText, variant: "unit-price" });
         break;
       }
       case "BUNDLES_BUTTON":
@@ -157,9 +147,7 @@ function mapDecoratorsToBadges(decorators: RawDecorator[]): Badge[] {
 // ─── Quantity extraction ──────────────────────────────────────────────────────
 
 function extractQuantity(decorators: RawDecorator[]): number {
-  const quantityDec = decorators.find(
-    (d) => asString(d["type"]) === "QUANTITY",
-  );
+  const quantityDec = decorators.find((d) => asString(d["type"]) === "QUANTITY");
   if (quantityDec) {
     return asNumber(quantityDec["quantity"], 1);
   }
@@ -175,9 +163,7 @@ type UnavailableInfo = {
 };
 
 function extractUnavailableInfo(decorators: RawDecorator[]): UnavailableInfo {
-  const unavailableDec = decorators.find(
-    (d) => asString(d["type"]) === "UNAVAILABLE",
-  );
+  const unavailableDec = decorators.find((d) => asString(d["type"]) === "UNAVAILABLE");
 
   if (!unavailableDec) {
     return { isUnavailable: false, unavailableExplanation: null, replacements: [] };
@@ -324,9 +310,7 @@ function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
   let displayPrice = asNumber(rawLine["display_price"]);
   const rawPrice = asNumber(rawLine["price"]);
 
-  const priceDec = effectiveDecorators.find(
-    (d) => asString(d["type"]) === "PRICE",
-  );
+  const priceDec = effectiveDecorators.find((d) => asString(d["type"]) === "PRICE");
   if (priceDec && typeof priceDec["display_price"] === "number") {
     displayPrice = priceDec["display_price"] as number;
   }
@@ -435,7 +419,10 @@ export function parseCartResponse(rawData: unknown): CartData {
   const suggestions = extractSuggestions(rawData);
 
   // Delivery slot
-  const selectedSlot = parseSelectedSlot(rawData["selected_slot"], asArray(rawData["delivery_slots"]));
+  const selectedSlot = parseSelectedSlot(
+    rawData["selected_slot"],
+    asArray(rawData["delivery_slots"])
+  );
   const deliveryBannerText = selectedSlot?.isExplicitSelection
     ? formatBannerText(selectedSlot.windowStart, selectedSlot.windowEnd)
     : NO_SLOT_TEXT;

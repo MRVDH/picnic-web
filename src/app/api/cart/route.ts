@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
+
 import { isApiAuthError } from "@/lib/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
 import { parseCartResponse } from "@/lib/parse-cart";
-import type { CartData, CartMutationRequest, ApiErrorResponse } from "@/lib/types";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/types";
 
 /**
  * GET /api/cart
@@ -14,19 +15,21 @@ import type { CartData, CartMutationRequest, ApiErrorResponse } from "@/lib/type
  * Returns a CartData JSON object.
  */
 export async function GET(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<CartData | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
 
+  const countryCode = readCountryCode(request);
+
   try {
-    const client = buildPicnicClient(token);
+    const client = buildPicnicClient(token, countryCode);
 
     // Use the sendRequest cast pattern — include Picnic headers (4th arg)
     // so decorator_overrides (bundle discounts, etc.) are returned.
@@ -36,7 +39,7 @@ export async function GET(
           method: string,
           path: string,
           body: null,
-          includeFusion: boolean,
+          includeFusion: boolean
         ) => Promise<unknown>;
       }
     ).sendRequest("GET", "/cart", null, true);
@@ -48,20 +51,18 @@ export async function GET(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/cart] Failed to fetch cart:", message);
 
     return NextResponse.json(
       {
-        error:
-          "Kan winkelwagen niet ophalen. Probeer het later opnieuw.",
+        error: "Kan winkelwagen niet ophalen. Probeer het later opnieuw.",
       },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }
@@ -80,46 +81,41 @@ export async function GET(
  * parseCartResponse and returned as CartData.
  */
 export async function POST(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<NextResponse<CartData | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
     return NextResponse.json(
       { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
+
+  const countryCode = readCountryCode(request);
 
   let body: CartMutationRequest;
   try {
     body = (await request.json()) as CartMutationRequest;
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   if (!body.productId || !body.action || typeof body.count !== "number") {
     return NextResponse.json(
       { error: "Missing required fields: productId, action, count" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (body.action !== "add" && body.action !== "remove") {
-    return NextResponse.json(
-      { error: "action must be \"add\" or \"remove\"" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'action must be "add" or "remove"' }, { status: 400 });
   }
 
-  const endpoint =
-    body.action === "add" ? "/cart/add_product" : "/cart/remove_product";
+  const endpoint = body.action === "add" ? "/cart/add_product" : "/cart/remove_product";
 
   try {
-    const client = buildPicnicClient(token);
+    const client = buildPicnicClient(token, countryCode);
 
     const rawCart = await (
       client as unknown as {
@@ -127,13 +123,18 @@ export async function POST(
           method: string,
           path: string,
           body: Record<string, unknown>,
-          includeFusion: boolean,
+          includeFusion: boolean
         ) => Promise<unknown>;
       }
-    ).sendRequest("POST", endpoint, {
-      product_id: body.productId,
-      count: body.count,
-    }, true);
+    ).sendRequest(
+      "POST",
+      endpoint,
+      {
+        product_id: body.productId,
+        count: body.count,
+      },
+      true
+    );
 
     const cartData = parseCartResponse(rawCart);
 
@@ -142,20 +143,18 @@ export async function POST(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/cart] Failed to mutate cart:", message);
 
     return NextResponse.json(
       {
-        error:
-          "Kan winkelwagen niet bijwerken. Probeer het opnieuw.",
+        error: "Kan winkelwagen niet bijwerken. Probeer het opnieuw.",
       },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }

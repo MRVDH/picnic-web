@@ -27,9 +27,7 @@ export function BundleDots({ totalDots, filledDots }: BundleDotsProps) {
         <span
           key={index}
           className={`inline-block h-1.5 w-1.5 rounded-full ${
-            isFilled
-              ? "bg-picnic-red"
-              : "border border-gray-300 bg-transparent"
+            isFilled ? "bg-picnic-red" : "border border-gray-300 bg-transparent"
           }`}
           aria-hidden="true"
         />

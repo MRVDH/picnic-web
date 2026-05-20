@@ -6,14 +6,12 @@ type UnavailableOverlayProps = {
  * Renders unavailability explanation text for a cart item that is no longer
  * available.  Returns null when no explanation is provided.
  */
-export function UnavailableOverlay({
-  explanation,
-}: UnavailableOverlayProps) {
+export function UnavailableOverlay({ explanation }: UnavailableOverlayProps) {
   if (!explanation) return null;
 
   return (
     <div className="mt-2">
-      <p className="text-sm text-picnic-orange">{explanation}</p>
+      <p className="text-picnic-orange text-sm">{explanation}</p>
     </div>
   );
 }

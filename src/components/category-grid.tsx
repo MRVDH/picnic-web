@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { buildImageUrl } from "@/lib/image-url";
+
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import type { CategoryItem } from "@/lib/category-types";
+import { buildImageUrl } from "@/lib/image-url";
 
 type CategoryGridProps = {
   categories: CategoryItem[];
@@ -10,11 +12,10 @@ type CategoryGridProps = {
 };
 
 export function CategoryGrid({ categories, onCategoryTap }: CategoryGridProps) {
+  const t = useTranslations();
   return (
     <div>
-      <h2 className="mb-3 text-lg font-semibold text-foreground">
-        Alle categorieën
-      </h2>
+      <h2 className="text-foreground mb-3 text-lg font-semibold">{t.allCategoriesTitle}</h2>
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         {categories.map((category, index) => (
           <CategoryRow
@@ -38,17 +39,16 @@ function CategoryRow({
   isLast: boolean;
   onTap?: (category: CategoryItem) => void;
 }) {
+  const countryCode = useCountryCode();
   return (
     <button
       type="button"
       onClick={() => onTap?.(category)}
-      className={`flex w-full items-center gap-3 px-3 py-2 transition-colors
-                  hover:bg-gray-50 active:bg-gray-100
-                  ${isLast ? "" : "border-b border-gray-100"}`}
+      className={`flex w-full items-center gap-3 px-3 py-2 transition-colors hover:bg-gray-50 active:bg-gray-100 ${isLast ? "" : "border-b border-gray-100"}`}
     >
       <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg">
         <Image
-          src={buildImageUrl(category.imageId)}
+          src={buildImageUrl(category.imageId, countryCode)}
           alt={category.name}
           fill
           unoptimized
@@ -57,7 +57,7 @@ function CategoryRow({
         />
       </div>
 
-      <span className="min-w-0 flex-1 text-left text-[15px] font-medium leading-tight text-foreground">
+      <span className="text-foreground min-w-0 flex-1 text-left text-[15px] leading-tight font-medium">
         {category.name}
       </span>
 
@@ -76,11 +76,7 @@ function ChevronRightIcon() {
       stroke="currentColor"
       aria-hidden="true"
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m8.25 4.5 7.5 7.5-7.5 7.5"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
     </svg>
   );
 }

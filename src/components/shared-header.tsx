@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { CartData, ApiErrorResponse } from "@/lib/types";
-import { useCartOptional } from "@/contexts/cart-context";
-import { formatPrice } from "@/lib/format-price";
+
 import { SearchBar } from "@/components/search-bar";
+import { useCartOptional } from "@/contexts/cart-context";
+import { useCountryCode, useSwitchCountry, useTranslations } from "@/contexts/country-context";
+import { formatPrice } from "@/lib/format-price";
+import type { ApiErrorResponse, CartData } from "@/lib/types";
+import { SUPPORTED_COUNTRY_CODES } from "@/lib/types";
 
 // ─── Cart badge state ─────────────────────────────────────────────────────────
 
@@ -40,18 +44,17 @@ function CartIcon() {
 // ─── Cart badge ───────────────────────────────────────────────────────────────
 
 function CartBadge({ state }: { state: CartBadgeState }) {
-  const showBadge =
-    state.status === "ready" && state.totalCount > 0;
+  const showBadge = state.status === "ready" && state.totalCount > 0;
 
   return (
     <Link
       href="/cart"
-      className="relative flex items-center text-gray-600 transition-colors hover:text-foreground"
+      className="hover:text-foreground relative flex items-center text-gray-600 transition-colors"
       aria-label="Winkelwagen"
     >
       <CartIcon />
       {showBadge && (
-        <span className="ml-1 rounded-full bg-picnic-red px-2 py-0.5 text-xs font-semibold text-white">
+        <span className="bg-picnic-red ml-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white">
           {formatPrice(state.totalPrice)}
         </span>
       )}
@@ -75,10 +78,7 @@ type SharedHeaderProps = {
  * Fetches /api/cart on mount and shows a price badge on the cart icon.
  * Badge is hidden while loading, on error, or when the cart is empty.
  */
-export function SharedHeader({
-  bottomBar,
-  cartBadgeOverride = null,
-}: SharedHeaderProps) {
+export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? "";
@@ -140,8 +140,12 @@ export function SharedHeader({
     (query: string) => {
       router.push(`/?q=${encodeURIComponent(query)}`);
     },
-    [router],
+    [router]
   );
+
+  const countryCode = useCountryCode();
+  const switchCountry = useSwitchCountry();
+  const t = useTranslations();
 
   const handleSignOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -149,12 +153,12 @@ export function SharedHeader({
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-card-border bg-white/95 backdrop-blur-sm">
+    <header className="border-card-border sticky top-0 z-20 border-b bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-2">
         {/* Logo */}
         <Link
           href="/"
-          className="shrink-0 text-xl font-bold tracking-tight text-picnic-red select-none"
+          className="text-picnic-red shrink-0 text-xl font-bold tracking-tight select-none"
           aria-label="Picnic Web"
         >
           Picnic Web
@@ -168,12 +172,31 @@ export function SharedHeader({
             isLoading={false}
             initialQuery={urlQuery}
           />
+          {/* Country switcher */}
+          <div className="flex shrink-0 items-center gap-1">
+            {SUPPORTED_COUNTRY_CODES.map((code) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => switchCountry(code)}
+                className={`rounded px-2 py-1 text-xs font-semibold transition-colors ${
+                  code === countryCode
+                    ? "bg-picnic-red text-white"
+                    : "hover:text-foreground text-gray-500"
+                }`}
+                aria-pressed={code === countryCode}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={handleSignOut}
-            className="shrink-0 text-sm text-gray-500 transition-colors hover:text-foreground"
+            className="hover:text-foreground shrink-0 text-sm text-gray-500 transition-colors"
           >
-            Uitloggen
+            {t.signOut}
           </button>
         </div>
 

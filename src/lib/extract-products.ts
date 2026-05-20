@@ -1,4 +1,4 @@
-import type { Product, Badge, BadgeVariant, BundleThreshold } from "./types";
+import type { Badge, BadgeVariant, BundleThreshold, Product } from "./types";
 
 // ─── Decorator type guards ───────────────────────────────────────────────────
 // The upstream SellingUnit.decorators is typed as `any[]`.
@@ -33,7 +33,7 @@ const DECORATOR_MAPPINGS: DecoratorMapping[] = [
 
 function extractBadgeFromMapping(
   decorator: Record<string, unknown>,
-  mapping: DecoratorMapping,
+  mapping: DecoratorMapping
 ): Badge | null {
   const text = decorator[mapping.textField];
   if (typeof text !== "string" || text.trim() === "") {
@@ -42,12 +42,8 @@ function extractBadgeFromMapping(
   return { text: text.trim(), variant: mapping.variant };
 }
 
-function extractUnavailableBadge(
-  decorator: Record<string, unknown>,
-): Badge | null {
-  const explanation = decorator.explanation as
-    | { short_explanation?: string }
-    | undefined;
+function extractUnavailableBadge(decorator: Record<string, unknown>): Badge | null {
+  const explanation = decorator.explanation as { short_explanation?: string } | undefined;
   const text = explanation?.short_explanation ?? (decorator.reason as string);
   if (typeof text !== "string" || text.trim() === "") {
     return null;
@@ -55,9 +51,7 @@ function extractUnavailableBadge(
   return { text: text.trim(), variant: "availability" };
 }
 
-function extractCharacteristicsBadges(
-  decorator: Record<string, unknown>,
-): Badge[] {
+function extractCharacteristicsBadges(decorator: Record<string, unknown>): Badge[] {
   const characteristics = decorator.characteristics;
   if (!Array.isArray(characteristics)) {
     return [];
@@ -65,7 +59,7 @@ function extractCharacteristicsBadges(
   return characteristics
     .filter(
       (c): c is { type: string } =>
-        typeof c === "object" && c !== null && typeof c.type === "string",
+        typeof c === "object" && c !== null && typeof c.type === "string"
     )
     .map((c) => ({ text: c.type, variant: "info" as BadgeVariant }));
 }
@@ -87,19 +81,17 @@ function extractOriginalPrice(decorators: unknown[]): number | null {
 
 // ─── Extract unavailability ──────────────────────────────────────────────────
 
-function extractUnavailability(
-  decorators: unknown[],
-): { isUnavailable: boolean; reason: string | null } {
+function extractUnavailability(decorators: unknown[]): {
+  isUnavailable: boolean;
+  reason: string | null;
+} {
   for (const decorator of decorators) {
     if (!hasType(decorator)) continue;
     if (decorator.type !== "UNAVAILABLE") continue;
 
     const record = decorator as Record<string, unknown>;
-    const explanation = record.explanation as
-      | { short_explanation?: string }
-      | undefined;
-    const reason =
-      explanation?.short_explanation ?? (record.reason as string) ?? null;
+    const explanation = record.explanation as { short_explanation?: string } | undefined;
+    const reason = explanation?.short_explanation ?? (record.reason as string) ?? null;
 
     return { isUnavailable: true, reason };
   }
@@ -160,9 +152,7 @@ function isRawPriceRange(v: unknown): v is RawPriceRange {
 }
 
 /** Parse raw price_ranges into BundleThreshold[], sorted by quantity ascending. */
-function parsePriceRanges(
-  raw: unknown[] | null,
-): BundleThreshold[] | null {
+function parsePriceRanges(raw: unknown[] | null): BundleThreshold[] | null {
   if (!raw || raw.length === 0) return null;
 
   const thresholds: BundleThreshold[] = [];
@@ -214,8 +204,7 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
   // If there's a PRICE decorator with a higher value than display_price,
   // that's the original (pre-discount) price. If it's the same or lower,
   // there's no discount.
-  const hasDiscount =
-    originalPrice !== null && originalPrice > unit.display_price;
+  const hasDiscount = originalPrice !== null && originalPrice > unit.display_price;
 
   return {
     id: unit.id,

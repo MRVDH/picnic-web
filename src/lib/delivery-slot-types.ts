@@ -38,4 +38,3 @@ export type DeliverySlotPickerData = {
   dayGroups: SlotDayGroup[];
   selectedSlot: SelectedSlotData | null;
 };
-

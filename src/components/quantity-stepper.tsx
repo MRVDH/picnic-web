@@ -8,8 +8,11 @@
  * When bundle progress data is provided, shows dot indicators below the
  * count and a savings label above the stepper.
  */
+"use client";
 
+import { useTranslations } from "@/contexts/country-context";
 import type { BundleProgress } from "@/lib/types";
+
 import { BundleDots } from "./bundle-dots";
 import { SavingsLabel } from "./savings-label";
 
@@ -34,10 +37,7 @@ type BundleDisplay = {
   savingsInCents: number;
 };
 
-function computeBundleDisplay(
-  bundleProgress: BundleProgress,
-  regularPrice: number,
-): BundleDisplay {
+function computeBundleDisplay(bundleProgress: BundleProgress, regularPrice: number): BundleDisplay {
   const { thresholds, currentQuantity } = bundleProgress;
 
   if (thresholds.length === 0) {
@@ -45,24 +45,18 @@ function computeBundleDisplay(
   }
 
   // Find the active threshold (highest tier where qty <= currentQuantity).
-  const activeThreshold = thresholds
-    .filter((t) => t.quantity <= currentQuantity)
-    .at(-1) ?? null;
+  const activeThreshold = thresholds.filter((t) => t.quantity <= currentQuantity).at(-1) ?? null;
 
   // Find the next unmet threshold (first tier where qty > currentQuantity).
-  const nextUnmetThreshold =
-    thresholds.find((t) => t.quantity > currentQuantity) ?? null;
+  const nextUnmetThreshold = thresholds.find((t) => t.quantity > currentQuantity) ?? null;
 
   let savingsInCents = 0;
   let dotsTotal: number;
   let dotsFilled: number;
 
   if (activeThreshold) {
-    savingsInCents =
-      (regularPrice - activeThreshold.pricePerUnit) * currentQuantity;
-    dotsTotal = nextUnmetThreshold
-      ? nextUnmetThreshold.quantity
-      : activeThreshold.quantity;
+    savingsInCents = (regularPrice - activeThreshold.pricePerUnit) * currentQuantity;
+    dotsTotal = nextUnmetThreshold ? nextUnmetThreshold.quantity : activeThreshold.quantity;
     dotsFilled = Math.min(currentQuantity, dotsTotal);
   } else {
     dotsTotal = thresholds[0].quantity;
@@ -88,12 +82,14 @@ export function QuantityStepper({
   bundleProgress,
   regularPrice,
 }: QuantityStepperProps) {
+  const t = useTranslations();
   const isAtMax = quantity >= maxCount;
 
   const hasBundleData = bundleProgress && bundleProgress.thresholds.length > 0;
-  const bundleDisplay = hasBundleData && regularPrice !== undefined
-    ? computeBundleDisplay(bundleProgress, regularPrice)
-    : null;
+  const bundleDisplay =
+    hasBundleData && regularPrice !== undefined
+      ? computeBundleDisplay(bundleProgress, regularPrice)
+      : null;
 
   if (variant === "cart") {
     return (
@@ -102,14 +98,14 @@ export function QuantityStepper({
         <button
           type="button"
           onClick={onDecrement}
-          className="flex h-8 w-8 items-center justify-center text-base font-semibold text-foreground transition-opacity active:opacity-60"
-          aria-label="Verwijder 1"
+          className="text-foreground flex h-8 w-8 items-center justify-center text-base font-semibold transition-opacity active:opacity-60"
+          aria-label={t.removeOneAriaLabel}
         >
           −
         </button>
 
         {/* Quantity count */}
-        <span className="min-w-[1.5rem] text-center text-sm font-bold text-foreground">
+        <span className="text-foreground min-w-[1.5rem] text-center text-sm font-bold">
           {quantity}
         </span>
 
@@ -119,11 +115,9 @@ export function QuantityStepper({
           onClick={onIncrement}
           disabled={isAtMax}
           className={`flex h-8 w-8 items-center justify-center text-base font-semibold transition-opacity ${
-            isAtMax
-              ? "cursor-not-allowed text-gray-300"
-              : "text-foreground active:opacity-60"
+            isAtMax ? "cursor-not-allowed text-gray-300" : "text-foreground active:opacity-60"
           }`}
-          aria-label="Voeg 1 toe"
+          aria-label={t.addOneAriaLabel}
         >
           +
         </button>
@@ -144,22 +138,17 @@ export function QuantityStepper({
         <button
           type="button"
           onClick={onDecrement}
-          className="flex h-7 w-7 items-center justify-center text-base font-semibold text-text-muted transition-opacity active:opacity-60"
-          aria-label="Verwijder 1"
+          className="text-text-muted flex h-7 w-7 items-center justify-center text-base font-semibold transition-opacity active:opacity-60"
+          aria-label={t.removeOneAriaLabel}
         >
           −
         </button>
 
         {/* Quantity count + optional bundle dots */}
         <div className="flex min-w-[1.25rem] flex-col items-center">
-          <span className="text-center text-sm font-bold text-foreground">
-            {quantity}
-          </span>
+          <span className="text-foreground text-center text-sm font-bold">{quantity}</span>
           {bundleDisplay && bundleDisplay.dotsTotal > 0 && (
-            <BundleDots
-              totalDots={bundleDisplay.dotsTotal}
-              filledDots={bundleDisplay.dotsFilled}
-            />
+            <BundleDots totalDots={bundleDisplay.dotsTotal} filledDots={bundleDisplay.dotsFilled} />
           )}
         </div>
 
@@ -169,11 +158,9 @@ export function QuantityStepper({
           onClick={onIncrement}
           disabled={isAtMax}
           className={`flex h-7 w-7 items-center justify-center text-base font-semibold transition-opacity ${
-            isAtMax
-              ? "cursor-not-allowed text-gray-300"
-              : "text-text-muted active:opacity-60"
+            isAtMax ? "cursor-not-allowed text-gray-300" : "text-text-muted active:opacity-60"
           }`}
-          aria-label="Voeg 1 toe"
+          aria-label={t.addOneAriaLabel}
         >
           +
         </button>

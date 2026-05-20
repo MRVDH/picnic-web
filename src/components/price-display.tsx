@@ -12,13 +12,11 @@ export function PriceDisplay({ displayPrice, originalPrice }: PriceDisplayProps)
 
   return (
     <div className="flex items-baseline gap-1.5">
-      <span
-        className={`text-lg font-bold ${hasDiscount ? "text-price-discount" : "text-price"}`}
-      >
+      <span className={`text-lg font-bold ${hasDiscount ? "text-price-discount" : "text-price"}`}>
         {formatPrice(displayPrice)}
       </span>
       {hasDiscount && (
-        <span className="text-sm text-price-original line-through">
+        <span className="text-price-original text-sm line-through">
           {formatPrice(originalPrice)}
         </span>
       )}

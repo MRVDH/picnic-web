@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { buildImageUrl } from "@/lib/image-url";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ErrorView } from "@/components/error-view";
+
 import { BackArrowIcon } from "@/components/back-arrow-icon";
+import { ErrorView } from "@/components/error-view";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { useCountryCode } from "@/contexts/country-context";
 import type { CategoryItem } from "@/lib/category-types";
+import { buildImageUrl } from "@/lib/image-url";
 
 export type SubcategoriesState =
   | { status: "idle" }
@@ -39,9 +41,7 @@ export function SubcategoryView({
         Terug
       </button>
 
-      <h2 className="mb-3 text-lg font-semibold text-foreground">
-        {categoryName}
-      </h2>
+      <h2 className="text-foreground mb-3 text-lg font-semibold">{categoryName}</h2>
 
       {state.status === "loading" && <LoadingSpinner />}
       {state.status === "idle" && <LoadingSpinner />}
@@ -58,9 +58,7 @@ export function SubcategoryView({
         </div>
       )}
       {state.status === "success" && state.subcategories.length === 0 && (
-        <p className="py-8 text-center text-sm text-gray-500">
-          Geen subcategorieën gevonden.
-        </p>
+        <p className="py-8 text-center text-sm text-gray-500">Geen subcategorieën gevonden.</p>
       )}
       {state.status === "success" && state.subcategories.length > 0 && (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
@@ -88,11 +86,12 @@ function SubcategoryRow({
   isLast: boolean;
   onTap?: (category: CategoryItem) => void;
 }) {
+  const countryCode = useCountryCode();
   const content = (
     <>
       <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg">
         <Image
-          src={buildImageUrl(category.imageId)}
+          src={buildImageUrl(category.imageId, countryCode)}
           alt={category.name}
           fill
           unoptimized
@@ -100,7 +99,7 @@ function SubcategoryRow({
           sizes="56px"
         />
       </div>
-      <span className="min-w-0 flex-1 text-left text-[15px] font-medium leading-tight text-foreground">
+      <span className="text-foreground min-w-0 flex-1 text-left text-[15px] leading-tight font-medium">
         {category.name}
       </span>
     </>

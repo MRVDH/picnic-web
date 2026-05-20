@@ -1,47 +1,46 @@
 // Fusion product page parser.
 // Extracts a ProductDetail from the raw product-details-page-root response.
-
-import type {
-  ProductDetail,
-  AllergenInfo,
-  AllergenBadge,
-  ProductInfoSection,
-  ProductLabel,
-  ProductHighlightItem,
-  NutritionRow,
-} from "./types";
 import {
-  PRODUCT_MAIN_CONTAINER_ID,
-  PRODUCT_GALLERY_CONTAINER_ID,
-  PRODUCT_DESCRIPTION_ID,
-  PRODUCT_HIGHLIGHTS_ID,
-  PRODUCT_ALLERGIES_ID,
-  PRODUCT_ACCORDION_ID,
-  PRODUCT_LABELS_PREFIX,
-} from "./types";
+  extractBundles,
+  extractPromotion,
+  extractSimilarProducts,
+  findMainSellingUnit,
+  resolveDisplayPrice,
+} from "./extract-product-data";
 import {
-  collectMarkdowns,
-  stripColorTags,
   cleanMarkdown,
+  collectMarkdowns,
+  collectPropertyValues,
   extractInnerColor,
   findNodeById,
   findNodeByIdPrefix,
-  collectPropertyValues,
+  stripColorTags,
 } from "./pml-helpers";
 import {
-  collectPriceNodes,
+  collectAllergenGroups,
   collectHighlightRows,
   collectLabels,
   collectNutritionRows,
-  collectAllergenGroups,
+  collectPriceNodes,
 } from "./pml-product-helpers";
+import type {
+  AllergenBadge,
+  AllergenInfo,
+  NutritionRow,
+  ProductDetail,
+  ProductHighlightItem,
+  ProductInfoSection,
+  ProductLabel,
+} from "./types";
 import {
-  findMainSellingUnit,
-  resolveDisplayPrice,
-  extractPromotion,
-  extractBundles,
-  extractSimilarProducts,
-} from "./extract-product-data";
+  PRODUCT_ACCORDION_ID,
+  PRODUCT_ALLERGIES_ID,
+  PRODUCT_DESCRIPTION_ID,
+  PRODUCT_GALLERY_CONTAINER_ID,
+  PRODUCT_HIGHLIGHTS_ID,
+  PRODUCT_LABELS_PREFIX,
+  PRODUCT_MAIN_CONTAINER_ID,
+} from "./types";
 
 // ─── Internal extraction helpers ─────────────────────────────────────────────
 
@@ -211,29 +210,20 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
  * extraction, following the same patterns as picnic-api's extractProductDetails
  * but using local pml-helpers utilities instead of jsonpath-plus.
  */
-export function parseProductDetailPage(
-  rawPage: unknown,
-  productId: string,
-): ProductDetail {
+export function parseProductDetailPage(rawPage: unknown, productId: string): ProductDetail {
   // The page has a `.body` wrapper from the Fusion response
   const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
 
   const mainInfo = extractMainContainerInfo(page);
   const mainUnit = findMainSellingUnit(rawPage, productId);
-  const displayPrice = resolveDisplayPrice(
-    page,
-    productId,
-    mainUnit.displayPrice,
-  );
+  const displayPrice = resolveDisplayPrice(page, productId, mainUnit.displayPrice);
 
   const promotion = extractPromotion(rawPage);
 
   // Filter out promotion badges from labels — the promotion is already
   // rendered separately in ProductPriceSection, so showing it in labels
   // too would duplicate it.
-  const labels = extractLabels(page).filter(
-    (l) => !promotion || l.text !== promotion.label,
-  );
+  const labels = extractLabels(page).filter((l) => !promotion || l.text !== promotion.label);
 
   return {
     id: productId,

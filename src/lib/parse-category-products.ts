@@ -1,8 +1,7 @@
 // Parser that extracts Product[] from an L2 category page
 // FusionPage PML tree. Reuses shared conversion logic from parse-fusion-search.
-
-import { findSellingUnitContainers } from "@/lib/pml-helpers";
 import { containerToProduct } from "@/lib/parse-fusion-search";
+import { findSellingUnitContainers } from "@/lib/pml-helpers";
 import type { Product } from "@/lib/types";
 
 /**
