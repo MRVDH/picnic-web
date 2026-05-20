@@ -11,3 +11,12 @@ export function buildImageUrl(
 ): string {
   return `${getImageCdnBase(countryCode)}/${imageId}/${size}.png`;
 }
+
+/**
+ * Builds a CDN URL for a recipe hero image.
+ * Recipe images are served as WebP at a fixed 600×600 size and are publicly
+ * accessible — no auth or proxy needed. Using .png or other sizes returns 403.
+ */
+export function buildRecipeImageUrl(imageId: string, countryCode: CountryCode): string {
+  return `${getImageCdnBase(countryCode)}/${imageId}/filled-600x600.webp`;
+}

@@ -229,8 +229,8 @@ export function collectNutritionRows(node: unknown): NutritionRowData[] {
 
 // ─── Allergen badges ─────────────────────────────────────────────────────────
 
-/** Allergen heading pattern: "Bevat" or "Bevat mogelijk". */
-const ALLERGEN_HEADING_PATTERN = /^bevat(\s+mogelijk)?$/i;
+/** Allergen heading pattern: NL "Bevat"/"Bevat mogelijk", DE "Enthält"/"Kann enthalten". */
+const ALLERGEN_HEADING_PATTERN = /^(bevat(\s+mogelijk)?|enthält|kann enthalten)$/i;
 
 /** An allergen group: a heading ("Bevat"/"Bevat mogelijk") and its badges. */
 export type AllergenGroup = {

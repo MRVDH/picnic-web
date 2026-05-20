@@ -1,0 +1,56 @@
+import type { CountryCode, RecipeCategory } from "./types";
+
+const DE_CATEGORIES: RecipeCategory[] = [
+  { id: "recipe-cattree-25min", name: "Blitzrezepte" },
+  { id: "recipe-cattree-onepot", name: "One Pot" },
+  { id: "recipe-cattree-pasta", name: "Pasta" },
+  { id: "recipe-cattree-stuffedpasta", name: "Gefüllte Pasta" },
+  { id: "recipe-cattree-lasagne", name: "Lasagne" },
+  { id: "recipe-cattree-gnocchi", name: "Gnocchi" },
+  { id: "recipe-cattree-noodles", name: "Nudeln" },
+  { id: "recipe-cattree-schupfnudeln", name: "Schupfnudeln" },
+  { id: "recipe-cattree-maultaschen", name: "Maultaschen" },
+  { id: "recipe-cattree-spaetzle", name: "Spätzle" },
+  { id: "recipe-cattree-asia-reis", name: "Asia & Reis" },
+  { id: "recipe-cattree-risotto", name: "Risotto" },
+  { id: "recipe-cattree-couscous", name: "Couscous" },
+  { id: "recipe-cattree-bulgur", name: "Bulgur" },
+  { id: "recipe-cattree-knoedel", name: "Knödel" },
+  { id: "recipe-cattree-kartoffel", name: "Kartoffel" },
+  { id: "recipe-cattree-suppen", name: "Suppen" },
+  { id: "recipe-cattree-eintopf", name: "Eintopf" },
+  { id: "recipe-cattree-curry2", name: "Curry" },
+  { id: "recipe-cattree-l2-salad", name: "Salate" },
+  { id: "recipe-cattree-bowls", name: "Bowls" },
+  { id: "recipe-cattree-wraps", name: "Wraps" },
+  { id: "recipe-cattree-pita2", name: "Pita" },
+  { id: "recipe-cattree-l2-burger", name: "Burger" },
+  { id: "recipe-cattree-quiche", name: "Quiche" },
+  { id: "recipe-cattree-traybake", name: "Traybake" },
+  { id: "recipe-cattree-auflaufe", name: "Aufläufe" },
+  { id: "recipe-cattree-l2-pizza", name: "Pizza" },
+  { id: "recipe-cattree-vegetarisch", name: "Vegetarisch" },
+  { id: "recipe-cattree-vegan", name: "Vegan" },
+  { id: "recipe-cattree-highinveg", name: "Viel Gemüse" },
+  { id: "recipe-cattree-brunch", name: "Brunch" },
+  { id: "recipe-cattree-aperitif", name: "Aperitif" },
+  { id: "recipe-cattree-dessert", name: "Dessert" },
+  { id: "recipe-cattree-abendbrot", name: "Abendbrot" },
+  { id: "recipe-cattree-bbq", name: "BBQ" },
+  { id: "recipe-cattree-l2-party", name: "Party" },
+  { id: "recipe-cattree-basic", name: "Basics" },
+  { id: "recipe-cattree-baking", name: "Backen" },
+  { id: "recipe-cattree-snacks", name: "Snacks" },
+  { id: "recipe-cattree-getraenke", name: "Getränke" },
+  { id: "recipe-cattree-airfryer", name: "Airfryer" },
+  { id: "recipe-cattree-budget", name: "Budget" },
+  { id: "recipe-cattree-jamieoliver", name: "Jamie Oliver" },
+  { id: "recipe-cattree-season", name: "Saisonal" },
+  { id: "recipe-cattree-l2-kids", name: "Für Kinder" },
+];
+
+export function getRecipeCategories(countryCode: CountryCode): RecipeCategory[] {
+  if (countryCode === "DE") return DE_CATEGORIES;
+  // NL category IDs differ; return empty until NL categories are mapped.
+  return [];
+}

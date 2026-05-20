@@ -126,6 +126,7 @@ const translations = {
     // Cookbook
     cookbookTitle: "Alle recepten",
     cookbookFeatured: "Uitgelicht",
+    cookbookSaved: "Opgeslagen recepten",
     cookbookSearchPlaceholder: "Zoek op recept of ingrediënt...",
     cookbookLoadError: "Recepten konden niet worden geladen.",
     noRecipes: "Geen recepten gevonden.",
@@ -133,6 +134,21 @@ const translations = {
 
     // Auth
     signOut: "Uitloggen",
+
+    // Recipe detail
+    recipeIngredients: "Ingrediënten",
+    recipeSteps: "Bereiding",
+    recipePortions: "Personen",
+    recipeAddToCart: "Alle ingrediënten toevoegen",
+    recipeAddingToCart: "Wordt toegevoegd...",
+    recipeAddedToCart: "Toegevoegd!",
+    recipeCondiments: "Heb je waarschijnlijk al",
+    recipeLoadError: "Recept kon niet worden geladen.",
+    recipePricePerServing: "per portie",
+    recipePriceTotal: "totaal",
+    recipeAllergens: "Bevat",
+    recipeMayContain: "Kan bevatten",
+    recipeNutrition: "Voedingswaarde",
 
     // Toast / error view
     dismissAriaLabel: "Sluiten",
@@ -263,6 +279,7 @@ const translations = {
     // Cookbook
     cookbookTitle: "Alle Rezepte",
     cookbookFeatured: "Empfehlungen",
+    cookbookSaved: "Gespeicherte Rezepte",
     cookbookSearchPlaceholder: "Nach Rezept oder Zutat suchen...",
     cookbookLoadError: "Rezepte konnten nicht geladen werden.",
     noRecipes: "Keine Rezepte gefunden.",
@@ -270,6 +287,21 @@ const translations = {
 
     // Auth
     signOut: "Abmelden",
+
+    // Recipe detail
+    recipeIngredients: "Zutaten",
+    recipeSteps: "Zubereitung",
+    recipePortions: "Personen",
+    recipeAddToCart: "Alle Zutaten in den Warenkorb",
+    recipeAddingToCart: "Wird hinzugefügt...",
+    recipeAddedToCart: "Hinzugefügt!",
+    recipeCondiments: "Hast du wahrscheinlich schon",
+    recipeLoadError: "Rezept konnte nicht geladen werden.",
+    recipePricePerServing: "pro Portion",
+    recipePriceTotal: "gesamt",
+    recipeAllergens: "Enthält",
+    recipeMayContain: "Kann enthalten",
+    recipeNutrition: "Nährwerte",
 
     // Toast / error view
     dismissAriaLabel: "Schließen",
