@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/api-error";
