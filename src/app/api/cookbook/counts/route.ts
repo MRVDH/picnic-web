@@ -29,7 +29,7 @@ export async function GET(
   }
 
   const countryCode = readCountryCode(request);
-  const cacheKey = `${countryCode}:${token.slice(-8)}`;
+  const cacheKey = `${countryCode}:${crypto.createHash('sha256').update(token).digest('hex').slice(0, 16)}`;
   const cached = cache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return NextResponse.json(cached.counts);
