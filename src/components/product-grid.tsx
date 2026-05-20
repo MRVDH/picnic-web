@@ -1,5 +1,6 @@
 import type { Product, SearchSection } from "@/lib/types";
 import { buildSectionId } from "@/lib/types";
+
 import { ProductCard } from "./product-card";
 
 type ProductGridProps =
@@ -12,21 +13,11 @@ export function ProductGrid(props: ProductGridProps) {
     return (
       <div className="space-y-8">
         {props.sections.map((section, index) => (
-          <section
-            key={section.title}
-            id={buildSectionId(index)}
-            className="scroll-mt-36"
-          >
-            <h2 className="mb-3 text-lg font-semibold text-foreground">
-              {section.title}
-            </h2>
+          <section key={section.title} id={buildSectionId(index)} className="scroll-mt-36">
+            <h2 className="text-foreground mb-3 text-lg font-semibold">{section.title}</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {section.products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  href={`/product/${product.id}`}
-                />
+                <ProductCard key={product.id} product={product} href={`/product/${product.id}`} />
               ))}
             </div>
           </section>
@@ -42,11 +33,7 @@ export function ProductGrid(props: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          href={`/product/${product.id}`}
-        />
+        <ProductCard key={product.id} product={product} href={`/product/${product.id}`} />
       ))}
     </div>
   );

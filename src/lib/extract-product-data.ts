@@ -1,33 +1,26 @@
 // Extraction helpers for bundle options, similar products, pricing, and
 // promotion data from the Fusion product detail page tree.
-
-import type { BundleOption, SliderProduct, ProductPromotion } from "./types";
-import {
-  PRODUCT_MAIN_CONTAINER_ID,
-  PRODUCT_BUNDLES_PREFIX,
-  PRODUCT_ALTERNATIVES_ID,
-} from "./types";
-import {
-  findNodeById,
-  findNodeByIdPrefix,
-  collectPropertyValues,
-} from "./pml-helpers";
+import { collectPropertyValues, findNodeById, findNodeByIdPrefix } from "./pml-helpers";
 import type { PmlNode } from "./pml-helpers";
+import type { BundleOption, ProductPromotion, SliderProduct } from "./types";
+import {
+  PRODUCT_ALTERNATIVES_ID,
+  PRODUCT_BUNDLES_PREFIX,
+  PRODUCT_MAIN_CONTAINER_ID,
+} from "./types";
 
 // ─── Selling unit helpers ────────────────────────────────────────────────────
 
 /** Find the main selling unit for a product ID from the page tree. */
 export function findMainSellingUnit(
   page: unknown,
-  productId: string,
+  productId: string
 ): { displayPrice: number; maxCount: number; imageId: string } {
   const allUnits = collectPropertyValues(page, "sellingUnit").filter(
-    (u): u is Record<string, unknown> => typeof u === "object" && u !== null,
+    (u): u is Record<string, unknown> => typeof u === "object" && u !== null
   );
 
-  const mainUnit = allUnits.find(
-    (u) => u.id === productId && u.max_count !== undefined,
-  );
+  const mainUnit = allUnits.find((u) => u.id === productId && u.max_count !== undefined);
 
   return {
     displayPrice: (mainUnit?.display_price as number) ?? 0,
@@ -45,7 +38,7 @@ export function findMainSellingUnit(
 export function resolveDisplayPrice(
   page: unknown,
   productId: string,
-  mainUnitPrice: number,
+  mainUnitPrice: number
 ): number {
   if (mainUnitPrice) return mainUnitPrice;
 
@@ -53,7 +46,7 @@ export function resolveDisplayPrice(
   const bundleNode = findNodeById(page, productId);
   if (bundleNode) {
     const prices = collectPropertyValues(bundleNode, "price").filter(
-      (p): p is number => typeof p === "number",
+      (p): p is number => typeof p === "number"
     );
     if (prices[0]) return prices[0];
   }
@@ -62,7 +55,7 @@ export function resolveDisplayPrice(
   const mainContainer = findNodeById(page, PRODUCT_MAIN_CONTAINER_ID);
   if (mainContainer) {
     const prices = collectPropertyValues(mainContainer, "price").filter(
-      (p): p is number => typeof p === "number",
+      (p): p is number => typeof p === "number"
     );
     if (prices[0]) return prices[0];
   }
@@ -150,10 +143,10 @@ export function extractBundles(page: unknown): BundleOption[] {
   for (let i = 0; i < bundleItemNodes.length; i++) {
     const node = bundleItemNodes[i];
     const sellingUnits = collectPropertyValues(node, "sellingUnit").filter(
-      (u): u is Record<string, unknown> => typeof u === "object" && u !== null,
+      (u): u is Record<string, unknown> => typeof u === "object" && u !== null
     );
     const prices = collectPropertyValues(node, "price").filter(
-      (p): p is number => typeof p === "number",
+      (p): p is number => typeof p === "number"
     );
     const su = sellingUnits[0];
     if (!su) continue;
@@ -223,7 +216,7 @@ export function extractSimilarProducts(page: unknown): SliderProduct[] {
   if (!altContainer) return [];
 
   const allUnits = collectPropertyValues(altContainer, "sellingUnit").filter(
-    (u): u is Record<string, unknown> => typeof u === "object" && u !== null,
+    (u): u is Record<string, unknown> => typeof u === "object" && u !== null
   );
 
   return allUnits

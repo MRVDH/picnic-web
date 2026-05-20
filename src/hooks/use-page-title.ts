@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { APP_NAME, TITLE_SEPARATOR, MAX_TITLE_CONTEXT_LENGTH } from "@/lib/constants";
+
+import { APP_NAME, MAX_TITLE_CONTEXT_LENGTH, TITLE_SEPARATOR } from "@/lib/constants";
 
 /**
  * Sets the browser tab title. Pass a page-specific context string

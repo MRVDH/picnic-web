@@ -12,9 +12,7 @@ export function AllergenBadges({ allergens }: AllergenBadgesProps) {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">
-        Allergenen
-      </h2>
+      <h2 className="text-foreground text-lg font-semibold">Allergenen</h2>
 
       {/* Confirmed allergens */}
       {hasConfirmed && (
@@ -40,9 +38,7 @@ export function AllergenBadges({ allergens }: AllergenBadgesProps) {
       {/* May contain allergens */}
       {hasMayContain && (
         <div>
-          <p className="mb-1.5 text-sm font-medium text-gray-500">
-            Bevat mogelijk
-          </p>
+          <p className="mb-1.5 text-sm font-medium text-gray-500">Bevat mogelijk</p>
           <div className="flex flex-wrap gap-2">
             {allergens.mayContain.map((badge) => (
               <span

@@ -1,26 +1,24 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { CartToast } from "@/components/cart-toast";
+import { CategoryGrid } from "@/components/category-grid";
+import { ErrorView } from "@/components/error-view";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { ResultsView } from "@/components/results-view";
 import { SectionNavBar } from "@/components/section-nav-bar";
 import { SharedHeader } from "@/components/shared-header";
-import { CartProvider } from "@/contexts/cart-context";
-import { CartToast } from "@/components/cart-toast";
-import { CategoryGrid } from "@/components/category-grid";
 import { ShortcutList } from "@/components/shortcut-list";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ErrorView } from "@/components/error-view";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import { CartProvider } from "@/contexts/cart-context";
+import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { parsePageIdFromDeepLink } from "@/lib/parse-deep-link";
 import type { CategoryItem, ShortcutItem } from "@/lib/category-types";
-import type {
-  Product,
-  SearchSection,
-  SearchApiResponse,
-  ApiErrorResponse,
-} from "@/lib/types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import { parsePageIdFromDeepLink } from "@/lib/parse-deep-link";
+import type { ApiErrorResponse, Product, SearchApiResponse, SearchSection } from "@/lib/types";
 
 type SearchState =
   | { status: "idle" }
@@ -48,6 +46,7 @@ export default function Home() {
 }
 
 function SearchPage() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlQuery = searchParams.get("q") ?? "";
@@ -60,8 +59,7 @@ function SearchPage() {
     status: "idle",
   });
 
-  const titleContext =
-    searchState.status !== "idle" ? `"${searchState.query}"` : undefined;
+  const titleContext = searchState.status !== "idle" ? `"${searchState.query}"` : undefined;
   usePageTitle(titleContext);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -89,8 +87,7 @@ function SearchPage() {
       try {
         const url = `/api/search?q=${encodeURIComponent(trimmed)}`;
         const response = await fetch(url);
-        const data: SearchApiResponse | ApiErrorResponse =
-          await response.json();
+        const data: SearchApiResponse | ApiErrorResponse = await response.json();
 
         if ("error" in data) {
           if ("code" in data && data.code === "TOKEN_EXPIRED") {
@@ -111,11 +108,11 @@ function SearchPage() {
         setSearchState({
           status: "error",
           query: trimmed,
-          message: "Er is iets misgegaan. Probeer het later opnieuw.",
+          message: t.searchError,
         });
       }
     },
-    [router],
+    [router, t.searchError]
   );
 
   // Auto-search when the page loads with ?q= or when URL changes (back/forward)
@@ -137,32 +134,39 @@ function SearchPage() {
 
     fetch("/api/categories")
       .then((res) => res.json())
-      .then((data: { categories?: CategoryItem[]; shortcuts?: ShortcutItem[] } & Partial<ApiErrorResponse>) => {
-        if ("error" in data && data.error) {
-          if (data.code === "TOKEN_EXPIRED") {
-            window.location.href = TOKEN_EXPIRED_REDIRECT;
+      .then(
+        (
+          data: {
+            categories?: CategoryItem[];
+            shortcuts?: ShortcutItem[];
+          } & Partial<ApiErrorResponse>
+        ) => {
+          if ("error" in data && data.error) {
+            if (data.code === "TOKEN_EXPIRED") {
+              window.location.href = TOKEN_EXPIRED_REDIRECT;
+              return;
+            }
+            setCategoriesState({ status: "error", message: data.error });
             return;
           }
-          setCategoriesState({ status: "error", message: data.error });
-          return;
+          const categories = Array.isArray(data.categories) ? data.categories : [];
+          const shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
+          setCategoriesState({ status: "success", categories, shortcuts });
         }
-        const categories = Array.isArray(data.categories) ? data.categories : [];
-        const shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
-        setCategoriesState({ status: "success", categories, shortcuts });
-      })
+      )
       .catch(() => {
         setCategoriesState({
           status: "error",
-          message: "Kan categorieën niet laden.",
+          message: t.categoriesLoadError,
         });
       });
-  }, [searchState.status, categoriesState.status]);
+  }, [searchState.status, categoriesState.status, t.categoriesLoadError]);
 
   const handleCategoryTap = useCallback(
     (category: CategoryItem) => {
       router.push(`/categories/${encodeURIComponent(category.id)}`);
     },
-    [router],
+    [router]
   );
 
   const handleShortcutTap = useCallback(
@@ -174,7 +178,7 @@ function SearchPage() {
       const params = new URLSearchParams({ pageId, title: shortcut.name });
       router.push(`/pages?${params.toString()}`);
     },
-    [router],
+    [router]
   );
 
   return (
@@ -197,9 +201,7 @@ function SearchPage() {
             />
           )}
           {searchState.status === "loading" && <LoadingSpinner />}
-          {searchState.status === "error" && (
-            <ErrorView message={searchState.message} />
-          )}
+          {searchState.status === "error" && <ErrorView message={searchState.message} />}
           {searchState.status === "success" && (
             <ResultsView
               query={searchState.query}
@@ -233,10 +235,7 @@ function CategoryBrowser({ categoriesState, onCategoryTap, onShortcutTap }: Cate
   return (
     <>
       <ShortcutList shortcuts={categoriesState.shortcuts} onShortcutTap={onShortcutTap} />
-      <CategoryGrid
-        categories={categoriesState.categories}
-        onCategoryTap={onCategoryTap}
-      />
+      <CategoryGrid categories={categoriesState.categories} onCategoryTap={onCategoryTap} />
     </>
   );
 }

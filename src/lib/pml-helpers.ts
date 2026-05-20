@@ -77,9 +77,7 @@ export function extractInnerColor(md: string): string | null {
 // ─── Recursive finders ───────────────────────────────────────────────────────
 
 /** Find all selling-unit tile containers in the Fusion page tree. */
-export function findSellingUnitContainers(
-  obj: unknown,
-): SellingUnitTileContainer[] {
+export function findSellingUnitContainers(obj: unknown): SellingUnitTileContainer[] {
   const results: SellingUnitTileContainer[] = [];
 
   if (typeof obj !== "object" || obj === null) return results;
@@ -137,10 +135,7 @@ export function collectMarkdowns(node: unknown): string[] {
  * Find the first node with an exact `id` match.
  * Traverses `child`, `children`, and all object values recursively.
  */
-export function findNodeById(
-  obj: unknown,
-  id: string,
-): PmlNode | null {
+export function findNodeById(obj: unknown, id: string): PmlNode | null {
   if (typeof obj !== "object" || obj === null) return null;
 
   if (Array.isArray(obj)) {
@@ -165,10 +160,7 @@ export function findNodeById(
  * Find the first node whose `id` starts with the given prefix.
  * Traverses all object values recursively.
  */
-export function findNodeByIdPrefix(
-  obj: unknown,
-  prefix: string,
-): PmlNode | null {
+export function findNodeByIdPrefix(obj: unknown, prefix: string): PmlNode | null {
   if (typeof obj !== "object" || obj === null) return null;
 
   if (Array.isArray(obj)) {
@@ -195,10 +187,7 @@ export function findNodeByIdPrefix(
  * Find the first node whose `id` contains the given substring.
  * Traverses all object values recursively.
  */
-export function findNodeByIdSubstring(
-  obj: unknown,
-  idSubstring: string,
-): PmlNode | null {
+export function findNodeByIdSubstring(obj: unknown, idSubstring: string): PmlNode | null {
   if (typeof obj !== "object" || obj === null) return null;
 
   if (Array.isArray(obj)) {
@@ -225,10 +214,7 @@ export function findNodeByIdSubstring(
  * Recursively collect all values for a given property name.
  * Replaces JSONPath `$..key` pattern without adding a dependency.
  */
-export function collectPropertyValues(
-  node: unknown,
-  key: string,
-): unknown[] {
+export function collectPropertyValues(node: unknown, key: string): unknown[] {
   const results: unknown[] = [];
   if (typeof node !== "object" || node === null) return results;
 
@@ -252,9 +238,7 @@ export function collectPropertyValues(
 }
 
 /** Find all ICON nodes in a PML subtree. */
-export function findIconNodes(
-  node: unknown,
-): { iconKey: string; fallbackId: string | null }[] {
+export function findIconNodes(node: unknown): { iconKey: string; fallbackId: string | null }[] {
   const results: { iconKey: string; fallbackId: string | null }[] = [];
   if (typeof node !== "object" || node === null) return results;
 
@@ -266,10 +250,7 @@ export function findIconNodes(
   }
 
   const record = node as Record<string, unknown>;
-  if (
-    record.type === "ICON" &&
-    typeof record.iconKey === "string"
-  ) {
+  if (record.type === "ICON" && typeof record.iconKey === "string") {
     const fallback = record.fallback as { id?: string } | undefined;
     results.push({
       iconKey: record.iconKey as string,

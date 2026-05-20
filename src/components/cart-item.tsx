@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import type { CartItem } from "@/lib/types";
-import { buildImageUrl } from "@/lib/image-url";
-import { PriceDisplay } from "@/components/price-display";
+
 import { Badge } from "@/components/badge";
-import { UnavailableOverlay } from "@/components/unavailable-product";
+import { PriceDisplay } from "@/components/price-display";
 import { QuantityStepper } from "@/components/quantity-stepper";
+import { UnavailableOverlay } from "@/components/unavailable-product";
+import { useCountryCode } from "@/contexts/country-context";
+import { buildImageUrl } from "@/lib/image-url";
+import type { CartItem } from "@/lib/types";
 
 type CartItemCardProps = {
   item: CartItem;
@@ -22,25 +25,20 @@ type CartItemCardProps = {
  * The main content links to the product detail page.
  * When unavailable, applies a visual distinction and renders UnavailableOverlay.
  */
-export function CartItemCard({
-  item,
-  onIncrement,
-  onDecrement,
-}: CartItemCardProps) {
+export function CartItemCard({ item, onIncrement, onDecrement }: CartItemCardProps) {
+  const countryCode = useCountryCode();
   const [imgError, setImgError] = useState(false);
   const imageSrc =
     imgError || !item.imageId
       ? "/placeholder-product.svg"
-      : buildImageUrl(item.imageId);
+      : buildImageUrl(item.imageId, countryCode);
 
   return (
-    <div
-      className={`border-b border-card-border py-2${item.isUnavailable ? " bg-gray-50" : ""}`}
-    >
+    <div className={`border-card-border border-b py-2${item.isUnavailable ? "bg-gray-50" : ""}`}>
       <div className="flex gap-3">
         <Link
           href={`/product/${item.productId}`}
-          className={`flex min-w-0 flex-1 gap-3 transition-colors hover:bg-gray-50${item.isUnavailable ? " opacity-60" : ""}`}
+          className={`flex min-w-0 flex-1 gap-3 transition-colors hover:bg-gray-50${item.isUnavailable ? "opacity-60" : ""}`}
         >
           {/* Product image */}
           <div className="relative h-14 w-14 shrink-0 md:h-16 md:w-16">
@@ -57,9 +55,7 @@ export function CartItemCard({
           {/* Product info */}
           <div className="flex min-w-0 flex-1 flex-col justify-center">
             <div>
-              <p className="line-clamp-2 text-sm font-semibold text-foreground">
-                {item.name}
-              </p>
+              <p className="text-foreground line-clamp-2 text-sm font-semibold">{item.name}</p>
               <p className="text-xs text-gray-500">{item.unitQuantity}</p>
             </div>
 
@@ -84,18 +80,13 @@ export function CartItemCard({
               onIncrement={onIncrement}
               onDecrement={onDecrement}
             />
-            <PriceDisplay
-              displayPrice={item.displayPrice}
-              originalPrice={item.originalPrice}
-            />
+            <PriceDisplay displayPrice={item.displayPrice} originalPrice={item.originalPrice} />
           </div>
         )}
       </div>
 
       {/* Unavailability explanation (US4) */}
-      {item.isUnavailable && (
-        <UnavailableOverlay explanation={item.unavailableExplanation} />
-      )}
+      {item.isUnavailable && <UnavailableOverlay explanation={item.unavailableExplanation} />}
     </div>
   );
 }

@@ -25,7 +25,7 @@ type ProductQueue<T> = {
  * receiving the product ID, the result (or null on failure), and any error.
  */
 export function createMutationQueue<T>(
-  onSettled: (productId: string, result: T | null, error: unknown) => void,
+  onSettled: (productId: string, result: T | null, error: unknown) => void
 ): {
   enqueue: (productId: string, task: MutationTask<T>) => void;
 } {

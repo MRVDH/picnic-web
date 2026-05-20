@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { Product, BundleProgress } from "@/lib/types";
-import { buildImageUrl } from "@/lib/image-url";
-import { PriceDisplay } from "./price-display";
-import { Badge } from "./badge";
-import { QuantityStepper } from "./quantity-stepper";
+
 import { useCart } from "@/contexts/cart-context";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import { buildImageUrl } from "@/lib/image-url";
+import type { BundleProgress, Product } from "@/lib/types";
+
+import { Badge } from "./badge";
+import { PriceDisplay } from "./price-display";
+import { QuantityStepper } from "./quantity-stepper";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 const FLAG_SIZE = 14;
@@ -20,10 +24,12 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, href }: ProductCardProps) {
+  const countryCode = useCountryCode();
   const [imageSrc, setImageSrc] = useState(
-    product.imageId ? buildImageUrl(product.imageId) : PLACEHOLDER_IMAGE,
+    product.imageId ? buildImageUrl(product.imageId, countryCode) : PLACEHOLDER_IMAGE
   );
-  const { getQuantity, addProduct, removeProduct, getBundleProgress, registerBundleData } = useCart();
+  const { getQuantity, addProduct, removeProduct, getBundleProgress, registerBundleData } =
+    useCart();
   const quantity = getQuantity(product.id);
   const bundleProgress = getBundleProgress(product.id);
   const showCartActions = !product.isUnavailable;
@@ -42,8 +48,8 @@ export function ProductCard({ product, href }: ProductCardProps) {
 
   const cardContent = (
     <div
-      className={`relative flex h-full flex-col rounded-lg border border-card-border bg-card-bg p-4 shadow-sm${
-        href ? " transition-shadow hover:shadow-md" : ""
+      className={`border-card-border bg-card-bg relative flex h-full flex-col rounded-lg border p-4 shadow-sm${
+        href ? "transition-shadow hover:shadow-md" : ""
       }`}
     >
       {/* Product image */}
@@ -65,9 +71,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
         {/* Unavailability overlay on image area */}
         {product.isUnavailable && product.unavailableReason && (
           <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[rgba(231,236,215,0.55)]">
-            <span className="text-sm font-medium text-text-muted">
-              {product.unavailableReason}
-            </span>
+            <span className="text-text-muted text-sm font-medium">{product.unavailableReason}</span>
           </div>
         )}
 
@@ -88,17 +92,13 @@ export function ProductCard({ product, href }: ProductCardProps) {
 
       {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino") */}
       {product.subtitle && (
-        <p className="mb-0.5 truncate text-xs text-text-muted">
-          {product.subtitle}
-        </p>
+        <p className="text-text-muted mb-0.5 truncate text-xs">{product.subtitle}</p>
       )}
 
       {/* Product name */}
-      <h3 className="mb-0.5 text-sm font-medium leading-snug text-text-dark line-clamp-2">
+      <h3 className="text-text-dark mb-0.5 line-clamp-2 text-sm leading-snug font-medium">
         {product.namePrefix && (
-          <span className="font-bold text-text-bio-green">
-            {product.namePrefix}{" "}
-          </span>
+          <span className="text-text-bio-green font-bold">{product.namePrefix} </span>
         )}
         {product.name}
       </h3>
@@ -107,12 +107,9 @@ export function ProductCard({ product, href }: ProductCardProps) {
       {(product.brand || product.highlight || product.flagIconKey) && (
         <div className="mb-0.5 flex items-center gap-1">
           {product.flagIconKey && product.flagFallbackImageId && (
-            <span
-              className="relative inline-block"
-              style={{ width: FLAG_SIZE, height: FLAG_SIZE }}
-            >
+            <span className="relative inline-block" style={{ width: FLAG_SIZE, height: FLAG_SIZE }}>
               <Image
-                src={buildImageUrl(product.flagFallbackImageId, "small")}
+                src={buildImageUrl(product.flagFallbackImageId, countryCode, "small")}
                 alt={product.flagIconKey}
                 fill
                 sizes={`${FLAG_SIZE}px`}
@@ -120,14 +117,9 @@ export function ProductCard({ product, href }: ProductCardProps) {
               />
             </span>
           )}
-          {product.brand && (
-            <span className="text-sm text-text-dark">{product.brand}</span>
-          )}
+          {product.brand && <span className="text-text-dark text-sm">{product.brand}</span>}
           {product.highlight && (
-            <span
-              className="text-sm font-medium"
-              style={{ color: product.highlight.color }}
-            >
+            <span className="text-sm font-medium" style={{ color: product.highlight.color }}>
               {product.highlight.text}
             </span>
           )}
@@ -135,7 +127,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
       )}
 
       {/* Unit quantity */}
-      <p className="text-xs text-text-muted">{product.unitQuantity}</p>
+      <p className="text-text-muted text-xs">{product.unitQuantity}</p>
 
       {/* Bottom-anchored: badges + price */}
       <div className="mt-auto">
@@ -152,9 +144,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
         <div className="mt-1.5">
           <PriceDisplay
             displayPrice={effectiveDisplayPrice}
-            originalPrice={
-              bundleOriginalPrice ?? product.originalPrice
-            }
+            originalPrice={bundleOriginalPrice ?? product.originalPrice}
           />
         </div>
       </div>
@@ -180,15 +170,10 @@ export function ProductCard({ product, href }: ProductCardProps) {
 // ─── Bundle price helper ──────────────────────────────────────────────────────
 
 /** Returns the per-unit price in cents if a bundle threshold is active, or null. */
-function getActiveBundlePrice(
-  bp: BundleProgress | null,
-  quantity: number,
-): number | null {
+function getActiveBundlePrice(bp: BundleProgress | null, quantity: number): number | null {
   if (!bp || bp.thresholds.length === 0 || quantity === 0) return null;
 
-  const active = bp.thresholds
-    .filter((t) => t.quantity <= quantity)
-    .at(-1) ?? null;
+  const active = bp.thresholds.filter((t) => t.quantity <= quantity).at(-1) ?? null;
 
   return active ? active.pricePerUnit : null;
 }
@@ -215,6 +200,7 @@ function CartActionOverlay({
   bundleProgress,
   regularPrice,
 }: CartActionOverlayProps) {
+  const t = useTranslations();
   // Prevent click from propagating to the Link wrapper
   const stopPropagation = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -223,12 +209,12 @@ function CartActionOverlay({
 
   if (quantity === 0) {
     return (
-      <div className="absolute bottom-1 right-1 z-10" onClick={stopPropagation}>
+      <div className="absolute right-1 bottom-1 z-10" onClick={stopPropagation}>
         <button
           type="button"
           onClick={onAdd}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-text-dark shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
-          aria-label="Toevoegen aan winkelwagen"
+          className="text-text-dark flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold shadow-md transition-colors hover:bg-gray-100 active:bg-gray-200"
+          aria-label={t.addToCartAriaLabel}
         >
           +
         </button>
@@ -237,7 +223,7 @@ function CartActionOverlay({
   }
 
   return (
-    <div className="absolute bottom-1 right-1 z-10" onClick={stopPropagation}>
+    <div className="absolute right-1 bottom-1 z-10" onClick={stopPropagation}>
       <QuantityStepper
         quantity={quantity}
         maxCount={maxCount}

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAuthToken } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
+
+import { isApiAuthError } from "@/lib/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/auth";
 import { parseCategoryPageSections } from "@/lib/parse-fusion-search";
 import { extractPageTitle } from "@/lib/parse-subcategories";
-import { isApiAuthError } from "@/lib/api-error";
-import type { CategoryProductsApiResponse, ApiErrorResponse } from "@/lib/types";
+import { buildPicnicClient } from "@/lib/picnic-client";
+import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/types";
 
 const L2_PAGE_PREFIX = "L2-category-page-root?category_id=";
 
@@ -17,7 +18,7 @@ const L2_PAGE_PREFIX = "L2-category-page-root?category_id=";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ categoryId: string }> },
+  { params }: { params: Promise<{ categoryId: string }> }
 ): Promise<NextResponse<CategoryProductsApiResponse | ApiErrorResponse>> {
   const { categoryId } = await params;
   const token = readAuthToken(request);
@@ -25,15 +26,15 @@ export async function GET(
   if (!token) {
     return NextResponse.json(
       { error: "Authentication required", code: "TOKEN_EXPIRED" as const },
-      { status: 401 },
+      { status: 401 }
     );
   }
 
+  const countryCode = readCountryCode(request);
+
   try {
-    const client = buildPicnicClient(token);
-    const rawPage = await client.app.getPage(
-      `${L2_PAGE_PREFIX}${categoryId}`,
-    );
+    const client = buildPicnicClient(token, countryCode);
+    const rawPage = await client.app.getPage(`${L2_PAGE_PREFIX}${categoryId}`);
     const title = extractPageTitle(rawPage);
     const { sections, products } = parseCategoryPageSections(rawPage);
 
@@ -42,23 +43,18 @@ export async function GET(
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error(
-      `[/api/categories/${categoryId}/products] Failed:`,
-      message,
-    );
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error(`[/api/categories/${categoryId}/products] Failed:`, message);
 
     return NextResponse.json(
       {
-        error:
-          "Kan producten niet laden. Probeer het later opnieuw.",
+        error: "Kan producten niet laden. Probeer het later opnieuw.",
       },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }

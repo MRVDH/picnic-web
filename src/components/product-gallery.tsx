@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
 import Image from "next/image";
+
+import { useCountryCode } from "@/contexts/country-context";
 import { buildImageUrl } from "@/lib/image-url";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
@@ -13,6 +16,7 @@ type ProductGalleryProps = {
 };
 
 export function ProductGallery({ imageIds }: ProductGalleryProps) {
+  const countryCode = useCountryCode();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const hasImages = imageIds.length > 0;
@@ -21,7 +25,7 @@ export function ProductGallery({ imageIds }: ProductGalleryProps) {
   const selectedId = hasImages ? imageIds[selectedIndex] : null;
   const mainImageSrc =
     selectedId && !failedIds.has(selectedId)
-      ? buildImageUrl(selectedId, GALLERY_IMAGE_SIZE)
+      ? buildImageUrl(selectedId, countryCode, GALLERY_IMAGE_SIZE)
       : PLACEHOLDER_IMAGE;
 
   const handleImageError = (imageId: string) => {
@@ -69,7 +73,7 @@ export function ProductGallery({ imageIds }: ProductGalleryProps) {
                 src={
                   failedIds.has(imageId)
                     ? PLACEHOLDER_IMAGE
-                    : buildImageUrl(imageId, THUMBNAIL_IMAGE_SIZE)
+                    : buildImageUrl(imageId, countryCode, THUMBNAIL_IMAGE_SIZE)
                 }
                 alt={`Thumbnail ${index + 1}`}
                 fill

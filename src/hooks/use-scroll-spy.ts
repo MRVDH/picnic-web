@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { buildSectionId } from "@/lib/types";
 
 /**
@@ -37,10 +38,7 @@ export function useScrollSpy(sectionCount: number): number {
         let topEntry: IntersectionObserverEntry | null = null;
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          if (
-            topEntry === null ||
-            entry.boundingClientRect.top < topEntry.boundingClientRect.top
-          ) {
+          if (topEntry === null || entry.boundingClientRect.top < topEntry.boundingClientRect.top) {
             topEntry = entry;
           }
         }
@@ -53,7 +51,7 @@ export function useScrollSpy(sectionCount: number): number {
       {
         rootMargin: "-144px 0px -60% 0px",
         threshold: 0,
-      },
+      }
     );
 
     for (const el of elements) {

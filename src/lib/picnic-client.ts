@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-import { COUNTRY_CODE } from "./types";
+import { type CountryCode, DEFAULT_COUNTRY_CODE } from "./types";
 
 /**
  * picnic-api uses `export = class PicnicClient` (CJS module.exports).
@@ -16,9 +16,12 @@ export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
  * Each call creates a fresh instance — no cached state.
  * PicnicClient construction is cheap (plain object, no I/O).
  */
-export function buildPicnicClient(authToken: string): PicnicClientInstance {
+export function buildPicnicClient(
+  authToken: string,
+  countryCode: CountryCode = DEFAULT_COUNTRY_CODE
+): PicnicClientInstance {
   return new PicnicClient({
-    countryCode: COUNTRY_CODE,
+    countryCode,
     authKey: authToken,
   });
 }
@@ -28,8 +31,10 @@ export function buildPicnicClient(authToken: string): PicnicClientInstance {
  * Used for login-by-credentials where the authKey is not yet known.
  * Must only be called server-side (route handlers).
  */
-export function buildPicnicClientAnonymous(): PicnicClientInstance {
+export function buildPicnicClientAnonymous(
+  countryCode: CountryCode = DEFAULT_COUNTRY_CODE
+): PicnicClientInstance {
   return new PicnicClient({
-    countryCode: COUNTRY_CODE,
+    countryCode,
   });
 }

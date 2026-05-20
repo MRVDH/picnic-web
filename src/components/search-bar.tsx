@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { useTranslations } from "@/contexts/country-context";
 import { useDebounce } from "@/hooks/use-debounce";
-import { SearchSuggestions } from "./search-suggestions";
-import type {
-  SearchSuggestion,
-  SuggestionsApiResponse,
-  ApiErrorResponse,
-} from "@/lib/types";
-import { DEBOUNCE_DELAY_MS, MIN_SUGGESTION_LENGTH } from "@/lib/types";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
+import type { ApiErrorResponse, SearchSuggestion, SuggestionsApiResponse } from "@/lib/types";
+import { DEBOUNCE_DELAY_MS, MIN_SUGGESTION_LENGTH } from "@/lib/types";
+
+import { SearchSuggestions } from "./search-suggestions";
 
 type SearchBarProps = {
   onSearch: (query: string) => void;
@@ -18,6 +17,7 @@ type SearchBarProps = {
 };
 
 export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps) {
+  const t = useTranslations();
   const [inputValue, setInputValue] = useState(initialQuery ?? "");
   const [rawSuggestions, setRawSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -30,7 +30,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
   // Derive visible suggestions from raw data + input length
   const suggestions = useMemo(
     () => (shouldFetch ? rawSuggestions : []),
-    [shouldFetch, rawSuggestions],
+    [shouldFetch, rawSuggestions]
   );
 
   // Fetch suggestions when debounced input meets minimum length
@@ -75,10 +75,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
   // Close suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     }
@@ -98,7 +95,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
       setShowSuggestions(false);
       onSearch(trimmed);
     },
-    [inputValue, onSearch],
+    [inputValue, onSearch]
   );
 
   const handleSuggestionSelect = useCallback(
@@ -107,7 +104,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
       setShowSuggestions(false);
       onSearch(suggestion);
     },
-    [onSearch],
+    [onSearch]
   );
 
   return (
@@ -126,15 +123,15 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
                 setShowSuggestions(true);
               }
             }}
-            placeholder="Zoek producten..."
-            aria-label="Zoek producten"
-            className="w-full rounded-full border border-input-border bg-white px-4 py-2 pr-12 text-sm text-foreground shadow-sm outline-none transition-shadow placeholder:text-gray-400 focus:border-input-focus focus:ring-2 focus:ring-input-focus/20"
+            placeholder={t.searchPlaceholder}
+            aria-label={t.searchAriaLabel}
+            className="border-input-border text-foreground focus:border-input-focus focus:ring-input-focus/20 w-full rounded-full border bg-white px-4 py-2 pr-12 text-sm shadow-sm transition-shadow outline-none placeholder:text-gray-400 focus:ring-2"
           />
           <button
             type="submit"
             disabled={isLoading}
-            aria-label="Zoeken"
-            className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full bg-picnic-red p-1.5 text-white transition-colors hover:bg-picnic-red-dark disabled:opacity-50"
+            aria-label={t.searchButtonAriaLabel}
+            className="bg-picnic-red hover:bg-picnic-red-dark absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full p-1.5 text-white transition-colors disabled:opacity-50"
           >
             <SearchIcon />
           </button>

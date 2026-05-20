@@ -1,31 +1,32 @@
-import type { Product, Badge, BadgeVariant, BundleThreshold, SearchSection } from "./types";
-import type { PmlNode, SellingUnitTileContainer } from "./pml-helpers";
 import {
-  findSellingUnitContainers,
-  collectMarkdowns,
-  stripColorTags,
-  findNodeByIdSubstring,
-} from "./pml-helpers";
-import {
+  extractOriginalPriceFromPml,
   extractPromotionLabel,
-  findTextStackChildren,
   extractTextStackInfo,
   extractUnavailabilityFromPml,
-  extractOriginalPriceFromPml,
+  findTextStackChildren,
 } from "./extract-card-data";
 import { parseContentPageSections } from "./parse-content-page";
+import type { PmlNode, SellingUnitTileContainer } from "./pml-helpers";
+import {
+  collectMarkdowns,
+  findNodeByIdSubstring,
+  findSellingUnitContainers,
+  stripColorTags,
+} from "./pml-helpers";
+import type { Badge, BadgeVariant, BundleThreshold, Product, SearchSection } from "./types";
 
 /** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
-function parsePriceRangesFromRaw(
-  raw: unknown[] | null,
-): BundleThreshold[] | null {
+function parsePriceRangesFromRaw(raw: unknown[] | null): BundleThreshold[] | null {
   if (!raw || raw.length === 0) return null;
   const thresholds: BundleThreshold[] = [];
   for (const entry of raw) {
     if (
-      typeof entry === "object" && entry !== null &&
-      "price" in entry && typeof (entry as Record<string, unknown>).price === "number" &&
-      "from_quantity" in entry && typeof (entry as Record<string, unknown>).from_quantity === "number"
+      typeof entry === "object" &&
+      entry !== null &&
+      "price" in entry &&
+      typeof (entry as Record<string, unknown>).price === "number" &&
+      "from_quantity" in entry &&
+      typeof (entry as Record<string, unknown>).from_quantity === "number"
     ) {
       const e = entry as { price: number; from_quantity: number };
       thresholds.push({ quantity: e.from_quantity, pricePerUnit: e.price });
@@ -41,9 +42,7 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
   const su = container.content?.sellingUnit;
   if (!su) return null;
 
-  const pml = container.pml?.component
-    ? (container.pml as PmlNode)
-    : undefined;
+  const pml = container.pml?.component ? (container.pml as PmlNode) : undefined;
   const contexts = container.analytics?.contexts;
 
   const promotionLabel = extractPromotionLabel(contexts);
@@ -90,17 +89,12 @@ type PmlRecord = Record<string, unknown>;
 /** Extract the section title from a header-wrapper node's PML markdown. */
 function extractSectionTitle(headerNode: PmlRecord): string {
   const markdowns = collectMarkdowns(headerNode);
-  const cleaned = markdowns
-    .map((md) => stripColorTags(md))
-    .filter(Boolean);
+  const cleaned = markdowns.map((md) => stripColorTags(md)).filter(Boolean);
   return cleaned.join(" / ");
 }
 
 /** Extract products from a set of wrapper nodes using tile containers. */
-function extractProductsFromWrappers(
-  wrappers: PmlRecord[],
-  seenIds: Set<string>,
-): Product[] {
+function extractProductsFromWrappers(wrappers: PmlRecord[], seenIds: Set<string>): Product[] {
   const products: Product[] = [];
   for (const wrapper of wrappers) {
     const containers = findSellingUnitContainers(wrapper);
@@ -128,9 +122,10 @@ const VISUAL_SECTIONS_ID = "structured-selling-unit-search-result-visual-section
  * outside visual-sections) and duplicate section names (using full display text).
  * Deduplicates products across sections (first-occurrence wins).
  */
-export function parseFusionSearchSections(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+export function parseFusionSearchSections(rawPage: unknown): {
+  sections: SearchSection[];
+  products: Product[];
+} {
   const seenIds = new Set<string>();
   const sections: SearchSection[] = [];
 
@@ -202,7 +197,7 @@ export function parseFusionSearchSections(
 function parseSectionsFromChildren(
   children: PmlRecord[],
   sections: SearchSection[],
-  seenIds: Set<string>,
+  seenIds: Set<string>
 ): void {
   let i = 0;
   while (i < children.length) {
@@ -250,9 +245,10 @@ const CATEGORY_SUB_HEADER_PREFIX = "vertical-article-tiles-sub-header-";
  * 3. Content page layout (campaign, "Nieuw", theme pages)
  * 4. Flat product extraction (last resort)
  */
-export function parseCategoryPageSections(
-  rawPage: unknown,
-): { sections: SearchSection[]; products: Product[] } {
+export function parseCategoryPageSections(rawPage: unknown): {
+  sections: SearchSection[];
+  products: Product[];
+} {
   const articleSections = findAllByIdPrefix(rawPage, CATEGORY_ARTICLES_PREFIX);
 
   if (articleSections.length === 0) {
@@ -282,11 +278,7 @@ export function parseCategoryPageSections(
 }
 
 /** Find all nodes whose `id` starts with the given prefix. */
-function findAllByIdPrefix(
-  obj: unknown,
-  prefix: string,
-  results: PmlRecord[] = [],
-): PmlRecord[] {
+function findAllByIdPrefix(obj: unknown, prefix: string, results: PmlRecord[] = []): PmlRecord[] {
   if (typeof obj !== "object" || obj === null) return results;
 
   if (Array.isArray(obj)) {
