@@ -52,7 +52,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Kan producten niet laden. Probeer het later opnieuw.",
+        error: "Failed to load products. Please try again later.",
       },
       { status: 502 }
     );

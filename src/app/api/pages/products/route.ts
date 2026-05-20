@@ -54,7 +54,7 @@ export async function GET(
     console.error(`[/api/pages/products] Failed for pageId="${pageId}":`, message);
 
     return NextResponse.json(
-      { error: "Kan producten niet laden. Probeer het later opnieuw." },
+      { error: "Failed to load products. Please try again later." },
       { status: 502 }
     );
   }
