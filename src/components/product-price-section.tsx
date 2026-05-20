@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "@/contexts/country-context";
 import { formatPrice } from "@/lib/format-price";
 import type { BundleOption, ProductPromotion } from "@/lib/types";
 
@@ -83,6 +86,7 @@ type BundleTierGridProps = {
 };
 
 function BundleTierGrid({ bundles, cartQuantity, onSetQuantity }: BundleTierGridProps) {
+  const t = useTranslations();
   const activeTierIndex = findActiveTierIndex(bundles, cartQuantity);
 
   return (
@@ -99,7 +103,7 @@ function BundleTierGrid({ bundles, cartQuantity, onSetQuantity }: BundleTierGrid
               isActive ? "bg-[#d6e6cd] ring-1 ring-[#b0cfb0]" : "bg-gray-100 hover:bg-gray-200"
             }`}
           >
-            <span className="text-xs text-gray-500">Vanaf {bundle.quantity}</span>
+            <span className="text-xs text-gray-500">{t.bundleFromLabel} {bundle.quantity}</span>
             <span
               className={`text-sm font-bold ${
                 isActive ? "text-price-discount" : "text-foreground"
@@ -137,13 +141,15 @@ type PdpStepperProps = {
 };
 
 function PdpStepper({ quantity, maxCount, onIncrement, onDecrement }: PdpStepperProps) {
+  const t = useTranslations();
+
   if (quantity === 0) {
     return (
       <button
         onClick={onIncrement}
         className="border-card-border text-foreground w-full rounded-lg border bg-white py-3 text-center text-sm font-semibold transition-colors hover:bg-gray-50"
       >
-        In mandje
+        {t.addToCartButton}
       </button>
     );
   }
@@ -157,7 +163,7 @@ function PdpStepper({ quantity, maxCount, onIncrement, onDecrement }: PdpStepper
         &minus;
       </button>
       <span className="text-foreground flex-1 text-center text-sm font-semibold">
-        {quantity} in mandje
+        {quantity} {t.inCartLabel}
       </span>
       <button
         onClick={onIncrement}

@@ -475,7 +475,7 @@ export type RecipeDetail = {
   /** Per-serving nutrition extracted from the recipe page; empty when unavailable */
   recipeNutritionRows: NutritionRow[];
   /** Allergen names aggregated across all ingredients, extracted from the recipe page */
-  allergens: { confirmed: string[]; mayContain: string[] };
+  allergens: AllergenInfo;
 };
 
 export type RecipeDetailApiResponse = RecipeDetail;
