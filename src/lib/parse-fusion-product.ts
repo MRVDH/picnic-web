@@ -26,6 +26,7 @@ import {
 import type {
   AllergenBadge,
   AllergenInfo,
+  BundleThreshold,
   NutritionRow,
   ProductDetail,
   ProductHighlightItem,
@@ -193,7 +194,10 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
     const headerTexts = collectMarkdowns(record.header).map(cleanMarkdown);
     const title = headerTexts[0] ?? "";
 
-    if (title.toLowerCase().includes("voedingswaarde")) {
+    if (
+      title.toLowerCase().includes("voedingswaarde") ||
+      title.toLowerCase().includes("nährwert")
+    ) {
       return collectNutritionRows(record.body);
     }
   }
@@ -202,6 +206,114 @@ function extractNutritionRows(page: unknown): NutritionRow[] {
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
+
+/** Extract allergen info from a product page — used for recipe allergen aggregation. */
+export function extractProductAllergenData(rawPage: unknown): AllergenInfo {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+  return extractAllergens(page);
+}
+
+/** Extract nutrition rows from a product page — used per-ingredient in recipe detail. */
+export function extractProductNutritionRows(rawPage: unknown): NutritionRow[] {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+  return extractNutritionRows(page);
+}
+
+/**
+ * Extract the minimal fields needed to display a product as a recipe ingredient tile:
+ * name, unitQuantity, imageId, displayPrice, maxCount.
+ *
+ * Used by the recipe detail route to enrich ingredient stubs with product data.
+ */
+export function extractProductTileData(
+  rawPage: unknown,
+  productId: string
+): { name: string; unitQuantity: string; imageId: string; displayPrice: number; maxCount: number; originalPrice: number | null; priceRanges: BundleThreshold[] | null } {
+  const page = (rawPage as Record<string, unknown>)?.body ?? rawPage;
+
+  // Name and unit quantity from the main container's markdown nodes
+  const mainContainer = findNodeById(page, PRODUCT_MAIN_CONTAINER_ID);
+  const texts = collectMarkdowns(mainContainer).map(stripColorTags);
+  const name = cleanMarkdown(texts[0] ?? "");
+  const unitQuantity = cleanMarkdown(texts[2] ?? "");
+
+  // Find the selling unit by ID — don't require max_count to be set (unlike
+  // findMainSellingUnit which gates on max_count !== undefined and misses some units)
+  const allUnits = collectPropertyValues(rawPage, "sellingUnit").filter(
+    (u): u is Record<string, unknown> => typeof u === "object" && u !== null
+  );
+  const unit = allUnits.find((u) => u.id === productId) ?? allUnits[0] ?? null;
+
+  const rawPrice = (unit?.display_price as number | undefined) ?? 0;
+  const maxCount = (unit?.max_count as number | undefined) ?? 99;
+  const unitImageId = (unit?.image_id as string | undefined) ?? "";
+
+  // Image fallback: gallery container (same as parseProductDetailPage uses)
+  const imageId = unitImageId || (() => {
+    const gallery = findNodeById(page, PRODUCT_GALLERY_CONTAINER_ID);
+    const ids = collectPropertyValues(gallery, "source")
+      .filter((s): s is Record<string, unknown> => typeof s === "object" && s !== null)
+      .map((s) => s.id)
+      .filter((id): id is string => typeof id === "string");
+    return ids[0] ?? "";
+  })();
+
+  // Price resolution with multiple fallbacks
+  let displayPrice = resolveDisplayPrice(page, productId, rawPrice);
+
+  // Fallback: scan ALL PRICE-type nodes in the full page tree. Covers promotional
+  // products where display_price=0 but the rendered price is in a PRICE node.
+  if (!displayPrice) {
+    const allPriceNodes = collectPriceNodes(rawPage);
+    const active = allPriceNodes.find((p) => !p.isCrossed && p.price > 0);
+    if (active) displayPrice = active.price;
+  }
+
+  // Last resort: parse the display price from the markdown text at position 3,
+  // e.g. "€ 1.99" or "€1,99" → 199
+  if (!displayPrice && texts[3]) {
+    const m = texts[3].match(/(\d+)[.,](\d{2})/);
+    if (m) displayPrice = parseInt(m[1]) * 100 + parseInt(m[2]);
+  }
+
+  const originalPrice = extractOriginalPrice(page);
+
+  // Bundle pricing comes from extractBundles (via __ep1.v1 tier arrays or legacy bundle container),
+  // not from price_ranges on the selling unit (which doesn't exist in the Picnic API).
+  const bundleOptions = extractBundles(rawPage);
+
+  // When the bundle container uses real IDs (Strategy 2), detect whether this product
+  // is itself one of the bundle SKUs (e.g. s1089939 = 3-pack). In that case the
+  // per-pack price (191) must be multiplied by the bundle count to get the total (573),
+  // and per-quantity tier scaling must NOT be applied — the item is always bought once.
+  const selfBundle = bundleOptions.find((b) => b.id === productId && b.quantity > 1);
+  if (selfBundle) {
+    const baseOption = bundleOptions.find((b) => b.quantity === 1);
+    const singlePackPrice = baseOption?.pricePerUnit ?? 0;
+    const bundleTotal = selfBundle.quantity * selfBundle.pricePerUnit;
+    const originalTotal = singlePackPrice > 0 ? selfBundle.quantity * singlePackPrice : null;
+    return {
+      name,
+      unitQuantity,
+      imageId,
+      displayPrice: bundleTotal,
+      maxCount,
+      originalPrice: originalTotal !== null && originalTotal > bundleTotal ? originalTotal : null,
+      priceRanges: null,
+    };
+  }
+
+  let priceRanges: BundleThreshold[] | null = null;
+  if (bundleOptions.length > 0) {
+    const thresholds: BundleThreshold[] = bundleOptions
+      .filter((b) => b.pricePerUnit > 0)
+      .map((b) => ({ quantity: b.quantity, pricePerUnit: b.pricePerUnit }))
+      .sort((a, b) => a.quantity - b.quantity);
+    if (thresholds.length > 0) priceRanges = thresholds;
+  }
+
+  return { name, unitQuantity, imageId, displayPrice, maxCount, originalPrice, priceRanges };
+}
 
 /**
  * Parse a raw product-details-page-root Fusion page into a ProductDetail.

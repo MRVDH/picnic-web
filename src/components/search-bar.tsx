@@ -87,7 +87,7 @@ export function SearchBar({ onSearch, isLoading, initialQuery }: SearchBarProps)
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: { preventDefault(): void }) => {
       e.preventDefault();
       const trimmed = inputValue.trim();
       if (trimmed === "") return;

@@ -48,6 +48,8 @@ type CartContextValue = {
   getBundleProgress: (productId: string) => BundleProgress | null;
   /** Register bundle thresholds for a product (from search results). */
   registerBundleData: (productId: string, thresholds: BundleThreshold[]) => void;
+  /** Re-fetch /api/cart and reconcile state. Used after bulk operations like recipe add. */
+  refresh: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -252,6 +254,15 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
     });
   }, []);
 
+  const refresh = useCallback(() => {
+    fetch("/api/cart")
+      .then((res) => res.json())
+      .then((data: CartData) => {
+        if (!("error" in data)) reconcileFromServer(data);
+      })
+      .catch(() => {});
+  }, [reconcileFromServer]);
+
   const value = useMemo<CartContextValue>(
     () => ({
       quantities,
@@ -264,6 +275,7 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
       getQuantity,
       getBundleProgress,
       registerBundleData,
+      refresh,
     }),
     [
       quantities,
@@ -276,6 +288,7 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
       getQuantity,
       getBundleProgress,
       registerBundleData,
+      refresh,
     ]
   );
 
