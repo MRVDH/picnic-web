@@ -16,19 +16,24 @@ const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 
 async function fetchRecipePage(
   client: PicnicClientInstance,
-  countryCode: string,
   id: string,
   portions?: number
 ): Promise<unknown> {
   const portionsParam = portions ? `&portions=${portions}` : "";
-  if (countryCode === "DE") {
-    return (client as unknown as SendRequestClient).sendRequest(
+
+  // Try selling-group-details-page first (works for DE; NL may use either endpoint).
+  // Fall back to recipe-details-page-root if the first is not found.
+  try {
+    return await (client as unknown as SendRequestClient).sendRequest(
       "GET",
       `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`,
       null,
       true
     );
+  } catch {
+    // Fall through to the alternative endpoint
   }
+
   return (client as unknown as SendRequestClient).sendRequest(
     "GET",
     `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`,
@@ -104,7 +109,7 @@ export async function GET(
     const client = buildPicnicClient(token, countryCode);
     const portionsParam = request.nextUrl.searchParams.get("portions");
     const portions = portionsParam ? parseInt(portionsParam, 10) : undefined;
-    const rawPage = await fetchRecipePage(client, countryCode, id, portions && portions > 0 ? portions : undefined);
+    const rawPage = await fetchRecipePage(client, id, portions && portions > 0 ? portions : undefined);
     const detail = parseRecipeDetail(rawPage, id);
     const ingredients = await enrichIngredients(
       client as unknown as SendRequestClient,
