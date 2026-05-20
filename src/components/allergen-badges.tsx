@@ -1,10 +1,25 @@
+"use client";
+
+import { useTranslations } from "@/contexts/country-context";
 import type { AllergenInfo } from "@/lib/types";
 
 type AllergenBadgesProps = {
   allergens: AllergenInfo;
+  title?: string;
+  confirmedLabel?: string;
+  mayContainLabel?: string;
 };
 
-export function AllergenBadges({ allergens }: AllergenBadgesProps) {
+export function AllergenBadges({
+  allergens,
+  title,
+  confirmedLabel,
+  mayContainLabel,
+}: AllergenBadgesProps) {
+  const t = useTranslations();
+  const resolvedTitle = title ?? t.allergenTitle;
+  const resolvedConfirmedLabel = confirmedLabel ?? t.recipeAllergens;
+  const resolvedMayContainLabel = mayContainLabel ?? t.recipeMayContain;
   const hasConfirmed = allergens.confirmed.length > 0;
   const hasMayContain = allergens.mayContain.length > 0;
 
@@ -12,21 +27,17 @@ export function AllergenBadges({ allergens }: AllergenBadgesProps) {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-foreground text-lg font-semibold">Allergenen</h2>
+      {resolvedTitle && <h2 className="text-foreground text-lg font-semibold">{resolvedTitle}</h2>}
 
-      {/* Confirmed allergens */}
       {hasConfirmed && (
         <div>
-          <p className="mb-1.5 text-sm font-medium text-gray-600">Bevat</p>
+          <p className="mb-1.5 text-sm font-medium text-gray-600">{resolvedConfirmedLabel}</p>
           <div className="flex flex-wrap gap-2">
             {allergens.confirmed.map((badge) => (
               <span
                 key={badge.text}
                 className="rounded px-3 py-1 text-xs font-medium"
-                style={{
-                  backgroundColor: badge.backgroundColor,
-                  color: badge.textColor,
-                }}
+                style={{ backgroundColor: badge.backgroundColor, color: badge.textColor }}
               >
                 {badge.text}
               </span>
@@ -35,19 +46,15 @@ export function AllergenBadges({ allergens }: AllergenBadgesProps) {
         </div>
       )}
 
-      {/* May contain allergens */}
       {hasMayContain && (
         <div>
-          <p className="mb-1.5 text-sm font-medium text-gray-500">Bevat mogelijk</p>
+          <p className="mb-1.5 text-sm font-medium text-gray-500">{resolvedMayContainLabel}</p>
           <div className="flex flex-wrap gap-2">
             {allergens.mayContain.map((badge) => (
               <span
                 key={badge.text}
                 className="rounded px-3 py-1 text-xs font-medium"
-                style={{
-                  backgroundColor: badge.backgroundColor,
-                  color: badge.textColor,
-                }}
+                style={{ backgroundColor: badge.backgroundColor, color: badge.textColor }}
               >
                 {badge.text}
               </span>

@@ -18,6 +18,7 @@ import { ProductPriceSection } from "@/components/product-price-section";
 import { ProductSlider } from "@/components/product-slider";
 import { SharedHeader } from "@/components/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
+import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
 import type { ApiErrorResponse, ProductDetail } from "@/lib/types";
@@ -125,6 +126,7 @@ function NotFoundView() {
 
 function ProductDetailView({ product }: { product: ProductDetail }) {
   const { getQuantity, addProduct, removeProduct } = useCart();
+  const t = useTranslations();
   const cartQuantity = getQuantity(product.id);
 
   const handleSetQuantity = useCallback(
@@ -220,7 +222,7 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
       )}
 
       {/* Similar products slider */}
-      <ProductSlider title="Vergelijkbare producten" products={product.similarProducts} />
+      <ProductSlider title={t.similarProductsTitle} products={product.similarProducts} />
     </div>
   );
 }
