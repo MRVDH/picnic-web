@@ -1,16 +1,17 @@
-import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+
+import crypto from "node:crypto";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
-import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
+import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
+import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
 
-// Server-side cache per country, expires after 5 minutes.
+// Server-side cache per country, expires after an hour.
 const cache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 async function fetchCount(client: PicnicClientInstance, categoryId: string): Promise<number> {
   try {
@@ -30,7 +31,7 @@ export async function GET(
   }
 
   const countryCode = readCountryCode(request);
-  const cacheKey = `${countryCode}:${crypto.createHash('sha256').update(token).digest('hex').slice(0, 16)}`;
+  const cacheKey = `${countryCode}:${crypto.createHash("sha256").update(token).digest("hex").slice(0, 16)}`;
   const cached = cache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return NextResponse.json(cached.counts);
