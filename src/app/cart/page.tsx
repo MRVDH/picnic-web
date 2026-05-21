@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CartPageContent, EmptyView } from "@/components/cart/cart-page-content";
 import { CartToast } from "@/components/cart/cart-toast";
 import { DeliverySlotPicker } from "@/components/delivery/delivery-slot-picker";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { createMutationQueue } from "@/lib/cart/mutation-queue";
+import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
 type CartPageState =
@@ -139,6 +139,30 @@ export default function CartPage() {
     setRetryCount((count) => count + 1);
   }, []);
 
+  const handleClearCart = useCallback(async () => {
+    const snapshot = pageState.status === "success" ? pageState.cart : null;
+    setPageState({ status: "empty" });
+    confirmedCartRef.current = null;
+
+    try {
+      const response = await fetch("/api/cart", { method: "DELETE" });
+      const data: CartData | ApiErrorResponse = await response.json();
+      if (!response.ok || "error" in data) {
+        if (snapshot) {
+          confirmedCartRef.current = snapshot;
+          setPageState({ status: "success", cart: snapshot });
+        }
+        setToastMessage(t.clearCartError);
+      }
+    } catch {
+      if (snapshot) {
+        confirmedCartRef.current = snapshot;
+        setPageState({ status: "success", cart: snapshot });
+      }
+      setToastMessage(t.clearCartError);
+    }
+  }, [pageState, t.clearCartError]);
+
   const enqueueMutation = useCallback((productId: string, action: "add" | "remove") => {
     queueRef.current?.enqueue(productId, () => postCartMutation(productId, action));
   }, []);
@@ -240,6 +264,7 @@ export default function CartPage() {
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
             onOpenPicker={() => setIsPickerOpen(true)}
+            onClearCart={handleClearCart}
           />
         )}
       </main>

@@ -10,6 +10,7 @@ import { CheckoutCta } from "@/components/cart/checkout-cta";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { DeliverySlotBanner } from "@/components/delivery/delivery-slot-banner";
 import { ProductSlider } from "@/components/product/product-slider";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { buildRecipeImageUrl } from "@/lib/core/image-url";
 import type { CartData, CartItem, CartRecipeGroup } from "@/lib/core/types";
@@ -84,13 +85,16 @@ export function CartPageContent({
   onIncrement,
   onDecrement,
   onOpenPicker,
+  onClearCart,
 }: {
   cart: CartData;
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onOpenPicker: () => void;
+  onClearCart: () => void;
 }) {
   const t = useTranslations();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // Group items by their recipe (basketGroupId), keeping API order within each group.
   const itemsByGroupId = new Map<string, CartItem[]>();
@@ -111,7 +115,16 @@ export function CartPageContent({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-foreground text-2xl font-bold">{t.cartTitle}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-foreground text-2xl font-bold">{t.cartTitle}</h1>
+        <button
+          type="button"
+          onClick={() => setIsConfirmOpen(true)}
+          className="border-picnic-orange text-picnic-orange rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-orange-50"
+        >
+          {t.clearCartButton}
+        </button>
+      </div>
 
       <DeliverySlotBanner
         bannerText={cart.deliveryBannerText}
@@ -161,6 +174,20 @@ export function CartPageContent({
       <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
 
       <CheckoutCta />
+
+      {isConfirmOpen && (
+        <ConfirmModal
+          title={t.clearCartConfirmTitle}
+          message={t.clearCartConfirmMessage}
+          confirmLabel={t.confirmButton}
+          cancelLabel={t.cancelButton}
+          onConfirm={() => {
+            setIsConfirmOpen(false);
+            onClearCart();
+          }}
+          onCancel={() => setIsConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 }

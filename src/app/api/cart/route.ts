@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { parseCartResponse } from "@/lib/cart/parse-cart";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseCartResponse } from "@/lib/cart/parse-cart";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/core/types";
 
@@ -64,6 +64,48 @@ export async function GET(
       },
       { status: 502 }
     );
+  }
+}
+
+// ─── DELETE /api/cart ───────────────────────────────────────────────────────
+
+/**
+ * DELETE /api/cart
+ *
+ * Clears all items from the user's cart by calling POST /cart/clear on the
+ * Picnic API. Returns the resulting empty CartData.
+ */
+export async function DELETE(
+  request: NextRequest
+): Promise<NextResponse<CartData | ApiErrorResponse>> {
+  const token = readAuthToken(request);
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
+      { status: 401 }
+    );
+  }
+
+  const countryCode = readCountryCode(request);
+
+  try {
+    const client = buildPicnicClient(token, countryCode);
+    const rawCart = await client.cart.clearCart();
+    const cartData = parseCartResponse(rawCart, countryCode);
+    return NextResponse.json(cartData);
+  } catch (error) {
+    if (isApiAuthError(error)) {
+      return NextResponse.json(
+        { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
+        { status: 401 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("[/api/cart] Failed to clear cart:", message);
+
+    return NextResponse.json({ error: "Failed to clear cart. Please try again." }, { status: 502 });
   }
 }
 
