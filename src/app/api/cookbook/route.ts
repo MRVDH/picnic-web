@@ -7,7 +7,9 @@ import { buildPicnicClient } from "@/lib/picnic-client";
 import { getRecipeCategories } from "@/lib/recipe-categories";
 import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/types";
 
-const CATEGORY_ID_RE = /^recipe-cattree-[\w-]+$/;
+// DE uses short slug IDs (recipe-cattree-*); NL uses UUID-based content pages.
+const CATEGORY_ID_RE =
+  /^recipe-cattree-[\w-]+$|^meals-category-page-content\?category_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const SAVED_PAGE_ID = "saved-deep-dive-page-content";
 
 type SendRequestClient = {
