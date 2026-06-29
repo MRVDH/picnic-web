@@ -53,6 +53,10 @@ export type BadgeVariant =
 export type Badge = {
   text: string;
   variant: BadgeVariant;
+  /** Hex background color from the API decorator, when provided. */
+  backgroundColor?: string;
+  /** Hex text color from the API decorator, when provided. */
+  textColor?: string;
 };
 
 // ─── Highlight (colored subtext) ─────────────────────────────────────────────
