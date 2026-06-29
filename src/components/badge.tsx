@@ -16,11 +16,16 @@ type BadgeProps = {
 };
 
 export function Badge({ badge }: BadgeProps) {
-  const classes = VARIANT_CLASSES[badge.variant];
+  const hasApiColor = badge.backgroundColor || badge.textColor;
+  const classes = hasApiColor ? "" : VARIANT_CLASSES[badge.variant];
+  const style = hasApiColor
+    ? { backgroundColor: badge.backgroundColor, color: badge.textColor }
+    : undefined;
 
   return (
     <span
       className={`inline-block rounded-sm px-1.5 py-0.5 text-xs leading-tight font-medium ${classes}`}
+      style={style}
     >
       {badge.text}
     </span>
