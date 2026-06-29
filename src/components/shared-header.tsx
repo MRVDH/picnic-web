@@ -7,10 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { SearchBar } from "@/components/search-bar";
 import { useCartOptional } from "@/contexts/cart-context";
-import { useCountryCode, useSwitchCountry, useTranslations } from "@/contexts/country-context";
+import { useTranslations } from "@/contexts/country-context";
 import { formatPrice } from "@/lib/format-price";
 import type { ApiErrorResponse, CartData } from "@/lib/types";
-import { SUPPORTED_COUNTRY_CODES } from "@/lib/types";
 
 // ─── Cart badge state ─────────────────────────────────────────────────────────
 
@@ -143,8 +142,6 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
     [router]
   );
 
-  const countryCode = useCountryCode();
-  const switchCountry = useSwitchCountry();
   const t = useTranslations();
 
   const handleSignOut = useCallback(async () => {
@@ -172,25 +169,6 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
             isLoading={false}
             initialQuery={urlQuery}
           />
-          {/* Country switcher */}
-          <div className="flex shrink-0 items-center gap-1">
-            {SUPPORTED_COUNTRY_CODES.map((code) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => switchCountry(code)}
-                className={`rounded px-2 py-1 text-xs font-semibold transition-colors ${
-                  code === countryCode
-                    ? "bg-picnic-red text-white"
-                    : "hover:text-foreground text-gray-500"
-                }`}
-                aria-pressed={code === countryCode}
-              >
-                {code}
-              </button>
-            ))}
-          </div>
-
           <button
             type="button"
             onClick={handleSignOut}

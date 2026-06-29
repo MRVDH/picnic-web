@@ -123,7 +123,14 @@ function mapDecoratorsToBadges(decorators: RawDecorator[]): Badge[] {
         const text = asString(dec["text"]);
         if (!text) break;
         const isBundleLabel = text.toLowerCase().includes("bundel");
-        badges.push({ text, variant: isBundleLabel ? "bundle" : "promo" });
+        const backgroundColor = asString(dec["background_color"]) || undefined;
+        const textColor = asString(dec["text_color"]) || undefined;
+        badges.push({
+          text,
+          variant: isBundleLabel ? "bundle" : "promo",
+          backgroundColor,
+          textColor,
+        });
         break;
       }
       case "FRESH_LABEL": {

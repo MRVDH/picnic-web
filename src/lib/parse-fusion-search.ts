@@ -190,6 +190,15 @@ export function parseFusionSearchSections(rawPage: unknown): {
   // Build flat product list from all sections
   const products = sections.flatMap((s) => s.products);
 
+  // Narrow searches return the result node WITHOUT client-side-filtering
+  // section structure — tiles sit directly under it. The header/wrapper/
+  // visual-sections logic finds nothing, so fall back to flat extraction
+  // scoped to the result node (reuses the existing tile-container walker).
+  if (products.length === 0) {
+    const flat = extractProductsFromWrappers([resultNode as PmlRecord], new Set());
+    return { sections: [], products: flat };
+  }
+
   return { sections, products };
 }
 
