@@ -68,6 +68,13 @@ export function ProductCard({ product, href }: ProductCardProps) {
           }}
         />
 
+        {/* Promotion pill overlaid on the image (e.g. "20% korting") */}
+        {product.promoBadge && product.promoPlacement === "image" && (
+          <div className="absolute bottom-0 left-0 z-10">
+            <Badge badge={product.promoBadge} />
+          </div>
+        )}
+
         {/* Unavailability overlay on image area */}
         {product.isUnavailable && product.unavailableReason && (
           <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[rgba(231,236,215,0.55)]">
@@ -90,9 +97,19 @@ export function ProductCard({ product, href }: ProductCardProps) {
         )}
       </div>
 
-      {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino") */}
+      {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino", or a colored taste
+          descriptor flanked by guillemets like "« Lichtzoet en aards »") */}
       {product.subtitle && (
-        <p className="text-text-muted mb-0.5 truncate text-xs">{product.subtitle}</p>
+        <p
+          className={`mb-0.5 truncate text-xs font-medium ${
+            product.subtitleColor ? "" : "text-text-muted"
+          }`}
+          style={product.subtitleColor ? { color: product.subtitleColor } : undefined}
+        >
+          {product.subtitleLeadingIcon && "« "}
+          {product.subtitle}
+          {product.subtitleTrailingIcon && " »"}
+        </p>
       )}
 
       {/* Product name */}
@@ -126,26 +143,30 @@ export function ProductCard({ product, href }: ProductCardProps) {
         </div>
       )}
 
-      {/* Unit quantity */}
-      <p className="text-text-muted text-xs">{product.unitQuantity}</p>
+      {/* Unit quantity, with any size/label badge inline (e.g. "XL  1.5 kilo") */}
+      {(product.unitQuantity || product.badges.length > 0) && (
+        <div className="flex items-center gap-1">
+          {product.badges.map((badge, index) => (
+            <Badge key={`${badge.variant}-${index}`} badge={badge} />
+          ))}
+          {product.unitQuantity && (
+            <p className="text-text-muted text-xs">{product.unitQuantity}</p>
+          )}
+        </div>
+      )}
 
-      {/* Bottom-anchored: badges + price */}
+      {/* Bottom-anchored: price */}
       <div className="mt-auto">
-        {/* Badges */}
-        {product.badges.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {product.badges.map((badge, index) => (
-              <Badge key={`${badge.variant}-${index}`} badge={badge} />
-            ))}
-          </div>
-        )}
-
-        {/* Price — show bundle-discounted price when applicable */}
-        <div className="mt-1.5">
+        {/* Price — with the promotion pill inline (e.g. green "Family") */}
+        <div className="mt-1.5 flex items-center gap-2">
           <PriceDisplay
             displayPrice={effectiveDisplayPrice}
             originalPrice={bundleOriginalPrice ?? product.originalPrice}
+            displayPriceColor={product.displayPriceColor}
           />
+          {product.promoBadge && product.promoPlacement === "inline" && (
+            <Badge badge={product.promoBadge} />
+          )}
         </div>
       </div>
 
@@ -235,3 +256,4 @@ function CartActionOverlay({
     </div>
   );
 }
+

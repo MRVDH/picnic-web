@@ -68,6 +68,21 @@ export type Highlight = {
   color: string;
 };
 
+/**
+ * Where the app renders a promotion pill:
+ * - "inline": next to the price (member/"Family" discounts)
+ * - "image": overlaid on the product photo (e.g. "20% korting" promos)
+ */
+export type PromoPlacement = "inline" | "image";
+
+/** A decorative icon flanking the subtitle (e.g. a laurel leaf). */
+export type SubtitleIcon = {
+  /** Fallback CDN image ID for the icon (gated — load via the /api/image proxy). */
+  imageId: string;
+  /** Hex color the app tints the icon with (e.g. "#95710F"), or null. */
+  color: string | null;
+};
+
 // ─── Product ─────────────────────────────────────────────────────────────────
 
 export type Product = {
@@ -77,6 +92,12 @@ export type Product = {
   namePrefix: string | null;
   /** Small subtitle above the product name (e.g. "D.O.P. Sarnese-Nocerino"). */
   subtitle: string | null;
+  /** API-driven color for the subtitle text (e.g. "#95710F"), or null for default. */
+  subtitleColor: string | null;
+  /** Decorative icon shown before the subtitle text (e.g. a laurel leaf), or null. */
+  subtitleLeadingIcon: SubtitleIcon | null;
+  /** Decorative icon shown after the subtitle text (e.g. a laurel leaf), or null. */
+  subtitleTrailingIcon: SubtitleIcon | null;
   /** Brand name shown below the product name (e.g. "Mutti"). */
   brand: string | null;
   /** Colored subtext like "Prijskampioen" shown in the brand/subtext row. */
@@ -90,14 +111,24 @@ export type Product = {
   displayPrice: number;
   /** Original price in cents when discounted, or null. */
   originalPrice: number | null;
+  /**
+   * API-driven color for the current price (e.g. green for a member/family
+   * discount, red for a clearance markdown), or null to use the default
+   * styling. Mirrors the color the mobile app renders the price in.
+   */
+  displayPriceColor: string | null;
   /** Human-readable unit/quantity string (e.g. "500 g", "6 x 300 ml"). */
   unitQuantity: string;
   /** Maximum number of units a user can order. */
   maxCount: number;
   /** Bundle price ranges from the API, or null if no bundle. */
   priceRanges: BundleThreshold[] | null;
-  /** All labels/badges extracted from decorators. */
+  /** Non-promotion labels/badges (size, freshness, info, …). */
   badges: Badge[];
+  /** The discount/promotion pill, or null when not on promotion. */
+  promoBadge: Badge | null;
+  /** Where to render {@link promoBadge}: inline by the price, or on the image. */
+  promoPlacement: PromoPlacement | null;
   /** Whether the product is currently unavailable. */
   isUnavailable: boolean;
   /** Reason for unavailability, if applicable. */
@@ -277,6 +308,12 @@ export type ProductDetail = {
   displayPrice: number;
   /** Original price in cents before discount, or null. */
   originalPrice: number | null;
+  /**
+   * API-driven color for the current price (e.g. green for a member/family
+   * discount, red for a clearance markdown), or null to use the default
+   * styling. Mirrors the color the mobile app renders the price in.
+   */
+  displayPriceColor: string | null;
   /** Maximum items that can be added to cart. */
   maxCount: number;
   /** Gallery image IDs. May be empty. */
