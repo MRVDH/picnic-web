@@ -90,6 +90,12 @@ export type Product = {
   displayPrice: number;
   /** Original price in cents when discounted, or null. */
   originalPrice: number | null;
+  /**
+   * API-driven color for the current price (e.g. green for a member/family
+   * discount, red for a clearance markdown), or null to use the default
+   * styling. Mirrors the color the mobile app renders the price in.
+   */
+  displayPriceColor: string | null;
   /** Human-readable unit/quantity string (e.g. "500 g", "6 x 300 ml"). */
   unitQuantity: string;
   /** Maximum number of units a user can order. */
@@ -277,6 +283,12 @@ export type ProductDetail = {
   displayPrice: number;
   /** Original price in cents before discount, or null. */
   originalPrice: number | null;
+  /**
+   * API-driven color for the current price (e.g. green for a member/family
+   * discount, red for a clearance markdown), or null to use the default
+   * styling. Mirrors the color the mobile app renders the price in.
+   */
+  displayPriceColor: string | null;
   /** Maximum items that can be added to cart. */
   maxCount: number;
   /** Gallery image IDs. May be empty. */

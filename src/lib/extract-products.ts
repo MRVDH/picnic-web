@@ -225,6 +225,9 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
     imageId: unit.image_id,
     displayPrice: unit.display_price,
     originalPrice: hasDiscount ? originalPrice : null,
+    // Catalog PRICE decorators don't carry the PML price color; the color is
+    // only available on the Fusion PML path (see parse-fusion-search.ts).
+    displayPriceColor: null,
     unitQuantity: unit.unit_quantity,
     maxCount: unit.max_count,
     priceRanges,

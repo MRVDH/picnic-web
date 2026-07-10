@@ -174,6 +174,7 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
           <ProductPriceSection
             displayPrice={product.displayPrice}
             originalPrice={product.originalPrice}
+            displayPriceColor={product.displayPriceColor}
             promotion={product.promotion}
             bundles={product.bundles}
             cartQuantity={cartQuantity}

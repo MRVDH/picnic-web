@@ -145,6 +145,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
           <PriceDisplay
             displayPrice={effectiveDisplayPrice}
             originalPrice={bundleOriginalPrice ?? product.originalPrice}
+            displayPriceColor={product.displayPriceColor}
           />
         </div>
       </div>
