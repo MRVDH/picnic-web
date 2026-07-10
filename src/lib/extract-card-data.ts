@@ -8,7 +8,7 @@ import {
   stripColorTags,
 } from "./pml-helpers";
 import { collectLabels } from "./pml-product-helpers";
-import type { Badge, BadgeVariant, Highlight } from "./types";
+import type { Badge, BadgeVariant, Highlight, SubtitleIcon } from "./types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
 export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
@@ -100,6 +100,67 @@ export function findTextStackChildren(pml: PmlNode | undefined): PmlNode[] | nul
 /** Known product size labels that should use the "size" badge variant. */
 export const SIZE_LABELS = new Set(["Klein", "XL", "Groot"]);
 
+/**
+ * Split the decorative icons in a subtitle row into the one before the text
+ * (leading) and the one after it (trailing) — e.g. a laurel leaf on each side.
+ * Flattens the row into an ordered stream of icon/text tokens and splits at the
+ * text position. Returns nulls when the row has no flanking icons.
+ */
+function splitFlankingIcons(row: PmlNode): {
+  leading: SubtitleIcon | null;
+  trailing: SubtitleIcon | null;
+} {
+  type Token = { kind: "icon"; icon: SubtitleIcon } | { kind: "text" };
+  const tokens: Token[] = [];
+
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (typeof node !== "object" || node === null) return;
+    const record = node as Record<string, unknown>;
+
+    if (record.type === "ICON" && typeof record.iconKey === "string") {
+      const fallback = record.fallback as { id?: string } | undefined;
+      if (fallback?.id) {
+        tokens.push({
+          kind: "icon",
+          icon: {
+            imageId: fallback.id,
+            color: typeof record.color === "string" ? record.color : null,
+          },
+        });
+      }
+      return; // don't descend into the icon's internals
+    }
+
+    if (typeof record.markdown === "string" && cleanMarkdown(record.markdown) !== "") {
+      tokens.push({ kind: "text" });
+    }
+
+    for (const value of Object.values(record)) walk(value);
+  };
+  walk(row);
+
+  const firstTextIdx = tokens.findIndex((t) => t.kind === "text");
+  if (firstTextIdx === -1) {
+    const firstIcon = tokens.find((t): t is { kind: "icon"; icon: SubtitleIcon } => t.kind === "icon");
+    return { leading: firstIcon?.icon ?? null, trailing: null };
+  }
+  const lastTextIdx = tokens.map((t) => t.kind).lastIndexOf("text");
+
+  let leading: SubtitleIcon | null = null;
+  let trailing: SubtitleIcon | null = null;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.kind !== "icon") continue;
+    if (i < firstTextIdx && !leading) leading = t.icon;
+    else if (i > lastTextIdx && !trailing) trailing = t.icon;
+  }
+  return { leading, trailing };
+}
+
 /** Classify text stack rows and extract structured product info. */
 export function extractTextStackInfo(
   stackChildren: PmlNode[] | null,
@@ -107,6 +168,9 @@ export function extractTextStackInfo(
   unitQuantity: string
 ): {
   subtitle: string | null;
+  subtitleColor: string | null;
+  subtitleLeadingIcon: SubtitleIcon | null;
+  subtitleTrailingIcon: SubtitleIcon | null;
   displayName: string | null;
   namePrefix: string | null;
   brand: string | null;
@@ -117,6 +181,9 @@ export function extractTextStackInfo(
 } {
   const result = {
     subtitle: null as string | null,
+    subtitleColor: null as string | null,
+    subtitleLeadingIcon: null as SubtitleIcon | null,
+    subtitleTrailingIcon: null as SubtitleIcon | null,
     displayName: null as string | null,
     namePrefix: null as string | null,
     brand: null as string | null,
@@ -157,6 +224,22 @@ export function extractTextStackInfo(
       .join(" ");
     if (text) {
       result.subtitle = text;
+
+      // The subtitle can carry a distinct color tag (e.g. a gold taste
+      // descriptor) that cleanMarkdown strips — recover it like `highlight` does.
+      for (const md of markdowns) {
+        const color = extractInnerColor(md);
+        if (color) {
+          result.subtitleColor = color;
+          break;
+        }
+      }
+
+      // The subtitle row can be flanked by decorative icons (e.g. laurel
+      // leaves). Split them by whether they appear before or after the text.
+      const { leading, trailing } = splitFlankingIcons(subtitleRow);
+      result.subtitleLeadingIcon = leading;
+      result.subtitleTrailingIcon = trailing;
     }
   }
 

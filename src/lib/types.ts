@@ -68,6 +68,14 @@ export type Highlight = {
   color: string;
 };
 
+/** A decorative icon flanking the subtitle (e.g. a laurel leaf). */
+export type SubtitleIcon = {
+  /** Fallback CDN image ID for the icon (gated — load via the /api/image proxy). */
+  imageId: string;
+  /** Hex color the app tints the icon with (e.g. "#95710F"), or null. */
+  color: string | null;
+};
+
 // ─── Product ─────────────────────────────────────────────────────────────────
 
 export type Product = {
@@ -77,6 +85,12 @@ export type Product = {
   namePrefix: string | null;
   /** Small subtitle above the product name (e.g. "D.O.P. Sarnese-Nocerino"). */
   subtitle: string | null;
+  /** API-driven color for the subtitle text (e.g. "#95710F"), or null for default. */
+  subtitleColor: string | null;
+  /** Decorative icon shown before the subtitle text (e.g. a laurel leaf), or null. */
+  subtitleLeadingIcon: SubtitleIcon | null;
+  /** Decorative icon shown after the subtitle text (e.g. a laurel leaf), or null. */
+  subtitleTrailingIcon: SubtitleIcon | null;
   /** Brand name shown below the product name (e.g. "Mutti"). */
   brand: string | null;
   /** Colored subtext like "Prijskampioen" shown in the brand/subtext row. */
