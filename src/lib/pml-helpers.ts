@@ -238,8 +238,10 @@ export function collectPropertyValues(node: unknown, key: string): unknown[] {
 }
 
 /** Find all ICON nodes in a PML subtree. */
-export function findIconNodes(node: unknown): { iconKey: string; fallbackId: string | null }[] {
-  const results: { iconKey: string; fallbackId: string | null }[] = [];
+export function findIconNodes(
+  node: unknown
+): { iconKey: string; fallbackId: string | null; color: string | null }[] {
+  const results: { iconKey: string; fallbackId: string | null; color: string | null }[] = [];
   if (typeof node !== "object" || node === null) return results;
 
   if (Array.isArray(node)) {
@@ -255,6 +257,7 @@ export function findIconNodes(node: unknown): { iconKey: string; fallbackId: str
     results.push({
       iconKey: record.iconKey as string,
       fallbackId: fallback?.id ?? null,
+      color: typeof record.color === "string" ? record.color : null,
     });
   }
   for (const value of Object.values(record)) {

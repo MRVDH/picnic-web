@@ -39,7 +39,14 @@ function extractBadgeFromMapping(
   if (typeof text !== "string" || text.trim() === "") {
     return null;
   }
-  return { text: text.trim(), variant: mapping.variant };
+  // LABEL/promo decorators carry API-driven colors (e.g. a green "Familie
+  // korting"). Pass them through so the Badge component uses them instead of
+  // the hardcoded yellow `promo` fallback. Mirrors parse-cart.ts.
+  const backgroundColor =
+    typeof decorator["background_color"] === "string" ? decorator["background_color"] : undefined;
+  const textColor =
+    typeof decorator["text_color"] === "string" ? decorator["text_color"] : undefined;
+  return { text: text.trim(), variant: mapping.variant, backgroundColor, textColor };
 }
 
 function extractUnavailableBadge(decorator: Record<string, unknown>): Badge | null {
@@ -211,6 +218,9 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
     name: unit.name,
     namePrefix: null,
     subtitle: null,
+    subtitleColor: null,
+    subtitleLeadingIcon: null,
+    subtitleTrailingIcon: null,
     brand: null,
     highlight: null,
     flagIconKey: null,
@@ -218,10 +228,16 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
     imageId: unit.image_id,
     displayPrice: unit.display_price,
     originalPrice: hasDiscount ? originalPrice : null,
+    // Catalog PRICE decorators don't carry the PML price color; the color is
+    // only available on the Fusion PML path (see parse-fusion-search.ts).
+    displayPriceColor: null,
     unitQuantity: unit.unit_quantity,
     maxCount: unit.max_count,
     priceRanges,
     badges,
+    // Promo placement is only derivable from the Fusion PML path.
+    promoBadge: null,
+    promoPlacement: null,
     isUnavailable,
     unavailableReason: reason,
   };

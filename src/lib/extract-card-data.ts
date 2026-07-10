@@ -7,7 +7,8 @@ import {
   findIconNodes,
   stripColorTags,
 } from "./pml-helpers";
-import type { BadgeVariant, Highlight } from "./types";
+import { collectLabels } from "./pml-product-helpers";
+import type { Badge, BadgeVariant, Highlight, PromoPlacement, SubtitleIcon } from "./types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
 export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
@@ -21,6 +22,47 @@ export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined):
     }
   }
   return null;
+}
+
+/**
+ * Build the promotion badge for a selling-unit tile, with its placement.
+ *
+ * The label text comes from the analytics contexts, but its color is rendered
+ * in the tile PML as a CONTAINER+backgroundColor pill (same structure as the
+ * product page labels). We match the two by text to pick up the API-driven
+ * color (e.g. green "Family", yellow "20% korting") instead of the hardcoded
+ * yellow `promo` fallback.
+ *
+ * Placement mirrors the app: if the pill lives in the text stack (next to the
+ * price) it is "inline"; if it only appears elsewhere in the tile (overlaid on
+ * the product image) it is "image". `stackChildren` is the text-stack subtree
+ * from {@link findTextStackChildren}.
+ */
+export function extractPromotionBadge(
+  contexts: AnalyticsContext[] | undefined,
+  pml: PmlNode | undefined,
+  stackChildren: PmlNode[] | null
+): { badge: Badge; placement: PromoPlacement } | null {
+  const label = extractPromotionLabel(contexts);
+  if (!label) return null;
+
+  // collectLabels strips color tags but keeps bold markers, while the analytics
+  // label is plain text — normalize both sides before matching.
+  const matches = (l: { text: string }) => cleanMarkdown(l.text) === label;
+
+  // The pill is inline when it appears within the text stack (by the price).
+  const inline = collectLabels(stackChildren).find(matches);
+  const colored = inline ?? collectLabels(pml).find(matches);
+
+  return {
+    badge: {
+      text: label,
+      variant: "promo",
+      backgroundColor: colored?.backgroundColor,
+      textColor: colored?.textColor,
+    },
+    placement: inline ? "inline" : "image",
+  };
 }
 
 /**
@@ -70,6 +112,67 @@ export function findTextStackChildren(pml: PmlNode | undefined): PmlNode[] | nul
 /** Known product size labels that should use the "size" badge variant. */
 export const SIZE_LABELS = new Set(["Klein", "XL", "Groot"]);
 
+/**
+ * Split the decorative icons in a subtitle row into the one before the text
+ * (leading) and the one after it (trailing) — e.g. a laurel leaf on each side.
+ * Flattens the row into an ordered stream of icon/text tokens and splits at the
+ * text position. Returns nulls when the row has no flanking icons.
+ */
+function splitFlankingIcons(row: PmlNode): {
+  leading: SubtitleIcon | null;
+  trailing: SubtitleIcon | null;
+} {
+  type Token = { kind: "icon"; icon: SubtitleIcon } | { kind: "text" };
+  const tokens: Token[] = [];
+
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (typeof node !== "object" || node === null) return;
+    const record = node as Record<string, unknown>;
+
+    if (record.type === "ICON" && typeof record.iconKey === "string") {
+      const fallback = record.fallback as { id?: string } | undefined;
+      if (fallback?.id) {
+        tokens.push({
+          kind: "icon",
+          icon: {
+            imageId: fallback.id,
+            color: typeof record.color === "string" ? record.color : null,
+          },
+        });
+      }
+      return; // don't descend into the icon's internals
+    }
+
+    if (typeof record.markdown === "string" && cleanMarkdown(record.markdown) !== "") {
+      tokens.push({ kind: "text" });
+    }
+
+    for (const value of Object.values(record)) walk(value);
+  };
+  walk(row);
+
+  const firstTextIdx = tokens.findIndex((t) => t.kind === "text");
+  if (firstTextIdx === -1) {
+    const firstIcon = tokens.find((t): t is { kind: "icon"; icon: SubtitleIcon } => t.kind === "icon");
+    return { leading: firstIcon?.icon ?? null, trailing: null };
+  }
+  const lastTextIdx = tokens.map((t) => t.kind).lastIndexOf("text");
+
+  let leading: SubtitleIcon | null = null;
+  let trailing: SubtitleIcon | null = null;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.kind !== "icon") continue;
+    if (i < firstTextIdx && !leading) leading = t.icon;
+    else if (i > lastTextIdx && !trailing) trailing = t.icon;
+  }
+  return { leading, trailing };
+}
+
 /** Classify text stack rows and extract structured product info. */
 export function extractTextStackInfo(
   stackChildren: PmlNode[] | null,
@@ -77,6 +180,9 @@ export function extractTextStackInfo(
   unitQuantity: string
 ): {
   subtitle: string | null;
+  subtitleColor: string | null;
+  subtitleLeadingIcon: SubtitleIcon | null;
+  subtitleTrailingIcon: SubtitleIcon | null;
   displayName: string | null;
   namePrefix: string | null;
   brand: string | null;
@@ -87,6 +193,9 @@ export function extractTextStackInfo(
 } {
   const result = {
     subtitle: null as string | null,
+    subtitleColor: null as string | null,
+    subtitleLeadingIcon: null as SubtitleIcon | null,
+    subtitleTrailingIcon: null as SubtitleIcon | null,
     displayName: null as string | null,
     namePrefix: null as string | null,
     brand: null as string | null,
@@ -127,6 +236,22 @@ export function extractTextStackInfo(
       .join(" ");
     if (text) {
       result.subtitle = text;
+
+      // The subtitle can carry a distinct color tag (e.g. a gold taste
+      // descriptor) that cleanMarkdown strips — recover it like `highlight` does.
+      for (const md of markdowns) {
+        const color = extractInnerColor(md);
+        if (color) {
+          result.subtitleColor = color;
+          break;
+        }
+      }
+
+      // The subtitle row can be flanked by decorative icons (e.g. laurel
+      // leaves). Split them by whether they appear before or after the text.
+      const { leading, trailing } = splitFlankingIcons(subtitleRow);
+      result.subtitleLeadingIcon = leading;
+      result.subtitleTrailingIcon = trailing;
     }
   }
 
@@ -291,4 +416,57 @@ export function extractOriginalPriceFromPml(
   }
 
   return null;
+}
+
+/** Default price text colors that shouldn't override the UI's default styling. */
+const DEFAULT_PRICE_COLORS = new Set(["#333333", "#5b534e", "#787570"]);
+
+/**
+ * Find the API-driven color of the current (display) price in a tile.
+ *
+ * Search/PLP tiles render the price as a RICH_TEXT node whose color lives in
+ * `textAttributes.color` (e.g. green "#3F7326" for a member/family discount, red
+ * for a clearance markdown) — not in a markdown color tag and not a PRICE
+ * component. Finds the RICH_TEXT node whose value equals the display price and
+ * returns its color, or null when the price uses a default text color so the UI
+ * keeps its default styling.
+ */
+export function extractDisplayPriceColor(
+  stackChildren: PmlNode[] | null,
+  displayPrice: number
+): string | null {
+  if (!stackChildren) return null;
+
+  let found: string | null = null;
+
+  const walk = (node: unknown): void => {
+    if (found) return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (typeof node !== "object" || node === null) return;
+    const record = node as Record<string, unknown>;
+
+    const md = record.markdown;
+    if (typeof md === "string") {
+      const match = cleanMarkdown(md).match(/^€?\s*(\d+)[.,](\d{2})$/);
+      if (match) {
+        const cents = parseInt(match[1], 10) * 100 + parseInt(match[2], 10);
+        if (cents === displayPrice) {
+          const attrs = record.textAttributes as { color?: unknown } | undefined;
+          const color = typeof attrs?.color === "string" ? attrs.color : null;
+          if (color && !DEFAULT_PRICE_COLORS.has(color.toLowerCase())) {
+            found = color;
+            return;
+          }
+        }
+      }
+    }
+
+    for (const value of Object.values(record)) walk(value);
+  };
+
+  walk(stackChildren);
+  return found;
 }

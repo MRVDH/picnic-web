@@ -1,6 +1,7 @@
 import {
+  extractDisplayPriceColor,
   extractOriginalPriceFromPml,
-  extractPromotionLabel,
+  extractPromotionBadge,
   extractTextStackInfo,
   extractUnavailabilityFromPml,
   findTextStackChildren,
@@ -13,7 +14,7 @@ import {
   findSellingUnitContainers,
   stripColorTags,
 } from "./pml-helpers";
-import type { Badge, BadgeVariant, BundleThreshold, Product, SearchSection } from "./types";
+import type { Badge, BundleThreshold, Product, SearchSection } from "./types";
 
 /** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
 function parsePriceRangesFromRaw(raw: unknown[] | null): BundleThreshold[] | null {
@@ -45,16 +46,15 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
   const pml = container.pml?.component ? (container.pml as PmlNode) : undefined;
   const contexts = container.analytics?.contexts;
 
-  const promotionLabel = extractPromotionLabel(contexts);
   const stackChildren = findTextStackChildren(pml);
+  const promotion = extractPromotionBadge(contexts, pml, stackChildren);
   const textInfo = extractTextStackInfo(stackChildren, su.name, su.unit_quantity);
   const { isUnavailable, reason } = extractUnavailabilityFromPml(pml);
   const originalPrice = extractOriginalPriceFromPml(stackChildren, su.display_price);
 
+  // The promotion pill is rendered specially (inline by the price or on the
+  // image); other labels (size, etc.) go in the generic badge row.
   const badges: Badge[] = [];
-  if (promotionLabel) {
-    badges.push({ text: promotionLabel, variant: "promo" as BadgeVariant });
-  }
   if (textInfo.extraLabel) {
     badges.push(textInfo.extraLabel);
   }
@@ -66,6 +66,9 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     name: textInfo.displayName ?? su.name,
     namePrefix: textInfo.namePrefix,
     subtitle: textInfo.subtitle,
+    subtitleColor: textInfo.subtitleColor,
+    subtitleLeadingIcon: textInfo.subtitleLeadingIcon,
+    subtitleTrailingIcon: textInfo.subtitleTrailingIcon,
     brand: textInfo.brand,
     highlight: textInfo.highlight,
     flagIconKey: textInfo.flagIconKey,
@@ -73,10 +76,13 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     imageId: su.image_id,
     displayPrice: su.display_price,
     originalPrice: hasDiscount ? originalPrice : null,
+    displayPriceColor: extractDisplayPriceColor(stackChildren, su.display_price),
     unitQuantity: su.unit_quantity,
     maxCount: su.max_count,
     priceRanges: parsePriceRangesFromRaw(su.price_ranges),
     badges,
+    promoBadge: promotion?.badge ?? null,
+    promoPlacement: promotion?.placement ?? null,
     isUnavailable,
     unavailableReason: reason,
   };

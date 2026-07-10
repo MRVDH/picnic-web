@@ -180,6 +180,30 @@ function extractOriginalPrice(page: unknown): number | null {
   return crossedPrice?.price ?? null;
 }
 
+/** Default price text colors that shouldn't override the UI's default styling. */
+const DEFAULT_PRICE_COLORS = new Set(["#333333", "#5b534e", "#787570"]);
+
+/**
+ * Extract the API-driven color of the active (non-crossed) display price.
+ *
+ * The mobile app renders the current price in a data-driven color — green for a
+ * member/family discount, red for a clearance markdown. Returns null when the
+ * price uses a default text color, so the UI keeps its default styling.
+ */
+function extractDisplayPriceColor(page: unknown, displayPrice: number): string | null {
+  const mainContainer = findNodeById(page, PRODUCT_MAIN_CONTAINER_ID);
+  if (!mainContainer) return null;
+
+  const priceNodes = collectPriceNodes(mainContainer);
+  const active =
+    priceNodes.find((p) => !p.isCrossed && p.price === displayPrice) ??
+    priceNodes.find((p) => !p.isCrossed);
+
+  const color = active?.color ?? null;
+  if (!color || DEFAULT_PRICE_COLORS.has(color.toLowerCase())) return null;
+  return color;
+}
+
 /** Extract structured nutrition rows from the Voedingswaarde accordion item. */
 function extractNutritionRows(page: unknown): NutritionRow[] {
   const accordionBlock = findNodeById(page, PRODUCT_ACCORDION_ID);
@@ -346,6 +370,7 @@ export function parseProductDetailPage(rawPage: unknown, productId: string): Pro
     categoryTag: mainInfo.categoryTag,
     displayPrice,
     originalPrice: extractOriginalPrice(page),
+    displayPriceColor: extractDisplayPriceColor(page, displayPrice),
     maxCount: mainUnit.maxCount,
     imageIds: extractImageIds(page, mainUnit.imageId),
     labels,
