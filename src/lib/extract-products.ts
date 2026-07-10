@@ -39,7 +39,14 @@ function extractBadgeFromMapping(
   if (typeof text !== "string" || text.trim() === "") {
     return null;
   }
-  return { text: text.trim(), variant: mapping.variant };
+  // LABEL/promo decorators carry API-driven colors (e.g. a green "Familie
+  // korting"). Pass them through so the Badge component uses them instead of
+  // the hardcoded yellow `promo` fallback. Mirrors parse-cart.ts.
+  const backgroundColor =
+    typeof decorator["background_color"] === "string" ? decorator["background_color"] : undefined;
+  const textColor =
+    typeof decorator["text_color"] === "string" ? decorator["text_color"] : undefined;
+  return { text: text.trim(), variant: mapping.variant, backgroundColor, textColor };
 }
 
 function extractUnavailableBadge(decorator: Record<string, unknown>): Badge | null {
