@@ -235,6 +235,9 @@ function extractSingleProduct(unit: RawSellingUnit): Product {
     maxCount: unit.max_count,
     priceRanges,
     badges,
+    // Promo placement is only derivable from the Fusion PML path.
+    promoBadge: null,
+    promoPlacement: null,
     isUnavailable,
     unavailableReason: reason,
   };

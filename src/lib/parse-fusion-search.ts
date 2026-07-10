@@ -46,16 +46,15 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
   const pml = container.pml?.component ? (container.pml as PmlNode) : undefined;
   const contexts = container.analytics?.contexts;
 
-  const promotionBadge = extractPromotionBadge(contexts, pml);
   const stackChildren = findTextStackChildren(pml);
+  const promotion = extractPromotionBadge(contexts, pml, stackChildren);
   const textInfo = extractTextStackInfo(stackChildren, su.name, su.unit_quantity);
   const { isUnavailable, reason } = extractUnavailabilityFromPml(pml);
   const originalPrice = extractOriginalPriceFromPml(stackChildren, su.display_price);
 
+  // The promotion pill is rendered specially (inline by the price or on the
+  // image); other labels (size, etc.) go in the generic badge row.
   const badges: Badge[] = [];
-  if (promotionBadge) {
-    badges.push(promotionBadge);
-  }
   if (textInfo.extraLabel) {
     badges.push(textInfo.extraLabel);
   }
@@ -82,6 +81,8 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     maxCount: su.max_count,
     priceRanges: parsePriceRangesFromRaw(su.price_ranges),
     badges,
+    promoBadge: promotion?.badge ?? null,
+    promoPlacement: promotion?.placement ?? null,
     isUnavailable,
     unavailableReason: reason,
   };

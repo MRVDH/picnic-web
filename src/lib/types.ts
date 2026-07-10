@@ -68,6 +68,13 @@ export type Highlight = {
   color: string;
 };
 
+/**
+ * Where the app renders a promotion pill:
+ * - "inline": next to the price (member/"Family" discounts)
+ * - "image": overlaid on the product photo (e.g. "20% korting" promos)
+ */
+export type PromoPlacement = "inline" | "image";
+
 /** A decorative icon flanking the subtitle (e.g. a laurel leaf). */
 export type SubtitleIcon = {
   /** Fallback CDN image ID for the icon (gated — load via the /api/image proxy). */
@@ -116,8 +123,12 @@ export type Product = {
   maxCount: number;
   /** Bundle price ranges from the API, or null if no bundle. */
   priceRanges: BundleThreshold[] | null;
-  /** All labels/badges extracted from decorators. */
+  /** Non-promotion labels/badges (size, freshness, info, …). */
   badges: Badge[];
+  /** The discount/promotion pill, or null when not on promotion. */
+  promoBadge: Badge | null;
+  /** Where to render {@link promoBadge}: inline by the price, or on the image. */
+  promoPlacement: PromoPlacement | null;
   /** Whether the product is currently unavailable. */
   isUnavailable: boolean;
   /** Reason for unavailability, if applicable. */

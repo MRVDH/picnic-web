@@ -8,7 +8,7 @@ import {
   stripColorTags,
 } from "./pml-helpers";
 import { collectLabels } from "./pml-product-helpers";
-import type { Badge, BadgeVariant, Highlight, SubtitleIcon } from "./types";
+import type { Badge, BadgeVariant, Highlight, PromoPlacement, SubtitleIcon } from "./types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
 export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
@@ -25,31 +25,43 @@ export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined):
 }
 
 /**
- * Build the promotion badge for a selling-unit tile.
+ * Build the promotion badge for a selling-unit tile, with its placement.
  *
  * The label text comes from the analytics contexts, but its color is rendered
- * in the tile PML as a CONTAINER+backgroundColor badge (same structure as the
- * product page labels). We match the two by text so the badge uses the
- * API-driven color — e.g. a green "Familie korting" — instead of the hardcoded
- * yellow `promo` fallback in the Badge component. Colors are left undefined
- * when no matching PML badge is found, preserving the previous behavior.
+ * in the tile PML as a CONTAINER+backgroundColor pill (same structure as the
+ * product page labels). We match the two by text to pick up the API-driven
+ * color (e.g. green "Family", yellow "20% korting") instead of the hardcoded
+ * yellow `promo` fallback.
+ *
+ * Placement mirrors the app: if the pill lives in the text stack (next to the
+ * price) it is "inline"; if it only appears elsewhere in the tile (overlaid on
+ * the product image) it is "image". `stackChildren` is the text-stack subtree
+ * from {@link findTextStackChildren}.
  */
 export function extractPromotionBadge(
   contexts: AnalyticsContext[] | undefined,
-  pml: PmlNode | undefined
-): Badge | null {
+  pml: PmlNode | undefined,
+  stackChildren: PmlNode[] | null
+): { badge: Badge; placement: PromoPlacement } | null {
   const label = extractPromotionLabel(contexts);
   if (!label) return null;
 
   // collectLabels strips color tags but keeps bold markers, while the analytics
   // label is plain text — normalize both sides before matching.
-  const colored = collectLabels(pml).find((l) => cleanMarkdown(l.text) === label);
+  const matches = (l: { text: string }) => cleanMarkdown(l.text) === label;
+
+  // The pill is inline when it appears within the text stack (by the price).
+  const inline = collectLabels(stackChildren).find(matches);
+  const colored = inline ?? collectLabels(pml).find(matches);
 
   return {
-    text: label,
-    variant: "promo",
-    backgroundColor: colored?.backgroundColor,
-    textColor: colored?.textColor,
+    badge: {
+      text: label,
+      variant: "promo",
+      backgroundColor: colored?.backgroundColor,
+      textColor: colored?.textColor,
+    },
+    placement: inline ? "inline" : "image",
   };
 }
 
