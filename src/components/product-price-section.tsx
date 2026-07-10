@@ -7,6 +7,12 @@ import type { BundleOption, ProductPromotion } from "@/lib/types";
 type ProductPriceSectionProps = {
   displayPrice: number;
   originalPrice: number | null;
+  /**
+   * API-driven color for the current price. When set, it overrides the default
+   * discount color so the price matches the mobile app (e.g. green for a
+   * member/family discount, red for a clearance markdown).
+   */
+  displayPriceColor?: string | null;
   promotion: ProductPromotion | null;
   bundles: BundleOption[];
   /** Current cart quantity for this product, used to highlight the active tier. */
@@ -22,6 +28,7 @@ type ProductPriceSectionProps = {
 export function ProductPriceSection({
   displayPrice,
   originalPrice,
+  displayPriceColor,
   promotion,
   bundles,
   cartQuantity = 0,
@@ -31,6 +38,11 @@ export function ProductPriceSection({
   onSetQuantity,
 }: ProductPriceSectionProps) {
   const hasDiscount = originalPrice !== null && originalPrice > displayPrice;
+  const priceColorClass = displayPriceColor
+    ? ""
+    : hasDiscount
+      ? "text-price-discount"
+      : "text-foreground";
 
   return (
     <div className="space-y-3">
@@ -38,7 +50,8 @@ export function ProductPriceSection({
       <div className="flex items-center gap-3">
         <div className="flex items-baseline gap-2">
           <span
-            className={`text-2xl font-bold ${hasDiscount ? "text-price-discount" : "text-foreground"}`}
+            className={`text-2xl font-bold ${priceColorClass}`}
+            style={displayPriceColor ? { color: displayPriceColor } : undefined}
           >
             {formatPrice(displayPrice)}
           </span>

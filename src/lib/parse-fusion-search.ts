@@ -1,4 +1,5 @@
 import {
+  extractDisplayPriceColor,
   extractOriginalPriceFromPml,
   extractPromotionBadge,
   extractTextStackInfo,
@@ -73,6 +74,7 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     imageId: su.image_id,
     displayPrice: su.display_price,
     originalPrice: hasDiscount ? originalPrice : null,
+    displayPriceColor: extractDisplayPriceColor(stackChildren, su.display_price),
     unitQuantity: su.unit_quantity,
     maxCount: su.max_count,
     priceRanges: parsePriceRangesFromRaw(su.price_ranges),
