@@ -7,7 +7,8 @@ import {
   findIconNodes,
   stripColorTags,
 } from "./pml-helpers";
-import type { BadgeVariant, Highlight } from "./types";
+import { collectLabels } from "./pml-product-helpers";
+import type { Badge, BadgeVariant, Highlight } from "./types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
 export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
@@ -21,6 +22,35 @@ export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined):
     }
   }
   return null;
+}
+
+/**
+ * Build the promotion badge for a selling-unit tile.
+ *
+ * The label text comes from the analytics contexts, but its color is rendered
+ * in the tile PML as a CONTAINER+backgroundColor badge (same structure as the
+ * product page labels). We match the two by text so the badge uses the
+ * API-driven color — e.g. a green "Familie korting" — instead of the hardcoded
+ * yellow `promo` fallback in the Badge component. Colors are left undefined
+ * when no matching PML badge is found, preserving the previous behavior.
+ */
+export function extractPromotionBadge(
+  contexts: AnalyticsContext[] | undefined,
+  pml: PmlNode | undefined
+): Badge | null {
+  const label = extractPromotionLabel(contexts);
+  if (!label) return null;
+
+  // collectLabels strips color tags but keeps bold markers, while the analytics
+  // label is plain text — normalize both sides before matching.
+  const colored = collectLabels(pml).find((l) => cleanMarkdown(l.text) === label);
+
+  return {
+    text: label,
+    variant: "promo",
+    backgroundColor: colored?.backgroundColor,
+    textColor: colored?.textColor,
+  };
 }
 
 /**
