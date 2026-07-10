@@ -90,9 +90,19 @@ export function ProductCard({ product, href }: ProductCardProps) {
         )}
       </div>
 
-      {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino") */}
+      {/* Subtitle (e.g. "D.O.P. Sarnese-Nocerino", or a colored taste
+          descriptor flanked by guillemets like "« Lichtzoet en aards »") */}
       {product.subtitle && (
-        <p className="text-text-muted mb-0.5 truncate text-xs">{product.subtitle}</p>
+        <p
+          className={`mb-0.5 truncate text-xs font-medium ${
+            product.subtitleColor ? "" : "text-text-muted"
+          }`}
+          style={product.subtitleColor ? { color: product.subtitleColor } : undefined}
+        >
+          {product.subtitleLeadingIcon && "« "}
+          {product.subtitle}
+          {product.subtitleTrailingIcon && " »"}
+        </p>
       )}
 
       {/* Product name */}
@@ -236,3 +246,4 @@ function CartActionOverlay({
     </div>
   );
 }
+
