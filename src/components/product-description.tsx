@@ -1,3 +1,4 @@
+import { useTranslations } from "@/contexts/country-context";
 import { renderMarkdownBold } from "@/lib/render-markdown-bold";
 
 type ProductDescriptionProps = {
@@ -5,11 +6,12 @@ type ProductDescriptionProps = {
 };
 
 export function ProductDescription({ description }: ProductDescriptionProps) {
+  const t = useTranslations()
   if (!description) return null;
 
   return (
     <div>
-      <h2 className="text-foreground mb-2 text-lg font-semibold">Beschrijving</h2>
+      <h2 className="text-foreground mb-2 text-lg font-semibold">{t.descriptionTitle}</h2>
       <p className="text-sm leading-relaxed whitespace-pre-line text-gray-600">
         {renderMarkdownBold(description)}
       </p>
