@@ -42,9 +42,23 @@ export function parseSubcategoryPage(rawPage: unknown): CategoryItem[] {
  * Returns null if the header or title is missing.
  */
 export function extractPageTitle(rawPage: unknown): string | null {
-  if (typeof rawPage !== "object" || rawPage === null) return null;
-  const header = (rawPage as Record<string, unknown>).header;
-  if (typeof header !== "object" || header === null) return null;
+  if (typeof rawPage !== "object" || rawPage === null) {
+    return null;
+  }
+
+  const page = rawPage as Record<string, unknown>;
+
+  const header =
+    typeof page.layout === "object" &&
+    page.layout !== null &&
+    "header" in page.layout
+      ? (page.layout as Record<string, unknown>).header
+      : page.header;
+
+  if (typeof header !== "object" || header === null) {
+    return null;
+  }
+
   const title = (header as Record<string, unknown>).title;
   return typeof title === "string" ? title : null;
 }
