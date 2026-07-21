@@ -106,6 +106,7 @@ const translations = {
     inCartLabel: "in mandje",
     bundleFromLabel: "Vanaf",
     similarProductsTitle: "Vergelijkbare producten",
+    descriptionTitle: "Beschrijving",
 
     // Category grid
     allCategoriesTitle: "Alle categorieën",
@@ -281,12 +282,13 @@ const translations = {
     inCartLabel: "im Warenkorb",
     bundleFromLabel: "Ab",
     similarProductsTitle: "Ähnliche Produkte",
+    descriptionTitle: "Beschreibung",
 
     // Category grid
     allCategoriesTitle: "Alle Kategorien",
 
     // Shortcut list
-    shortcutSectionTitle: "Schnell zu",
+    shortcutSectionTitle: "Schnellzugriff",
 
     // Section nav bar
     sectionNavGoTo: "Gehe zu",
