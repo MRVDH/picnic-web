@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "auth-key": "node src/generate-auth-key.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
