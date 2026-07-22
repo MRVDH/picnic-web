@@ -1,48 +1,45 @@
 /**
- * Dutch date/time formatting for delivery slot windows.
+ * Date/time formatting for delivery slot windows.
  *
- * Uses explicit day-name and month-abbreviation maps (not Intl) to avoid
- * locale-dependent behaviour differences across environments.
+ * Uses explicit per-country day-name and month-abbreviation maps (not Intl) to
+ * avoid locale-dependent behaviour differences across environments, keyed by
+ * the same CountryCode the rest of the app uses.
  */
+import type { CountryCode } from "./types";
 
-const DUTCH_DAY_NAMES = [
-  "Zondag",
-  "Maandag",
-  "Dinsdag",
-  "Woensdag",
-  "Donderdag",
-  "Vrijdag",
-  "Zaterdag",
-] as const;
+const DAY_NAMES: Record<CountryCode, readonly string[]> = {
+  NL: ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"],
+  DE: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
+  FR: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+};
 
-const DUTCH_MONTH_ABBREVIATIONS = [
-  "jan",
-  "feb",
-  "mrt",
-  "apr",
-  "mei",
-  "jun",
-  "jul",
-  "aug",
-  "sep",
-  "okt",
-  "nov",
-  "dec",
-] as const;
+const MONTH_ABBREVIATIONS: Record<CountryCode, readonly string[]> = {
+  NL: ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
+  DE: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+  FR: ["janv", "févr", "mars", "avr", "mai", "juin", "juil", "août", "sept", "oct", "nov", "déc"],
+};
 
-/** Prompt text shown when no explicit slot selection exists. */
-export const NO_SLOT_TEXT = "Kies je bezorgmoment";
+const RELATIVE_LABELS: Record<CountryCode, { today: string; tomorrow: string }> = {
+  NL: { today: "Vandaag", tomorrow: "Morgen" },
+  DE: { today: "Heute", tomorrow: "Morgen" },
+  FR: { today: "Aujourd'hui", tomorrow: "Demain" },
+};
 
 /**
  * Format a delivery window for the cart banner.
- * Returns e.g. "Morgen 14:40 - 15:40", "Vandaag 08:00 - 09:00".
+ * Returns e.g. "Morgen 14:40 - 15:40", "Vandaag 08:00 - 09:00", or null when
+ * the window is incomplete (the caller substitutes the "pick a slot" prompt).
  */
-export function formatBannerText(windowStart: string | null, windowEnd: string | null): string {
-  if (!windowStart || !windowEnd) return NO_SLOT_TEXT;
+export function formatBannerText(
+  windowStart: string | null,
+  windowEnd: string | null,
+  countryCode: CountryCode
+): string | null {
+  if (!windowStart || !windowEnd) return null;
 
   const start = new Date(windowStart);
   const end = new Date(windowEnd);
-  const dayLabel = getRelativeDayLabel(start);
+  const dayLabel = getRelativeDayLabel(start, countryCode);
   const startTime = formatTime(start);
   const endTime = formatTime(end);
 
@@ -53,14 +50,17 @@ export function formatBannerText(windowStart: string | null, windowEnd: string |
  * Format a day tab label for the picker.
  * Returns { dayLabel: "Morgen", dateLabel: "16 apr" }.
  */
-export function formatDayTabLabel(dateStr: string): {
+export function formatDayTabLabel(
+  dateStr: string,
+  countryCode: CountryCode
+): {
   dayLabel: string;
   dateLabel: string;
 } {
   const date = new Date(dateStr + "T12:00:00");
-  const dayLabel = getRelativeDayLabel(date);
+  const dayLabel = getRelativeDayLabel(date, countryCode);
   const day = date.getDate();
-  const month = DUTCH_MONTH_ABBREVIATIONS[date.getMonth()];
+  const month = MONTH_ABBREVIATIONS[countryCode][date.getMonth()];
   return { dayLabel, dateLabel: `${day} ${month}` };
 }
 
@@ -71,16 +71,17 @@ export function formatTime(date: Date): string {
   return `${hours}:${minutes}`;
 }
 
-/** "Vandaag", "Morgen", or Dutch day name. */
-function getRelativeDayLabel(date: Date): string {
+/** Localized "today"/"tomorrow", or a localized day name. */
+function getRelativeDayLabel(date: Date, countryCode: CountryCode): string {
   const today = new Date();
   const todayDate = toDateString(today);
   const tomorrowDate = toDateString(addDays(today, 1));
   const targetDate = toDateString(date);
 
-  if (targetDate === todayDate) return "Vandaag";
-  if (targetDate === tomorrowDate) return "Morgen";
-  return DUTCH_DAY_NAMES[date.getDay()];
+  const labels = RELATIVE_LABELS[countryCode];
+  if (targetDate === todayDate) return labels.today;
+  if (targetDate === tomorrowDate) return labels.tomorrow;
+  return DAY_NAMES[countryCode][date.getDay()];
 }
 
 function toDateString(date: Date): string {

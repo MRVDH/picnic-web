@@ -26,4 +26,4 @@ Clone or download the repo, run `npm install`, `npm run build` and then `npm run
 
 #### How do I generate an auth key?
 
-If you'd rather not log in through the web interface, there's a small CLI for it. Copy `.env.example` to `.env`, fill in your Picnic email, password and country code (`NL` or `DE`), then run `npm run auth-key`. If your account has 2FA enabled it asks for the SMS code and prints the auth key when done.
+There's a small CLI for it. Copy `.env.example` to `.env`, fill in your Picnic email, password and country code (`NL`, `DE` or `FR`), then run `npm run auth-key`. If your account has 2FA enabled it asks for the SMS code and prints the auth key when done.

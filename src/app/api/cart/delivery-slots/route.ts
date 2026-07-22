@@ -49,7 +49,7 @@ export async function GET(
       false
     );
 
-    const pickerData = parseDeliverySlotsPicker(rawResult);
+    const pickerData = parseDeliverySlotsPicker(rawResult, countryCode);
 
     return NextResponse.json(pickerData);
   } catch (error) {
@@ -115,7 +115,7 @@ export async function POST(
       false
     );
 
-    const cartData = parseCartResponse(rawCart);
+    const cartData = parseCartResponse(rawCart, countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {

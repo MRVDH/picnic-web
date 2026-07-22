@@ -215,5 +215,8 @@ const NL_CATEGORIES: RecipeCategory[] = [
 export function getRecipeCategories(countryCode: CountryCode): RecipeCategory[] {
   if (countryCode === "DE") return DE_CATEGORIES;
   if (countryCode === "NL") return NL_CATEGORIES;
+  // FR has no category list yet: the ids above are country-specific Picnic
+  // content identifiers, so France needs its own set captured from the FR
+  // storefront. Until then the cookbook shows recipes without category tabs.
   return [];
 }
