@@ -28,7 +28,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response = await fetch(url, {
       headers: {
         "User-Agent": "okhttp/4.9.0",
-        "Accept-Language": countryCode === "DE" ? "de" : "nl",
+        "Accept-Language": countryCode === "DE" ? "de" : countryCode === "FR" ? "fr" : "nl",
         "x-picnic-agent": "30100;1.228.1-15480;",
         "x-picnic-did": "3C417201548B2E3B",
         ...(token && { "x-picnic-auth": token }),

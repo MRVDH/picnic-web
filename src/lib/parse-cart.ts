@@ -5,10 +5,18 @@
  * validates/extracts fields at runtime, returning a strongly-typed CartData.
  * No picnic-api types are imported for casting — all field access is defensive.
  */
-import { NO_SLOT_TEXT, formatBannerText } from "@/lib/format-delivery-window";
+import { formatBannerText } from "@/lib/format-delivery-window";
+import { getTranslations } from "@/lib/i18n";
 import { parseSelectedSlot } from "@/lib/parse-delivery-slots";
 import { asArray, asNumber, asString, isObject } from "@/lib/type-guards";
-import type { Badge, CartData, CartItem, DepositEntry, SliderProduct } from "@/lib/types";
+import type {
+  Badge,
+  CartData,
+  CartItem,
+  CountryCode,
+  DepositEntry,
+  SliderProduct,
+} from "@/lib/types";
 
 // ─── Decorator helpers ────────────────────────────────────────────────────────
 
@@ -352,9 +360,9 @@ function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
  * Transform the raw unknown cart response into a CartData display type.
  * All field access is defensive — uses optional chaining and fallback defaults.
  */
-export function parseCartResponse(rawData: unknown): CartData {
+export function parseCartResponse(rawData: unknown, countryCode: CountryCode): CartData {
   if (!isObject(rawData)) {
-    return emptyCartData();
+    return emptyCartData(countryCode);
   }
 
   // Merge decorator_overrides into items before processing
@@ -430,9 +438,11 @@ export function parseCartResponse(rawData: unknown): CartData {
     rawData["selected_slot"],
     asArray(rawData["delivery_slots"])
   );
-  const deliveryBannerText = selectedSlot?.isExplicitSelection
-    ? formatBannerText(selectedSlot.windowStart, selectedSlot.windowEnd)
-    : NO_SLOT_TEXT;
+  const t = getTranslations(countryCode);
+  const deliveryBannerText =
+    (selectedSlot?.isExplicitSelection
+      ? formatBannerText(selectedSlot.windowStart, selectedSlot.windowEnd, countryCode)
+      : null) ?? t.pickerTitle;
 
   return {
     items,
@@ -450,7 +460,7 @@ export function parseCartResponse(rawData: unknown): CartData {
   };
 }
 
-function emptyCartData(): CartData {
+function emptyCartData(countryCode: CountryCode): CartData {
   return {
     items: [],
     totalPrice: 0,
@@ -463,6 +473,6 @@ function emptyCartData(): CartData {
     minimumOrderValue: null,
     suggestions: [],
     selectedSlot: null,
-    deliveryBannerText: NO_SLOT_TEXT,
+    deliveryBannerText: getTranslations(countryCode).pickerTitle,
   };
 }

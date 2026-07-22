@@ -44,7 +44,7 @@ export async function GET(
       }
     ).sendRequest("GET", "/cart", null, true);
 
-    const cartData = parseCartResponse(rawCart);
+    const cartData = parseCartResponse(rawCart, countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {
@@ -136,7 +136,7 @@ export async function POST(
       true
     );
 
-    const cartData = parseCartResponse(rawCart);
+    const cartData = parseCartResponse(rawCart, countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {
