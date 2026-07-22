@@ -5,7 +5,7 @@ import Image from "next/image";
 import { BackArrowIcon } from "@/components/back-arrow-icon";
 import { ErrorView } from "@/components/error-view";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import { useCountryCode } from "@/contexts/country-context";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import type { CategoryItem } from "@/lib/category-types";
 import { buildImageUrl } from "@/lib/image-url";
 
@@ -30,6 +30,7 @@ export function SubcategoryView({
   onRetry,
   onSubcategoryTap,
 }: SubcategoryViewProps) {
+  const t = useTranslations();
   return (
     <div>
       <button
@@ -38,7 +39,7 @@ export function SubcategoryView({
         className="mb-4 flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
       >
         <BackArrowIcon />
-        Terug
+        {t.backButton}
       </button>
 
       <h2 className="text-foreground mb-3 text-lg font-semibold">{categoryName}</h2>
