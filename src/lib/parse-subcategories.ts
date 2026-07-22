@@ -37,28 +37,26 @@ export function parseSubcategoryPage(rawPage: unknown): CategoryItem[] {
   return subcategories;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
+}
+
 /**
  * Extract the page title from a FusionPage's header.
- * Returns null if the header or title is missing.
+ *
+ * The header lives under `layout.header` on newer pages and directly under
+ * `header` on older ones. Prefer the nested location, but fall back to the
+ * top-level header when the nested one is missing or malformed.
+ *
+ * Returns null if neither location yields a header with a string title.
  */
 export function extractPageTitle(rawPage: unknown): string | null {
-  if (typeof rawPage !== "object" || rawPage === null) {
-    return null;
-  }
+  const page = asRecord(rawPage);
+  if (!page) return null;
 
-  const page = rawPage as Record<string, unknown>;
+  const header = asRecord(asRecord(page.layout)?.header) ?? asRecord(page.header);
+  if (!header) return null;
 
-  const header =
-    typeof page.layout === "object" &&
-    page.layout !== null &&
-    "header" in page.layout
-      ? (page.layout as Record<string, unknown>).header
-      : page.header;
-
-  if (typeof header !== "object" || header === null) {
-    return null;
-  }
-
-  const title = (header as Record<string, unknown>).title;
+  const title = header.title;
   return typeof title === "string" ? title : null;
 }
