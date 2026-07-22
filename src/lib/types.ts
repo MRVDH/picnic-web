@@ -8,7 +8,7 @@ export type { SelectedSlotData } from "@/lib/delivery-slot-types";
 
 export const CENTS_DIVISOR = 100;
 
-export const SUPPORTED_COUNTRY_CODES = ["NL", "DE"] as const;
+export const SUPPORTED_COUNTRY_CODES = ["NL", "DE", "FR"] as const;
 export type CountryCode = (typeof SUPPORTED_COUNTRY_CODES)[number];
 export const DEFAULT_COUNTRY_CODE: CountryCode = "NL";
 
