@@ -12,6 +12,7 @@ import type {
 } from "@/lib/delivery-slot-types";
 import { formatDayTabLabel } from "@/lib/format-delivery-window";
 import { asArray, asString, isObject } from "@/lib/type-guards";
+import type { CountryCode } from "@/lib/types";
 
 // ─── Single slot extraction ──────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ function extractDateKey(isoTimestamp: string): string {
 }
 
 /** Group slots by calendar day and separate green vs regular. */
-function groupSlotsByDay(slots: DeliverySlotData[]): SlotDayGroup[] {
+function groupSlotsByDay(slots: DeliverySlotData[], countryCode: CountryCode): SlotDayGroup[] {
   const dayMap = new Map<string, DeliverySlotData[]>();
   const dayOrder: string[] = [];
 
@@ -128,7 +129,7 @@ function groupSlotsByDay(slots: DeliverySlotData[]): SlotDayGroup[] {
 
   return dayOrder.map((dateKey) => {
     const daySlots = dayMap.get(dateKey)!;
-    const { dayLabel, dateLabel } = formatDayTabLabel(dateKey);
+    const { dayLabel, dateLabel } = formatDayTabLabel(dateKey, countryCode);
     const greenSlots = daySlots.filter((s) => s.isGreenChoice);
     const regularSlots = daySlots.filter((s) => !s.isGreenChoice);
 
@@ -139,7 +140,10 @@ function groupSlotsByDay(slots: DeliverySlotData[]): SlotDayGroup[] {
 // ─── Full picker response parser ─────────────────────────────────────────────
 
 /** Parse the full delivery slots picker response (from GET /cart/delivery_slots). */
-export function parseDeliverySlotsPicker(rawData: unknown): DeliverySlotPickerData {
+export function parseDeliverySlotsPicker(
+  rawData: unknown,
+  countryCode: CountryCode
+): DeliverySlotPickerData {
   if (!isObject(rawData)) {
     return { dayGroups: [], selectedSlot: null };
   }
@@ -159,7 +163,7 @@ export function parseDeliverySlotsPicker(rawData: unknown): DeliverySlotPickerDa
   }
 
   // Group by day
-  const dayGroups = groupSlotsByDay(slots);
+  const dayGroups = groupSlotsByDay(slots, countryCode);
 
   // Parse selected slot
   const selectedSlot = parseSelectedSlot(rawData["selected_slot"], rawSlots);
