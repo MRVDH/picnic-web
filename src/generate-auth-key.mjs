@@ -8,7 +8,7 @@ import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "node:readline/promises";
 import PicnicClient from "picnic-api";
 
-const SUPPORTED_COUNTRY_CODES = ["NL", "DE"];
+const SUPPORTED_COUNTRY_CODES = ["NL", "DE", "FR"];
 
 const { PICNIC_EMAIL, PICNIC_PASSWORD, COUNTRY_CODE } = process.env;
 
