@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import type { CategoriesApiResponse } from "@/lib/category-types";
-import { parseCategoryPage } from "@/lib/parse-categories";
-import { parseShortcutsPage } from "@/lib/parse-shortcuts";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import type { CategoriesApiResponse } from "@/lib/category/category-types";
+import { parseCategoryPage } from "@/lib/category/parse-categories";
+import { parseShortcutsPage } from "@/lib/category/parse-shortcuts";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse } from "@/lib/core/types";
 
 const SEARCH_EMPTY_PAGE_ID = "empty-search-page-root";
 const HOME_PAGE_ID = "home_page_root";

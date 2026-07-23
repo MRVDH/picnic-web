@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import type { DeliverySlotPickerData } from "@/lib/delivery-slot-types";
-import { parseCartResponse } from "@/lib/parse-cart";
-import { parseDeliverySlotsPicker } from "@/lib/parse-delivery-slots";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse, CartData } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import type { DeliverySlotPickerData } from "@/lib/core/delivery-slot-types";
+import { parseCartResponse } from "@/lib/cart/parse-cart";
+import { parseDeliverySlotsPicker } from "@/lib/delivery/parse-delivery-slots";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
 // ─── sendRequest cast type ───────────────────────────────────────────────────
 

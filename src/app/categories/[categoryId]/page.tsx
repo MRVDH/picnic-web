@@ -4,16 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useParams, useRouter } from "next/navigation";
 
-import { CartToast } from "@/components/cart-toast";
-import { SharedHeader } from "@/components/shared-header";
-import { SubcategoryView } from "@/components/subcategory-view";
-import type { SubcategoriesState } from "@/components/subcategory-view";
+import { CartToast } from "@/components/cart/cart-toast";
+import { SharedHeader } from "@/components/layout/shared-header";
+import { SubcategoryView } from "@/components/category/subcategory-view";
+import type { SubcategoriesState } from "@/components/category/subcategory-view";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import type { CategoryItem, SubcategoriesApiResponse } from "@/lib/category-types";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type { ApiErrorResponse } from "@/lib/types";
+import type { CategoryItem, SubcategoriesApiResponse } from "@/lib/category/category-types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { ApiErrorResponse } from "@/lib/core/types";
 
 export default function CategorySubcategoriesPage() {
   const { categoryId } = useParams<{ categoryId: string }>();

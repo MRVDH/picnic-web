@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { AUTH_COOKIE_NAME, LOGIN_PATH } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, LOGIN_PATH } from "@/lib/core/auth";
 
 /**
  * Next.js proxy — gates all routes behind authentication.

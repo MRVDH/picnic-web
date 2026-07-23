@@ -18,8 +18,8 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
-import { createMutationQueue } from "@/lib/mutation-queue";
-import type { BundleProgress, BundleThreshold, CartData } from "@/lib/types";
+import { createMutationQueue } from "@/lib/cart/mutation-queue";
+import type { BundleProgress, BundleThreshold, CartData } from "@/lib/core/types";
 
 // ─── Toast callback type ──────────────────────────────────────────────────────
 

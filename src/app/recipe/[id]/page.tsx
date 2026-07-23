@@ -4,20 +4,20 @@ import { use, useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { AllergenBadges } from "@/components/allergen-badges";
-import { NutritionTable } from "@/components/nutrition-table";
-import { RecipeHeroImage } from "@/components/recipe-hero-image";
-import { RecipeIngredientRow } from "@/components/recipe-ingredient-row";
-import { ErrorView } from "@/components/error-view";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { SharedHeader } from "@/components/shared-header";
+import { AllergenBadges } from "@/components/product/allergen-badges";
+import { NutritionTable } from "@/components/product/nutrition-table";
+import { RecipeHeroImage } from "@/components/recipe/recipe-hero-image";
+import { RecipeIngredientRow } from "@/components/recipe/recipe-ingredient-row";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { formatEuroPrice } from "@/lib/format-price";
-import { renderMarkdownBold } from "@/lib/render-markdown-bold";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type { ApiErrorResponse, RecipeDetail } from "@/lib/types";
+import { formatEuroPrice } from "@/lib/core/format-price";
+import { renderMarkdownBold } from "@/lib/pml/render-markdown-bold";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { ApiErrorResponse, RecipeDetail } from "@/lib/core/types";
 
 type PageState =
   | { status: "loading" }
