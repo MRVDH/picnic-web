@@ -7,7 +7,7 @@ Picnic API, and state lives in the URL, cookies, or client memory.
 
 ## Stack
 
-TypeScript, Node 20+, Next.js (App Router), React 19, Tailwind CSS 4, and the
+TypeScript, Node 24+, Next.js (App Router), React 19, Tailwind CSS 4, and the
 picnic-api client library. Exact versions live in [package.json](package.json).
 
 ## Project structure
