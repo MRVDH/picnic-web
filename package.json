@@ -2,6 +2,9 @@
   "name": "picnic-web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,15 +15,15 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "next": "16.2.1",
-    "picnic-api": "^4.5.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "next": "16.2.11",
+    "picnic-api": "^4.6.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
