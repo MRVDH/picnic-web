@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { PicnicClientInstance } from "@/lib/picnic-client";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 

@@ -2,8 +2,8 @@
 
 import { type ReactNode, createContext, useCallback, useContext } from "react";
 
-import { type Translations, getTranslations } from "@/lib/i18n";
-import { COUNTRY_COOKIE_NAME, type CountryCode, DEFAULT_COUNTRY_CODE } from "@/lib/types";
+import { type Translations, getTranslations } from "@/lib/core/i18n";
+import { COUNTRY_COOKIE_NAME, type CountryCode, DEFAULT_COUNTRY_CODE } from "@/lib/core/types";
 
 const COUNTRY_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
 

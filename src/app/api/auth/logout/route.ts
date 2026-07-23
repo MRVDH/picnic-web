@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { AUTH_COOKIE_NAME } from "@/lib/auth";
-import type { AuthApiResponse } from "@/lib/types";
+import { AUTH_COOKIE_NAME } from "@/lib/core/auth";
+import type { AuthApiResponse } from "@/lib/core/types";
 
 /**
  * POST /api/auth/logout

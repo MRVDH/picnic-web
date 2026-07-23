@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCookbookPage } from "@/lib/parse-cookbook";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/core/types";
 
 type SendRequestClient = {
   sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;

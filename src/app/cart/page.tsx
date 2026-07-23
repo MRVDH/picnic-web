@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { CartPageContent, EmptyView } from "@/components/cart-page-content";
-import { CartToast } from "@/components/cart-toast";
-import { DeliverySlotPicker } from "@/components/delivery-slot-picker";
-import { ErrorView } from "@/components/error-view";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { SharedHeader } from "@/components/shared-header";
+import { CartPageContent, EmptyView } from "@/components/cart/cart-page-content";
+import { CartToast } from "@/components/cart/cart-toast";
+import { DeliverySlotPicker } from "@/components/delivery/delivery-slot-picker";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import { createMutationQueue } from "@/lib/mutation-queue";
-import type { ApiErrorResponse, CartData } from "@/lib/types";
+import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { createMutationQueue } from "@/lib/cart/mutation-queue";
+import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
 type CartPageState =
   | { status: "loading" }

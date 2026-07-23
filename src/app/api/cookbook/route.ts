@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCookbookPage } from "@/lib/parse-cookbook";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { getRecipeCategories } from "@/lib/recipe-categories";
-import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
+import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/core/types";
 
 // DE uses short slug IDs (recipe-cattree-*); NL uses UUID-based content pages.
 const CATEGORY_ID_RE =
