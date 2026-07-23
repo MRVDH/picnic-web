@@ -1,12 +1,12 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCookbookPage } from "@/lib/parse-cookbook";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import { getRecipeCategories } from "@/lib/recipe-categories";
-import type { PicnicClientInstance } from "@/lib/picnic-client";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
+import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 
 // Server-side cache per country, expires after 5 minutes.
 const cache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCartResponse } from "@/lib/parse-cart";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { parseCartResponse } from "@/lib/cart/parse-cart";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/core/types";
 
 /**
  * GET /api/cart

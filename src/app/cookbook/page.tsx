@@ -4,17 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { CategoryDropdown } from "@/components/category-dropdown";
-import { RecipeSearchInput } from "@/components/recipe-search-input";
-import { ErrorView } from "@/components/error-view";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { RecipeCard } from "@/components/recipe-card";
-import { SharedHeader } from "@/components/shared-header";
+import { CategoryDropdown } from "@/components/ui/category-dropdown";
+import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { RecipeCard } from "@/components/recipe/recipe-card";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import { DEBOUNCE_DELAY_MS } from "@/lib/types";
-import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
+import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
 
 const PAGE_SIZE = 24;
 

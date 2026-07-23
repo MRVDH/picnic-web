@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { extractProductNutritionRows, extractProductTileData } from "@/lib/parse-fusion-product";
-import { parseRecipeDetail } from "@/lib/parse-recipe-detail";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { PicnicClientInstance } from "@/lib/picnic-client";
-import type { RecipeDetailApiResponse, RecipeIngredient } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { extractProductNutritionRows, extractProductTileData } from "@/lib/product/parse-fusion-product";
+import { parseRecipeDetail } from "@/lib/recipe/parse-recipe-detail";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { PicnicClientInstance } from "@/lib/core/picnic-client";
+import type { RecipeDetailApiResponse, RecipeIngredient } from "@/lib/core/types";
 
 type SendRequestClient = PicnicClientInstance & {
   sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;

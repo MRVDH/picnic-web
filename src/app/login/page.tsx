@@ -5,13 +5,13 @@ import { Suspense, useCallback, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { usePageTitle } from "@/hooks/use-page-title";
-import { type Translations, getTranslations } from "@/lib/i18n";
+import { type Translations, getTranslations } from "@/lib/core/i18n";
 import {
   COUNTRY_COOKIE_NAME,
   type CountryCode,
   DEFAULT_COUNTRY_CODE,
   SUPPORTED_COUNTRY_CODES,
-} from "@/lib/types";
+} from "@/lib/core/types";
 
 const DEFAULT_REDIRECT = "/";
 

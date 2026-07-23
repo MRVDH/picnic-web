@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { readAuthToken, readCountryCode } from "@/lib/auth";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 
 const ALLOWED_HOST_SUFFIX = ".picnicinternational.com";
 
