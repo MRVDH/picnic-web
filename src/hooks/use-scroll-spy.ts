@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { buildSectionId } from "@/lib/types";
+import { buildSectionId } from "@/lib/core/types";
 
 /**
  * Observes section elements via IntersectionObserver and returns the index

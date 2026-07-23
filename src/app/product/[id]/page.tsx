@@ -4,24 +4,24 @@ import { use, useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { AccordionSection } from "@/components/accordion-section";
-import { AllergenBadges } from "@/components/allergen-badges";
-import { ErrorView } from "@/components/error-view";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { NutritionTable } from "@/components/nutrition-table";
-import { ProductDescription } from "@/components/product-description";
-import { ProductGallery } from "@/components/product-gallery";
-import { ProductHighlights } from "@/components/product-highlights";
-import { ProductInfoHeader } from "@/components/product-info-header";
-import { ProductLabels } from "@/components/product-labels";
-import { ProductPriceSection } from "@/components/product-price-section";
-import { ProductSlider } from "@/components/product-slider";
-import { SharedHeader } from "@/components/shared-header";
+import { AccordionSection } from "@/components/ui/accordion-section";
+import { AllergenBadges } from "@/components/product/allergen-badges";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { NutritionTable } from "@/components/product/nutrition-table";
+import { ProductDescription } from "@/components/product/product-description";
+import { ProductGallery } from "@/components/product/product-gallery";
+import { ProductHighlights } from "@/components/product/product-highlights";
+import { ProductInfoHeader } from "@/components/product/product-info-header";
+import { ProductLabels } from "@/components/product/product-labels";
+import { ProductPriceSection } from "@/components/product/product-price-section";
+import { ProductSlider } from "@/components/product/product-slider";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type { ApiErrorResponse, ProductDetail } from "@/lib/types";
+import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { ApiErrorResponse, ProductDetail } from "@/lib/core/types";
 
 // ─── State ───────────────────────────────────────────────────────────────────
 

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { parseCategoryPageSections } from "@/lib/parse-fusion-search";
-import { extractPageTitle } from "@/lib/parse-subcategories";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
+import { extractPageTitle } from "@/lib/category/parse-subcategories";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
 
 const L2_PAGE_PREFIX = "L2-category-page-root?category_id=";
 

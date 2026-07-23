@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { CountryCodeProvider } from "@/contexts/country-context";
-import { parseCountryCode } from "@/lib/types";
+import { parseCountryCode } from "@/lib/core/types";
 
 import "./globals.css";
 

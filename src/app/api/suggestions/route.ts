@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/api-error";
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
-import type { ApiErrorResponse, SearchSuggestion, SuggestionsApiResponse } from "@/lib/types";
+import { isApiAuthError } from "@/lib/core/api-error";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse, SearchSuggestion, SuggestionsApiResponse } from "@/lib/core/types";
 
 /**
  * GET /api/suggestions?q=<query>

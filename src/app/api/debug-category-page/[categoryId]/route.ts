@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { readAuthToken, readCountryCode } from "@/lib/auth";
-import { buildPicnicClient } from "@/lib/picnic-client";
+import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
 
 const L2_PAGE_PREFIX = "L2-category-page-root?category_id=";
 

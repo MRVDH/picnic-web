@@ -4,21 +4,21 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { CartToast } from "@/components/cart-toast";
-import { CategoryGrid } from "@/components/category-grid";
-import { ErrorView } from "@/components/error-view";
-import { LoadingSpinner } from "@/components/loading-spinner";
-import { ResultsView } from "@/components/results-view";
-import { SectionNavBar } from "@/components/section-nav-bar";
-import { SharedHeader } from "@/components/shared-header";
-import { ShortcutList } from "@/components/shortcut-list";
+import { CartToast } from "@/components/cart/cart-toast";
+import { CategoryGrid } from "@/components/category/category-grid";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ResultsView } from "@/components/search/results-view";
+import { SectionNavBar } from "@/components/layout/section-nav-bar";
+import { SharedHeader } from "@/components/layout/shared-header";
+import { ShortcutList } from "@/components/category/shortcut-list";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import type { CategoryItem, ShortcutItem } from "@/lib/category-types";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import { parsePageIdFromDeepLink } from "@/lib/parse-deep-link";
-import type { ApiErrorResponse, Product, SearchApiResponse, SearchSection } from "@/lib/types";
+import type { CategoryItem, ShortcutItem } from "@/lib/category/category-types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { parsePageIdFromDeepLink } from "@/lib/core/parse-deep-link";
+import type { ApiErrorResponse, Product, SearchApiResponse, SearchSection } from "@/lib/core/types";
 
 type SearchState =
   | { status: "idle" }

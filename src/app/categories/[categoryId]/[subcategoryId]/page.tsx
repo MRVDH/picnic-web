@@ -4,15 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useParams, useRouter } from "next/navigation";
 
-import { CartToast } from "@/components/cart-toast";
-import { CategoryProductsView } from "@/components/category-products-view";
-import type { CategoryProductsState } from "@/components/category-products-view";
-import { SectionNavBar } from "@/components/section-nav-bar";
-import { SharedHeader } from "@/components/shared-header";
+import { CartToast } from "@/components/cart/cart-toast";
+import { CategoryProductsView } from "@/components/category/category-products-view";
+import type { CategoryProductsState } from "@/components/category/category-products-view";
+import { SectionNavBar } from "@/components/layout/section-nav-bar";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { CartProvider } from "@/contexts/cart-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/constants";
-import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
 
 export default function CategoryProductsPage() {
   const { categoryId, subcategoryId } = useParams<{
