@@ -143,6 +143,11 @@ const translations = {
     cookbookLoadError: "Recepten konden niet worden geladen.",
     noRecipes: "Geen recepten gevonden.",
     cookingTimeMinutes: "min",
+    mealPlanSelectAll: "Alles selecteren",
+    mealPlanDays: "dagen",
+    mealPlanGenerate: "Plan genereren",
+    mealPlanRegenerate: "Opnieuw genereren",
+    mealPlanSummary: "{n} recepten geselecteerd",
 
     // Auth
     signOut: "Uitloggen",
@@ -369,6 +374,11 @@ const translations = {
     cookbookLoadError: "Rezepte konnten nicht geladen werden.",
     noRecipes: "Keine Rezepte gefunden.",
     cookingTimeMinutes: "Min.",
+    mealPlanSelectAll: "Alle auswählen",
+    mealPlanDays: "Tage",
+    mealPlanGenerate: "Plan generieren",
+    mealPlanRegenerate: "Neu generieren",
+    mealPlanSummary: "{n} Rezepte ausgewählt",
 
     // Auth
     signOut: "Abmelden",
@@ -595,6 +605,11 @@ const translations = {
     cookbookLoadError: "Impossible de charger les recettes.",
     noRecipes: "Aucune recette trouvée.",
     cookingTimeMinutes: "min",
+    mealPlanSelectAll: "Tout sélectionner",
+    mealPlanDays: "jours",
+    mealPlanGenerate: "Générer le plan",
+    mealPlanRegenerate: "Régénérer",
+    mealPlanSummary: "{n} recettes sélectionnées",
 
     // Auth
     signOut: "Se déconnecter",
