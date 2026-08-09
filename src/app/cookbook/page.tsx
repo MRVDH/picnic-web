@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -18,6 +18,9 @@ import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/co
 
 const PAGE_SIZE = 24;
 const DEFAULT_DAYS = 7;
+
+// Stable identity so effects keyed on the recipe list don't re-run while loading.
+const EMPTY_RECIPES: RecipeItem[] = [];
 
 type RecipesState =
   | { status: "loading" }
@@ -63,63 +66,30 @@ export default function CookbookPage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    if (debouncedQuery) {
-      fetch(`/api/cookbook/search?q=${encodeURIComponent(debouncedQuery)}`, {
-        signal: controller.signal,
-      })
-        .then((res) => res.json())
-        .then((data: CookbookApiResponse & Partial<ApiErrorResponse>) => {
-          if ("error" in data && data.error) {
-            if (data.code === "TOKEN_EXPIRED") {
-              window.location.href = TOKEN_EXPIRED_REDIRECT;
-              return;
-            }
-            setRecipesState({ status: "error", message: data.error });
-            return;
-          }
-          setRecipesState({
-            status: "success",
-            recipes: Array.isArray(data.recipes) ? data.recipes : [],
-          });
-        })
-        .catch((err: unknown) => {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-          setRecipesState({ status: "error", message: t.cookbookLoadError });
-        });
-      return () => controller.abort();
-    }
-
-    // Multi-category parallel fetch
-    const urls = selectedCategories.map((catId) =>
-      catId === "__saved__"
-        ? "/api/cookbook?category=__saved__"
-        : catId
-          ? `/api/cookbook?category=${encodeURIComponent(catId)}`
-          : "/api/cookbook"
-    );
+    // Search takes priority; otherwise fetch each selected category in parallel.
+    const urls = debouncedQuery
+      ? [`/api/cookbook/search?q=${encodeURIComponent(debouncedQuery)}`]
+      : selectedCategories.map((catId) =>
+          catId ? `/api/cookbook?category=${encodeURIComponent(catId)}` : "/api/cookbook"
+        );
 
     Promise.all(
-      urls.map((url) =>
-        fetch(url, { signal: controller.signal }).then((r) => r.json())
-      )
+      urls.map((url) => fetch(url, { signal: controller.signal }).then((r) => r.json()))
     )
       .then((results: (CookbookApiResponse & Partial<ApiErrorResponse>)[]) => {
-        for (const data of results) {
-          if ("error" in data && data.error) {
-            if (data.code === "TOKEN_EXPIRED") {
-              window.location.href = TOKEN_EXPIRED_REDIRECT;
-              return;
-            }
-            setRecipesState({ status: "error", message: data.error });
+        const failed = results.find((data) => "error" in data && data.error);
+        if (failed?.error) {
+          if (failed.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
             return;
           }
+          setRecipesState({ status: "error", message: failed.error });
+          return;
         }
-        for (const data of results) {
-          if (data.categories?.length) {
-            setCategories(data.categories);
-            break;
-          }
-        }
+
+        const withCategories = results.find((data) => data.categories?.length);
+        if (withCategories?.categories) setCategories(withCategories.categories);
+
         const seen = new Set<string>();
         const merged: RecipeItem[] = [];
         for (const data of results) {
@@ -140,12 +110,7 @@ export default function CookbookPage() {
     return () => controller.abort();
   }, [debouncedQuery, selectedCategories, retryCount, t.cookbookLoadError]);
 
-  const recipesForPlan =
-    recipesState.status === "success" ? recipesState.recipes : null;
-  const allRecipes = useMemo(
-    () => recipesForPlan ?? [],
-    [recipesForPlan]
-  );
+  const allRecipes = recipesState.status === "success" ? recipesState.recipes : EMPTY_RECIPES;
   const displayedRecipes = mealPlan ?? allRecipes;
 
   // Infinite scroll: reveal PAGE_SIZE more recipes when sentinel enters viewport
@@ -246,7 +211,7 @@ export default function CookbookPage() {
                   setMealPlan(null);
                 }}
                 disabled={!!debouncedQuery}
-                className="focus:ring-picnic-red w-16 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                className="focus:ring-picnic-red w-16 rounded-xl border border-card-border bg-card-bg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
               />
               <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
               <button

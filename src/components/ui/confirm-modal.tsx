@@ -23,7 +23,7 @@ export function ConfirmModal({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm rounded-2xl bg-card-bg p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-foreground text-lg font-bold">{title}</h2>
