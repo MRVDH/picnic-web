@@ -535,6 +535,11 @@ export type RecipeDetail = {
 
 export type RecipeDetailApiResponse = RecipeDetail;
 
+/** Recipe IDs the user has saved on their Picnic account. */
+export type SavedRecipesApiResponse = {
+  recipeIds: string[];
+};
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
