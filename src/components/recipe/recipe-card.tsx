@@ -25,6 +25,8 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link
       href={`/recipe/${recipe.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
       className="border-card-border bg-card-bg flex flex-col overflow-hidden rounded-lg border shadow-sm transition-shadow hover:shadow-md"
     >
       <div className="relative h-40 w-full bg-gray-50">
