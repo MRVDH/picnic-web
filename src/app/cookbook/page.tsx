@@ -4,13 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { CartToast } from "@/components/cart/cart-toast";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
-import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { RecipeCard } from "@/components/recipe/recipe-card";
+import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
 import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
+import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
@@ -42,7 +44,10 @@ export default function CookbookPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const dismissToast = useCallback(() => setToastMessage(null), []);
 
   // Debounce search input
   useEffect(() => {
@@ -73,9 +78,7 @@ export default function CookbookPage() {
           catId ? `/api/cookbook?category=${encodeURIComponent(catId)}` : "/api/cookbook"
         );
 
-    Promise.all(
-      urls.map((url) => fetch(url, { signal: controller.signal }).then((r) => r.json()))
-    )
+    Promise.all(urls.map((url) => fetch(url, { signal: controller.signal }).then((r) => r.json())))
       .then((results: (CookbookApiResponse & Partial<ApiErrorResponse>)[]) => {
         const failed = results.find((data) => "error" in data && data.error);
         if (failed?.error) {
@@ -175,110 +178,113 @@ export default function CookbookPage() {
   const visibleRecipes = displayedRecipes.slice(0, visibleCount);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <SharedHeader />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-        {/* Header row */}
-        <div className="mb-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
-          >
-            ← {t.backButton}
-          </button>
-          <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
-        </div>
+    <SavedRecipesProvider showToast={setToastMessage}>
+      <div className="flex min-h-full flex-1 flex-col">
+        <SharedHeader />
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          {/* Header row */}
+          <div className="mb-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
+            >
+              ← {t.backButton}
+            </button>
+            <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
+          </div>
 
-        {/* Controls row */}
-        <div className="mb-6 flex flex-wrap gap-4">
-          <div className="flex flex-col gap-2">
-            <CategoryCheckboxPanel
-              options={checkboxOptions}
-              value={selectedCategories}
-              onChange={handleSelectCategories}
-              disabled={!!debouncedQuery}
-              selectAllLabel={t.mealPlanSelectAll}
-            />
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={daysCount}
-                onChange={(e) => {
-                  setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
-                  setMealPlan(null);
-                }}
+          {/* Controls row */}
+          <div className="mb-6 flex flex-wrap gap-4">
+            <div className="flex flex-col gap-2">
+              <CategoryCheckboxPanel
+                options={checkboxOptions}
+                value={selectedCategories}
+                onChange={handleSelectCategories}
                 disabled={!!debouncedQuery}
-                className="focus:ring-picnic-red w-16 rounded-xl border border-card-border bg-card-bg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                selectAllLabel={t.mealPlanSelectAll}
               />
-              <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
-              <button
-                type="button"
-                onClick={generatePlan}
-                disabled={!!debouncedQuery || recipesState.status !== "success"}
-                className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {t.mealPlanGenerate}
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-1 items-start">
-            <RecipeSearchInput
-              value={searchInput}
-              placeholder={t.cookbookSearchPlaceholder}
-              onChange={(val) => {
-                setSearchInput(val);
-                setMealPlan(null);
-                setRecipesState({ status: "loading" });
-                setVisibleCount(PAGE_SIZE);
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Content */}
-        {recipesState.status === "loading" && <LoadingSpinner />}
-
-        {recipesState.status === "error" && (
-          <ErrorView message={recipesState.message} onRetry={handleRetry} />
-        )}
-
-        {recipesState.status === "success" && displayedRecipes.length === 0 && (
-          <p className="text-text-muted text-sm">{t.noRecipes}</p>
-        )}
-
-        {recipesState.status === "success" && displayedRecipes.length > 0 && (
-          <>
-            {mealPlan && (
-              <div className="mb-4 flex items-center gap-3">
-                <span className="text-text-muted text-sm">
-                  {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
-                </span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={daysCount}
+                  onChange={(e) => {
+                    setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
+                    setMealPlan(null);
+                  }}
+                  disabled={!!debouncedQuery}
+                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                />
+                <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
                 <button
                   type="button"
                   onClick={generatePlan}
-                  className="text-picnic-red text-sm font-medium hover:underline"
+                  disabled={!!debouncedQuery || recipesState.status !== "success"}
+                  className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {t.mealPlanRegenerate}
+                  {t.mealPlanGenerate}
                 </button>
               </div>
-            )}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {visibleRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
             </div>
+            <div className="flex flex-1 items-start">
+              <RecipeSearchInput
+                value={searchInput}
+                placeholder={t.cookbookSearchPlaceholder}
+                onChange={(val) => {
+                  setSearchInput(val);
+                  setMealPlan(null);
+                  setRecipesState({ status: "loading" });
+                  setVisibleCount(PAGE_SIZE);
+                }}
+              />
+            </div>
+          </div>
 
-            {visibleCount < displayedRecipes.length && (
-              <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
-                <LoadingSpinner />
+          {/* Content */}
+          {recipesState.status === "loading" && <LoadingSpinner />}
+
+          {recipesState.status === "error" && (
+            <ErrorView message={recipesState.message} onRetry={handleRetry} />
+          )}
+
+          {recipesState.status === "success" && displayedRecipes.length === 0 && (
+            <p className="text-text-muted text-sm">{t.noRecipes}</p>
+          )}
+
+          {recipesState.status === "success" && displayedRecipes.length > 0 && (
+            <>
+              {mealPlan && (
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="text-text-muted text-sm">
+                    {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={generatePlan}
+                    className="text-picnic-red text-sm font-medium hover:underline"
+                  >
+                    {t.mealPlanRegenerate}
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {visibleRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </main>
-    </div>
+
+              {visibleCount < displayedRecipes.length && (
+                <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
+                  <LoadingSpinner />
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+      <CartToast message={toastMessage} onDismiss={dismissToast} />
+    </SavedRecipesProvider>
   );
 }

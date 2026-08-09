@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
 import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
@@ -10,11 +11,6 @@ import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/core/types";
 // DE uses short slug IDs (recipe-cattree-*); NL uses UUID-based content pages.
 const CATEGORY_ID_RE =
   /^recipe-cattree-[\w-]+$|^meals-category-page-content\?category_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const SAVED_PAGE_ID = "saved-deep-dive-page-content";
-
-type SendRequestClient = {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
-};
 
 export async function GET(
   request: NextRequest
@@ -35,13 +31,7 @@ export async function GET(
     const client = buildPicnicClient(token, countryCode);
 
     if (categoryId === "__saved__") {
-      const rawPage = await (client as unknown as SendRequestClient).sendRequest(
-        "GET",
-        `/pages/${SAVED_PAGE_ID}`,
-        null,
-        true
-      );
-      const recipes = parseCookbookPage(rawPage);
+      const recipes = await fetchSavedRecipes(client);
       return NextResponse.json({ categories: [], recipes });
     }
 
