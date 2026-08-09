@@ -144,22 +144,20 @@ export default function CartPage() {
     setPageState({ status: "empty" });
     confirmedCartRef.current = null;
 
-    try {
-      const response = await fetch("/api/cart", { method: "DELETE" });
-      const data: CartData | ApiErrorResponse = await response.json();
-      if (!response.ok || "error" in data) {
-        if (snapshot) {
-          confirmedCartRef.current = snapshot;
-          setPageState({ status: "success", cart: snapshot });
-        }
-        setToastMessage(t.clearCartError);
-      }
-    } catch {
+    const rollback = () => {
       if (snapshot) {
         confirmedCartRef.current = snapshot;
         setPageState({ status: "success", cart: snapshot });
       }
       setToastMessage(t.clearCartError);
+    };
+
+    try {
+      const response = await fetch("/api/cart", { method: "DELETE" });
+      const data: CartData | ApiErrorResponse = await response.json();
+      if (!response.ok || "error" in data) rollback();
+    } catch {
+      rollback();
     }
   }, [pageState, t.clearCartError]);
 
