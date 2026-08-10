@@ -28,8 +28,6 @@ type SavedRecipesContextValue = {
   isSaved: (recipeId: string) => boolean;
   /** Flip the saved state, optimistically. */
   toggleSaved: (recipeId: string) => void;
-  /** False until the saved list has loaded; hearts render unsaved until then. */
-  isReady: boolean;
 };
 
 const SavedRecipesContext = createContext<SavedRecipesContextValue | null>(null);
@@ -55,7 +53,6 @@ type SavedRecipesProviderProps = {
 export function SavedRecipesProvider({ children, showToast }: SavedRecipesProviderProps) {
   const t = useTranslations();
   const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
-  const [isReady, setIsReady] = useState(false);
 
   /** Last state the server confirmed — the rollback target. */
   const confirmedRef = useRef<ReadonlySet<string>>(new Set());
@@ -87,7 +84,6 @@ export function SavedRecipesProvider({ children, showToast }: SavedRecipesProvid
         confirmedRef.current = ids;
         optimisticRef.current = ids;
         setSavedIds(ids);
-        setIsReady(true);
       })
       .catch(() => {});
 
@@ -151,9 +147,8 @@ export function SavedRecipesProvider({ children, showToast }: SavedRecipesProvid
     () => ({
       isSaved: (recipeId: string) => savedIds.has(recipeId),
       toggleSaved,
-      isReady,
     }),
-    [savedIds, toggleSaved, isReady]
+    [savedIds, toggleSaved]
   );
 
   return <SavedRecipesContext.Provider value={value}>{children}</SavedRecipesContext.Provider>;
