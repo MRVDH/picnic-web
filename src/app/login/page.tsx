@@ -4,14 +4,10 @@ import { Suspense, useCallback, useRef, useState } from "react";
 
 import { useSearchParams } from "next/navigation";
 
+import { useCountryCode } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { type Translations, getTranslations } from "@/lib/core/i18n";
-import {
-  COUNTRY_COOKIE_NAME,
-  type CountryCode,
-  DEFAULT_COUNTRY_CODE,
-  SUPPORTED_COUNTRY_CODES,
-} from "@/lib/core/types";
+import { type CountryCode, SUPPORTED_COUNTRY_CODES } from "@/lib/core/types";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -28,17 +24,11 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirect") ?? DEFAULT_REDIRECT;
   const isExpired = searchParams.get("expired") === "true";
 
-  const [countryCode, setCountryCode] = useState<CountryCode>(() => {
-    // Read existing cookie if present so the selector matches the stored choice.
-    if (typeof document !== "undefined") {
-      const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${COUNTRY_COOKIE_NAME}=([^;]+)`));
-      const val = match?.[1]?.toUpperCase();
-      if (val && (SUPPORTED_COUNTRY_CODES as readonly string[]).includes(val)) {
-        return val as CountryCode;
-      }
-    }
-    return DEFAULT_COUNTRY_CODE;
-  });
+  // Seed from the country the root layout read out of the cookie server-side, so
+  // the selector matches the stored choice without diverging during hydration.
+  // Reading document.cookie here instead would render NL on the server and the
+  // stored country on the client.
+  const [countryCode, setCountryCode] = useState<CountryCode>(useCountryCode());
 
   const t = getTranslations(countryCode);
 
