@@ -54,7 +54,13 @@ export async function POST(
         await rawClient.sendRequest(
           "POST",
           "/cart/add_product",
-          { product_id: item.id, count: item.count },
+          {
+            product_id: item.id,
+            count: item.count,
+            selling_unit_contexts: [
+              { type: "SELLING_GROUP", selling_group_id: id, selling_group_creator_type: "PIM" },
+            ],
+          },
           true
         );
       }

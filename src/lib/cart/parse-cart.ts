@@ -5,18 +5,19 @@
  * validates/extracts fields at runtime, returning a strongly-typed CartData.
  * No picnic-api types are imported for casting — all field access is defensive.
  */
-import { formatBannerText } from "@/lib/delivery/format-delivery-window";
 import { getTranslations } from "@/lib/core/i18n";
-import { parseSelectedSlot } from "@/lib/delivery/parse-delivery-slots";
 import { asArray, asNumber, asString, isObject } from "@/lib/core/type-guards";
 import type {
   Badge,
   CartData,
   CartItem,
+  CartRecipeGroup,
   CountryCode,
   DepositEntry,
   SliderProduct,
 } from "@/lib/core/types";
+import { formatBannerText } from "@/lib/delivery/format-delivery-window";
+import { parseSelectedSlot } from "@/lib/delivery/parse-delivery-slots";
 
 // ─── Decorator helpers ────────────────────────────────────────────────────────
 
@@ -255,6 +256,24 @@ function extractMinimumOrderValue(raw: Record<string, unknown>): number | null {
   return mov;
 }
 
+// ─── Recipe groups from basket_sections ──────────────────────────────────────
+
+function extractRecipeGroups(raw: Record<string, unknown>): CartRecipeGroup[] {
+  const groups: CartRecipeGroup[] = [];
+  for (const section of asArray(raw["basket_sections"]).filter(isObject)) {
+    for (const group of asArray(section["groups"]).filter(isObject)) {
+      const id = asString(group["id"]);
+      if (!id) continue;
+      groups.push({
+        id,
+        title: asString(group["title"]),
+        imageId: asString(group["image_id"]) || null,
+      });
+    }
+  }
+  return groups;
+}
+
 // ─── Suggestions from basket_sections ────────────────────────────────────────
 
 function extractSuggestions(raw: Record<string, unknown>): SliderProduct[] {
@@ -337,6 +356,10 @@ function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
   const badges = mapDecoratorsToBadges(effectiveDecorators);
   const unavailable = extractUnavailableInfo(effectiveDecorators);
 
+  // Recipe / selling-group association from the BASKET_GROUP line decorator
+  const basketGroupDec = lineDecorators.find((d) => asString(d["type"]) === "BASKET_GROUP");
+  const basketGroupId = basketGroupDec ? asString(basketGroupDec["id"]) || null : null;
+
   return {
     id: lineId,
     productId,
@@ -351,6 +374,7 @@ function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
     isUnavailable: unavailable.isUnavailable,
     unavailableExplanation: unavailable.unavailableExplanation,
     replacements: unavailable.replacements,
+    basketGroupId,
   };
 }
 
@@ -430,6 +454,9 @@ export function parseCartResponse(rawData: unknown, countryCode: CountryCode): C
   // Minimum order value
   const minimumOrderValue = extractMinimumOrderValue(rawData);
 
+  // Recipe groups
+  const recipeGroups = extractRecipeGroups(rawData);
+
   // Suggestions
   const suggestions = extractSuggestions(rawData);
 
@@ -457,6 +484,7 @@ export function parseCartResponse(rawData: unknown, countryCode: CountryCode): C
     suggestions,
     selectedSlot,
     deliveryBannerText,
+    recipeGroups,
   };
 }
 
@@ -474,5 +502,6 @@ function emptyCartData(countryCode: CountryCode): CartData {
     suggestions: [],
     selectedSlot: null,
     deliveryBannerText: getTranslations(countryCode).pickerTitle,
+    recipeGroups: [],
   };
 }
