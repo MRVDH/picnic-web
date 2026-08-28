@@ -66,6 +66,13 @@ const translations = {
     nothingForgotten: "Niets vergeten?",
     cartMutationError: "Er ging iets mis. Probeer het opnieuw.",
     cartLoadError: "Er is iets misgegaan. Probeer het later opnieuw.",
+    cartOtherItems: "Overige producten",
+    clearCartButton: "Winkelwagen leegmaken",
+    clearCartError: "Kan winkelwagen niet leegmaken. Probeer het opnieuw.",
+    clearCartConfirmTitle: "Winkelwagen leegmaken?",
+    clearCartConfirmMessage: "Alle producten worden verwijderd uit je winkelwagen.",
+    confirmButton: "Bevestigen",
+    cancelButton: "Annuleren",
 
     // Checkout
     checkoutLabel: "Naar de kassa",
@@ -242,6 +249,13 @@ const translations = {
     nothingForgotten: "Alles dabei?",
     cartMutationError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
     cartLoadError: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
+    cartOtherItems: "Weitere Produkte",
+    clearCartButton: "Warenkorb leeren",
+    clearCartError: "Warenkorb konnte nicht geleert werden. Bitte versuche es erneut.",
+    clearCartConfirmTitle: "Warenkorb leeren?",
+    clearCartConfirmMessage: "Alle Produkte werden aus deinem Warenkorb entfernt.",
+    confirmButton: "Bestätigen",
+    cancelButton: "Abbrechen",
 
     // Checkout
     checkoutLabel: "Zur Kasse",
@@ -418,6 +432,13 @@ const translations = {
     nothingForgotten: "Rien oublié ?",
     cartMutationError: "Une erreur s'est produite. Veuillez réessayer.",
     cartLoadError: "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    cartOtherItems: "Autres produits",
+    clearCartButton: "Vider le panier",
+    clearCartError: "Impossible de vider le panier. Veuillez réessayer.",
+    clearCartConfirmTitle: "Vider le panier ?",
+    clearCartConfirmMessage: "Tous les produits seront supprimés de votre panier.",
+    confirmButton: "Confirmer",
+    cancelButton: "Annuler",
 
     // Checkout
     checkoutLabel: "Passer à la caisse",
