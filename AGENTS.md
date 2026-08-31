@@ -40,9 +40,12 @@ Path alias: `@/*` maps to `src/*`.
   types, `format-*` format values for display, `extract-*` pull fields;
   `types.ts` is the shared type home. Reuse these instead of inlining transforms.
 - **Internationalization.** Supported countries and locale logic live in
-  [src/lib/i18n.ts](src/lib/i18n.ts) (`CountryCode`). Any user-facing formatting —
-  prices, delivery windows, image language — must work for every supported
-  country.
+  [src/lib/core/i18n/](src/lib/core/i18n/) (`CountryCode`), one file per language.
+  [nl.ts](src/lib/core/i18n/nl.ts) is the reference language: its keys define the
+  `Translations` shape, and the other language files are checked against it, so a
+  new string has to be added everywhere before the project type-checks. Any
+  user-facing formatting — prices, delivery windows, image language — must work
+  for every supported country.
 
 ## Commands
 
