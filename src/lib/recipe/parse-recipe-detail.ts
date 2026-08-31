@@ -1,5 +1,5 @@
-import { cleanMarkdown, collectMarkdowns, stripColorTags } from "@/lib/pml/pml-helpers";
 import type { AllergenInfo, NutritionRow, RecipeDetail, RecipeIngredient } from "@/lib/core/types";
+import { cleanMarkdown, collectMarkdowns, stripColorTags } from "@/lib/pml/pml-helpers";
 
 const ALLERGEN_CONFIRMED_BG = "#fef3c7";
 const ALLERGEN_CONFIRMED_TEXT = "#92400e";

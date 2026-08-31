@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, SavedRecipesApiResponse } from "@/lib/core/types";
+import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
 
 /**
  * Saved recipe IDs for the logged-in user.

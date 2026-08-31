@@ -331,7 +331,13 @@ function LoginForm() {
             disabled={isLoading}
             className="bg-picnic-red hover:bg-picnic-red-dark focus:ring-picnic-red flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
-            {isLoading ? <Spinner ariaLabel={t.loadingAriaLabel} /> : showTwoFactor ? t.verifyButton : t.loginButton}
+            {isLoading ? (
+              <Spinner ariaLabel={t.loadingAriaLabel} />
+            ) : showTwoFactor ? (
+              t.verifyButton
+            ) : (
+              t.loginButton
+            )}
           </button>
         </form>
 

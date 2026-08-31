@@ -5,12 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
+import { SharedHeader } from "@/components/layout/shared-header";
+import { RecipeCard } from "@/components/recipe/recipe-card";
+import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { RecipeCard } from "@/components/recipe/recipe-card";
-import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import { usePageTitle } from "@/hooks/use-page-title";

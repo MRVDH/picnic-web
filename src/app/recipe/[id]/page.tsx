@@ -4,23 +4,23 @@ import { use, useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { AllergenBadges } from "@/components/product/allergen-badges";
 import { CartToast } from "@/components/cart/cart-toast";
-import { ErrorView } from "@/components/ui/error-view";
-import { FavoriteButton } from "@/components/recipe/favorite-button";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SharedHeader } from "@/components/layout/shared-header";
+import { AllergenBadges } from "@/components/product/allergen-badges";
 import { NutritionTable } from "@/components/product/nutrition-table";
+import { FavoriteButton } from "@/components/recipe/favorite-button";
 import { RecipeHeroImage } from "@/components/recipe/recipe-hero-image";
 import { RecipeIngredientRow } from "@/components/recipe/recipe-ingredient-row";
-import { SharedHeader } from "@/components/layout/shared-header";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { formatEuroPrice } from "@/lib/core/format-price";
-import { renderMarkdownBold } from "@/lib/pml/render-markdown-bold";
 import type { ApiErrorResponse, RecipeDetail } from "@/lib/core/types";
+import { renderMarkdownBold } from "@/lib/pml/render-markdown-bold";
 
 type PageState =
   | { status: "loading" }
