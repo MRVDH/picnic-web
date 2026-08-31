@@ -1,6 +1,6 @@
-import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import type { RecipeItem } from "@/lib/core/types";
+import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
 
 /** Fusion page holding the user's saved recipes. */
 const SAVED_PAGE_ID = "saved-deep-dive-page-content";

@@ -71,7 +71,7 @@ export function CategoryCheckboxPanel({
         type="button"
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
-        className={`focus:ring-picnic-red flex w-full items-center justify-between gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-2.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
+        className={`focus:ring-picnic-red border-card-border bg-card-bg flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
       >
         <span className="text-foreground truncate">{t.cookbookCategoryLabel}</span>
         <svg
@@ -89,7 +89,7 @@ export function CategoryCheckboxPanel({
 
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute left-0 z-50 mt-1.5 max-h-[70vh] w-full overflow-y-auto rounded-xl border border-card-border bg-card-bg py-1 shadow-lg">
+        <div className="border-card-border bg-card-bg absolute left-0 z-50 mt-1.5 max-h-[70vh] w-full overflow-y-auto rounded-xl border py-1 shadow-lg">
           <label className={rowClass}>
             <input
               ref={masterRef}
