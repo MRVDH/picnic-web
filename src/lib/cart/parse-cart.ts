@@ -46,11 +46,7 @@ function mergeOverrides(decorators: RawDecorator[], overrides: RawDecorator[]): 
   return result;
 }
 
-/**
- * Apply decorator_overrides from the top-level response to each order line and
- * its articles by matching the map key to item id fields.
- */
-function applyDecoratorOverrides(
+export function applyDecoratorOverrides(
   items: unknown[],
   overridesMap: Record<string, unknown>
 ): unknown[] {
@@ -310,7 +306,7 @@ function extractSuggestions(raw: Record<string, unknown>): SliderProduct[] {
 
 // ─── Order line → CartItem ────────────────────────────────────────────────────
 
-function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
+export function mapOrderLineToCartItem(rawLine: unknown): CartItem | null {
   if (!isObject(rawLine)) return null;
 
   const lineId = asString(rawLine["id"]);
