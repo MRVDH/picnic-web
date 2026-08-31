@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "next": "16.2.11",
-    "picnic-api": "^4.6.0",
+    "picnic-api": "github:veitforabetterworld/picnic-api#feat/checkout",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
