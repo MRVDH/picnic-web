@@ -173,7 +173,7 @@ export function CartPageContent({
 
       <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
 
-      <CheckoutCta />
+      <CheckoutCta totalPrice={cart.totalPrice} minimumOrderValue={cart.minimumOrderValue} />
 
       {isConfirmOpen && (
         <ConfirmModal
