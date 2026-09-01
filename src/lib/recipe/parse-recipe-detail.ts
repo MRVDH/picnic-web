@@ -1,5 +1,7 @@
 import type { AllergenInfo, NutritionRow, RecipeDetail, RecipeIngredient } from "@/lib/core/types";
+import type { AnalyticsContext } from "@/lib/pml/pml-helpers";
 import { cleanMarkdown, collectMarkdowns, stripColorTags } from "@/lib/pml/pml-helpers";
+import { extractPromotionLabel } from "@/lib/product/extract-card-data";
 
 const ALLERGEN_CONFIRMED_BG = "#fef3c7";
 const ALLERGEN_CONFIRMED_TEXT = "#92400e";
@@ -388,6 +390,12 @@ function buildIngredientTileNameMap(rawPage: unknown): Map<string, string> {
       );
       if (productCtx) {
         const productId = (productCtx.data as PmlRecord).product_id as string;
+        // The promotion tier label ("Family", "Prijskampioen") renders as its own
+        // line above the name and clears every check below. The API reports its
+        // exact text in the analytics contexts, so drop that line rather than
+        // guessing at the label vocabulary. Undefined when the tile has no label,
+        // which never equals a candidate.
+        const promotionLabel = extractPromotionLabel(ctxs as AnalyticsContext[])?.toLowerCase();
         const markdowns: string[] = [];
         getMarkdowns(o.pml, markdowns);
         const clean = markdowns
@@ -410,7 +418,8 @@ function buildIngredientTileNameMap(rawPage: unknown): Map<string, string> {
             /\p{L}{2}/u.test(t) &&
             // Quantity lines ("500 g", "1 Stück", "2 x 400 ml") sit above the name
             // in the tile; without this they win and the real name is never used.
-            !QUANTITY_ONLY_RE.test(t)
+            !QUANTITY_ONLY_RE.test(t) &&
+            t.toLowerCase() !== promotionLabel
         );
         if (name && productId && !result.has(productId)) result.set(productId, name);
         return;
