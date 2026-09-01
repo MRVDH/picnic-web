@@ -1,3 +1,11 @@
+import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
+import type { PmlNode, SellingUnitTileContainer } from "@/lib/pml/pml-helpers";
+import {
+  collectMarkdowns,
+  findNodeByIdSubstring,
+  findSellingUnitContainers,
+  stripColorTags,
+} from "@/lib/pml/pml-helpers";
 import {
   extractDisplayPriceColor,
   extractOriginalPriceFromPml,
@@ -7,14 +15,6 @@ import {
   findTextStackChildren,
 } from "@/lib/product/extract-card-data";
 import { parseContentPageSections } from "@/lib/search/parse-content-page";
-import type { PmlNode, SellingUnitTileContainer } from "@/lib/pml/pml-helpers";
-import {
-  collectMarkdowns,
-  findNodeByIdSubstring,
-  findSellingUnitContainers,
-  stripColorTags,
-} from "@/lib/pml/pml-helpers";
-import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
 
 /** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
 function parsePriceRangesFromRaw(raw: unknown[] | null): BundleThreshold[] | null {
@@ -208,7 +208,31 @@ export function parseFusionSearchSections(rawPage: unknown): {
   return { sections, products };
 }
 
-/** Parse interleaved header/wrapper children into sections. */
+/** True if `id` is a wrapper for `sectionKey` (`…-Key` or `…-Key__N`). */
+function isWrapperForSection(id: string, sectionKey: string): boolean {
+  const prefix = WRAPPER_PREFIX + sectionKey;
+  return id === prefix || id.startsWith(prefix + "__");
+}
+
+/** Collect consecutive wrappers for a section key starting at `start`. */
+function collectWrappers(children: PmlRecord[], start: number, sectionKey: string): number {
+  let j = start;
+  while (j < children.length) {
+    const nextId = (children[j].id as string) ?? "";
+    if (!isWrapperForSection(nextId, sectionKey)) break;
+    j++;
+  }
+  return j;
+}
+
+/**
+ * Parse interleaved header/wrapper children into sections.
+ *
+ * Picnic omits the header for the primary result group (e.g. "Hefe" →
+ * wrappers `…-Backpulver & Hefe` with no `…-header-wrapper-…`). Those
+ * orphan wrappers were skipped, so only "Siehe auch" survived. Use the
+ * wrapper id suffix as the section title when no header exists.
+ */
 function parseSectionsFromChildren(
   children: PmlRecord[],
   sections: SearchSection[],
@@ -222,24 +246,20 @@ function parseSectionsFromChildren(
     if (childId.startsWith(HEADER_PREFIX)) {
       const sectionKey = childId.slice(HEADER_PREFIX.length);
       const title = extractSectionTitle(child);
-
-      // Collect following wrapper nodes that belong to this section
-      // Wrappers have IDs like: WRAPPER_PREFIX + sectionKey or sectionKey__N
-      const wrappers: PmlRecord[] = [];
-      let j = i + 1;
-      while (j < children.length) {
-        const nextId = (children[j].id as string) ?? "";
-        if (!nextId.startsWith(WRAPPER_PREFIX + sectionKey)) break;
-        wrappers.push(children[j]);
-        j++;
-      }
-
-      const products = extractProductsFromWrappers(wrappers, seenIds);
+      const j = collectWrappers(children, i + 1, sectionKey);
+      const products = extractProductsFromWrappers(children.slice(i + 1, j), seenIds);
       if (products.length > 0) {
         sections.push({ title, products });
       }
-
-      i = j; // Skip past the wrappers we just consumed
+      i = j;
+    } else if (childId.startsWith(WRAPPER_PREFIX)) {
+      const sectionKey = childId.slice(WRAPPER_PREFIX.length).replace(/__\d+$/, "");
+      const j = collectWrappers(children, i, sectionKey);
+      const products = extractProductsFromWrappers(children.slice(i, j), seenIds);
+      if (products.length > 0) {
+        sections.push({ title: sectionKey, products });
+      }
+      i = j;
     } else {
       i++;
     }
