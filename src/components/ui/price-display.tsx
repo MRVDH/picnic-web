@@ -13,8 +13,12 @@ type PriceDisplayProps = {
   displayPriceColor?: string | null;
 };
 
-export function PriceDisplay({ displayPrice, originalPrice, displayPriceColor }: PriceDisplayProps) {
-  const hasDiscount = originalPrice !== null;
+export function PriceDisplay({
+  displayPrice,
+  originalPrice,
+  displayPriceColor,
+}: PriceDisplayProps) {
+  const hasDiscount = originalPrice !== null && originalPrice > displayPrice;
   const priceColorClass = displayPriceColor
     ? ""
     : hasDiscount

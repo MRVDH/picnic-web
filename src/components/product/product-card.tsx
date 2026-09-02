@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+import { PriceDisplay } from "@/components/ui/price-display";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { buildImageUrl } from "@/lib/core/image-url";
 import type { BundleProgress, Product } from "@/lib/core/types";
-
-import { Badge } from "@/components/ui/badge";
-import { PriceDisplay } from "@/components/ui/price-display";
-import { QuantityStepper } from "@/components/ui/quantity-stepper";
 
 const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 const FLAG_SIZE = 14;
@@ -44,7 +43,10 @@ export function ProductCard({ product, href }: ProductCardProps) {
   // When a bundle threshold is active, compute the discounted unit price.
   const bundleUnitPrice = getActiveBundlePrice(bundleProgress, quantity);
   const effectiveDisplayPrice = bundleUnitPrice ?? product.displayPrice;
-  const bundleOriginalPrice = bundleUnitPrice ? product.displayPrice : null;
+  const bundleOriginalPrice =
+    bundleUnitPrice !== null && bundleUnitPrice < product.displayPrice
+      ? product.displayPrice
+      : null;
 
   const cardContent = (
     <div
@@ -256,4 +258,3 @@ function CartActionOverlay({
     </div>
   );
 }
-
