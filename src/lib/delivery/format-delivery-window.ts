@@ -64,11 +64,12 @@ const MONTH_NAMES: Record<CountryCode, readonly string[]> = {
   ],
 };
 
-const RELATIVE_LABELS: Record<CountryCode, { today: string; tomorrow: string }> = {
-  NL: { today: "Vandaag", tomorrow: "Morgen" },
-  DE: { today: "Heute", tomorrow: "Morgen" },
-  FR: { today: "Aujourd'hui", tomorrow: "Demain" },
-};
+const RELATIVE_LABELS: Record<CountryCode, { today: string; tomorrow: string; yesterday: string }> =
+  {
+    NL: { today: "Vandaag", tomorrow: "Morgen", yesterday: "Gisteren" },
+    DE: { today: "Heute", tomorrow: "Morgen", yesterday: "Gestern" },
+    FR: { today: "Aujourd'hui", tomorrow: "Demain", yesterday: "Hier" },
+  };
 
 /**
  * Format a delivery window for the cart banner.
@@ -127,6 +128,33 @@ export function formatDeliveryWindowText(
   const end = new Date(windowEnd);
   const dayLabel = getRelativeDayLabel(start, countryCode);
   return `${dayLabel} ${formatTime(start)} - ${formatTime(end)}`;
+}
+
+/**
+ * Day label for the deliveries list, matching the app: "Gisteren", "Vandaag",
+ * "Morgen", or otherwise the weekday and date without a year, e.g.
+ * "Vrijdag 28 augustus" / "Freitag, 28. August" / "Vendredi 28 août".
+ */
+export function formatDeliveryDayText(
+  isoTimestamp: string | null,
+  countryCode: CountryCode
+): string {
+  if (!isoTimestamp) return "—";
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  const today = new Date();
+  const target = toDateString(date);
+  const labels = RELATIVE_LABELS[countryCode];
+  if (target === toDateString(today)) return labels.today;
+  if (target === toDateString(addDays(today, 1))) return labels.tomorrow;
+  if (target === toDateString(addDays(today, -1))) return labels.yesterday;
+
+  const weekday = DAY_NAMES[countryCode][date.getDay()];
+  const day = date.getDate();
+  const month = MONTH_NAMES[countryCode][date.getMonth()];
+  if (countryCode === "DE") return `${weekday}, ${day}. ${month}`;
+  return `${weekday} ${day} ${month}`;
 }
 
 /**
