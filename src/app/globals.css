@@ -66,6 +66,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Always reserve the scrollbar width so short pages do not shift when it appears. */
+  scrollbar-gutter: stable;
 }
 
 body {
