@@ -66,6 +66,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Always reserve the scrollbar width so short pages do not shift when it appears. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -78,4 +80,11 @@ button,
 [role="button"],
 summary {
   cursor: pointer;
+}
+
+/* Leave room for the fixed mobile tab bar (see MobileTabBar). */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
 }

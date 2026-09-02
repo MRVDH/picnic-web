@@ -1,193 +1,89 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
-import { SearchBar } from "@/components/search/search-bar";
-import { useCartOptional } from "@/contexts/cart-context";
+import { AccountPanel } from "@/components/layout/account-panel";
+import { type CartBadgeState, DesktopNav, MobileTabBar } from "@/components/layout/app-nav";
+import { UserIcon } from "@/components/layout/nav-icons";
+import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { useTranslations } from "@/contexts/country-context";
-import { formatPrice } from "@/lib/core/format-price";
+import { useHeaderSections } from "@/contexts/header-sections-context";
+import { useCartBadgeCache, writeCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
-// ─── Cart badge state ─────────────────────────────────────────────────────────
-
-type CartBadgeState =
-  | { status: "loading" }
-  | { status: "ready"; totalPrice: number; totalCount: number }
-  | { status: "error" };
-
-// ─── Cart icon ────────────────────────────────────────────────────────────────
-
-function CartIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.75}
-      stroke="currentColor"
-      className="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-      />
-    </svg>
-  );
-}
-
-// ─── Cart badge ───────────────────────────────────────────────────────────────
-
-function CartBadge({ state }: { state: CartBadgeState }) {
-  const showBadge = state.status === "ready" && state.totalCount > 0;
-
-  return (
-    <Link
-      href="/cart"
-      className="hover:text-foreground relative flex items-center text-gray-600 transition-colors"
-      aria-label="Winkelwagen"
-    >
-      <CartIcon />
-      {showBadge && (
-        <span className="bg-picnic-red ml-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white">
-          {formatPrice(state.totalPrice)}
-        </span>
-      )}
-    </Link>
-  );
-}
-
-// ─── Shared header ────────────────────────────────────────────────────────────
-
-type SharedHeaderProps = {
-  bottomBar?: React.ReactNode;
-  cartBadgeOverride?: {
-    totalPrice: number;
-    totalCount: number;
-  } | null;
-};
-
 /**
- * Sticky header shared across all authenticated pages.
- * Always renders the search bar and logout button.
- * Fetches /api/cart on mount and shows a price badge on the cart icon.
- * Badge is hidden while loading, on error, or when the cart is empty.
+ * Header and mobile tab bar for all authenticated pages. Rendered once by the
+ * (app) layout, so it stays mounted across client-side navigation.
+ *
+ * Desktop: logo, the five app tabs inline, and the account button. Mobile
+ * (< md): logo and account button on top, the five tabs fixed at the bottom.
+ *
+ * The cart badge reads the shared badge store (last known total, persisted in
+ * localStorage): CartProvider and the cart page write to it whenever their
+ * totals change, and this header refreshes it from /api/cart on every route
+ * change so pages without a cart context (checkout, deliveries) stay current.
+ * The badge is hidden until a total is known or when the cart is empty.
  */
-export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHeaderProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const urlQuery = searchParams.get("q") ?? "";
-
-  const cartContext = useCartOptional();
-  const [fetchedState, setFetchedState] = useState<CartBadgeState>({
-    status: "loading",
-  });
-
-  // Only fetch independently when NOT inside a CartProvider.
-  const shouldFetchIndependently = !cartContext;
+export function SharedHeader() {
+  const t = useTranslations();
+  const pathname = usePathname();
+  const sections = useHeaderSections();
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
-    if (!shouldFetchIndependently) return;
-
     const controller = new AbortController();
 
     fetch("/api/cart", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CartData | ApiErrorResponse) => {
-        if ("error" in data) {
-          setFetchedState({ status: "error" });
-          return;
-        }
-        setFetchedState({
-          status: "ready",
-          totalPrice: data.totalPrice,
-          totalCount: data.totalCount,
-        });
+        if ("error" in data) return;
+        writeCartBadgeCache({ totalPrice: data.totalPrice, totalCount: data.totalCount });
       })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setFetchedState({ status: "error" });
+      .catch(() => {
+        // Aborted or failed: the badge keeps showing the last known total.
       });
 
-    return () => {
-      controller.abort();
-    };
-  }, [shouldFetchIndependently]);
+    return () => controller.abort();
+  }, [pathname]);
 
-  // Derive badge state: prefer context (reactive), fall back to own fetch.
-  const cartState: CartBadgeState = cartBadgeOverride
-    ? {
-        status: "ready",
-        totalPrice: cartBadgeOverride.totalPrice,
-        totalCount: cartBadgeOverride.totalCount,
-      }
-    : cartContext
-      ? cartContext.isLoading
-        ? { status: "loading" }
-        : {
-            status: "ready",
-            totalPrice: cartContext.totalPrice,
-            totalCount: cartContext.totalCount,
-          }
-      : fetchedState;
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      router.push(`/?q=${encodeURIComponent(query)}`);
-    },
-    [router]
-  );
-
-  const t = useTranslations();
-
-  const handleSignOut = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
-  }, []);
+  const cachedBadge = useCartBadgeCache();
+  const cartState: CartBadgeState = cachedBadge
+    ? { status: "ready", ...cachedBadge }
+    : { status: "loading" };
 
   return (
-    <header className="border-card-border sticky top-0 z-20 border-b bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-2">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="text-picnic-red shrink-0 text-xl font-bold tracking-tight select-none"
-          aria-label="Picnic Web"
-        >
-          Picnic Web
-        </Link>
+    <>
+      <header className="border-card-border sticky top-0 z-20 border-b bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2">
+          <Link
+            href="/"
+            className="text-picnic-red shrink-0 text-xl font-bold tracking-tight select-none"
+            aria-label="Picnic Web"
+          >
+            Picnic Web
+          </Link>
 
-        {/* Search bar + logout */}
-        <div className="flex flex-1 items-center gap-4">
-          <SearchBar
-            key={urlQuery}
-            onSearch={handleSearch}
-            isLoading={false}
-            initialQuery={urlQuery}
-          />
+          <DesktopNav cartState={cartState} />
+
           <button
             type="button"
-            onClick={handleSignOut}
-            className="hover:text-foreground shrink-0 text-sm text-gray-500 transition-colors"
+            onClick={() => setAccountOpen(true)}
+            aria-label={t.navAccount}
+            aria-haspopup="dialog"
+            aria-expanded={accountOpen}
+            className="hover:text-foreground shrink-0 rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
           >
-            {t.signOut}
+            <UserIcon className="h-6 w-6" />
           </button>
         </div>
+        {sections.length > 0 && <SectionNavBar sections={sections} />}
+      </header>
 
-        {/* Cart icon + deliveries */}
-        <Link
-          href="/deliveries"
-          className="hover:text-foreground shrink-0 text-sm font-medium text-gray-600 transition-colors"
-        >
-          {t.deliveriesNavLabel}
-        </Link>
-        <CartBadge state={cartState} />
-      </div>
-      {bottomBar}
-    </header>
+      <MobileTabBar cartState={cartState} />
+      <AccountPanel open={accountOpen} onClose={() => setAccountOpen(false)} />
+    </>
   );
 }
