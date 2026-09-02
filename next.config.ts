@@ -3,13 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      // Search used to live on the home route; keep old ?q= links working.
-      {
-        source: "/",
-        has: [{ type: "query", key: "q" }],
-        destination: "/search",
-        permanent: false,
-      },
+      // Search is the landing page for now (the Ontdek home at /discover is still a TODO).
+      // Query params such as ?q= are carried along, which keeps old search links working.
+      { source: "/", destination: "/search", permanent: false },
     ];
   },
 };
