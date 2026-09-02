@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { DeliveryCard } from "@/components/delivery/delivery-card";
+import { ParcelList } from "@/components/delivery/parcel-list";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import type {
-  DeliveryListItem,
   DeliveriesApiResponse,
+  DeliveryListItem,
   ParcelItem,
   ParcelsApiResponse,
 } from "@/lib/core/delivery-types";
@@ -175,34 +176,7 @@ export default function DeliveriesPage() {
           </div>
         )}
 
-        {parcels.length > 0 && (
-          <section className="mt-10">
-            <h2 className="text-foreground mb-3 text-base font-semibold">{t.deliveriesParcelsTitle}</h2>
-            <div className="space-y-2">
-              {parcels.map((parcel) => (
-                <div
-                  key={parcel.id}
-                  className="border-card-border bg-card-bg flex items-center justify-between rounded-xl border p-4"
-                >
-                  <div>
-                    <p className="text-foreground font-medium">{parcel.carrier}</p>
-                    <p className="text-text-muted text-sm">{parcel.status}</p>
-                  </div>
-                  {parcel.trackingUrl && (
-                    <a
-                      href={parcel.trackingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-picnic-red text-sm font-medium hover:underline"
-                    >
-                      Track
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <ParcelList parcels={parcels} />
       </main>
     </div>
   );
