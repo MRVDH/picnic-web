@@ -5,7 +5,8 @@ import { asArray, asString, isObject } from "@/lib/core/type-guards";
  * Parse the raw `/parcels` response into ParcelItems.
  *
  * Raw shape (picnic-api `Parcel`):
- * `{ id, handler_name, active, current_status: { status, timestamp } }`.
+ * `{ id, handler_name, active, current_status: { status, timestamp } }`, plus
+ * possibly `tracking_url` for parcels still in transit (unverified).
  */
 export function parseParcels(rawData: unknown): ParcelItem[] {
   const rawList = Array.isArray(rawData) ? rawData : asArray(rawData);
@@ -22,6 +23,7 @@ export function parseParcels(rawData: unknown): ParcelItem[] {
         active: raw["active"] === true,
         status: statusObj ? asString(statusObj["status"]) : asString(raw["status"]),
         statusTimestamp: statusObj ? asString(statusObj["timestamp"]) : "",
+        trackingUrl: asString(raw["tracking_url"]) || null,
       };
     })
     .filter((item): item is ParcelItem => item !== null);

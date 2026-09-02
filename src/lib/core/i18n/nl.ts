@@ -258,6 +258,7 @@ export const nl = {
   deliveriesParcelsProcessed: "Verwerkt",
   deliveriesParcelName: "{carrier}-pakket",
   deliveriesParcelStatusHandedOver: "Opgehaald door Picnic",
+  deliveriesParcelTrack: "Volgen",
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",

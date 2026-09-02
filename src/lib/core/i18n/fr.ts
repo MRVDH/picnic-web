@@ -255,6 +255,7 @@ export const fr = {
   deliveriesParcelsProcessed: "Traités",
   deliveriesParcelName: "Colis {carrier}",
   deliveriesParcelStatusHandedOver: "Récupéré par Picnic",
+  deliveriesParcelTrack: "Suivre",
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",

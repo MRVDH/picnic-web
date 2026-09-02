@@ -40,6 +40,16 @@ function ParcelRow({ parcel }: { parcel: ParcelItem }) {
           {date && <> · {date}</>}
         </p>
       </div>
+      {parcel.trackingUrl && (
+        <a
+          href={parcel.trackingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-picnic-red shrink-0 text-sm font-medium hover:underline"
+        >
+          {t.deliveriesParcelTrack}
+        </a>
+      )}
     </li>
   );
 }
