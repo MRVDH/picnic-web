@@ -12,3 +12,6 @@ export const TITLE_SEPARATOR = " - ";
 
 /** Maximum character length for page context before truncation. */
 export const MAX_TITLE_CONTEXT_LENGTH = 60;
+
+/** sessionStorage key for checkout payment session (order + transaction ids). */
+export const CHECKOUT_STORAGE_KEY = "picnic_checkout_session";
