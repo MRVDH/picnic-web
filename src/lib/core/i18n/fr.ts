@@ -211,6 +211,13 @@ export const fr = {
   recipePriceTotal: "total",
   recipeAllergens: "Contient",
   recipeMayContain: "Peut contenir",
+  recipeEditIngredient: "Modifier l'ingrédient",
+  recipeEditSave: "Enregistrer",
+  recipeEditSaving: "Enregistrement...",
+  recipeEditCancel: "Annuler",
+  recipeEditLoadError: "Impossible de charger les alternatives.",
+  recipeEditSaveError: "Impossible de modifier l'ingrédient.",
+  recipeEditUnavailable: "Produit plus disponible",
   recipeNutrition: "Valeurs nutritionnelles",
 
   // Toast / error view
