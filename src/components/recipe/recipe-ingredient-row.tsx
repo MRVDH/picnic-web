@@ -29,6 +29,8 @@ type RecipeIngredientRowProps = {
   basePortion: number;
   checked: boolean;
   onToggle: () => void;
+  /** Opens the ingredient editor; omitted when the ingredient has no component id. */
+  onEdit?: () => void;
 };
 
 export function RecipeIngredientRow({
@@ -38,6 +40,7 @@ export function RecipeIngredientRow({
   basePortion,
   checked,
   onToggle,
+  onEdit,
 }: RecipeIngredientRowProps) {
   const countryCode = useCountryCode();
   const [imgSrc, setImgSrc] = useState(
@@ -128,6 +131,23 @@ export function RecipeIngredientRow({
           </p>
         )}
       </div>
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={ingredient.name}
+          className="text-text-muted hover:text-foreground ml-2 shrink-0 p-1 transition-colors"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path
+              d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
