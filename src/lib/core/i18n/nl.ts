@@ -218,6 +218,8 @@ export const nl = {
   // Deliveries
   deliveriesTitle: "Bestellingen",
   deliveriesNavLabel: "Bestellingen",
+  deliveriesTabAll: "Alle",
+  deliveriesEmptyAll: "Nog geen bestellingen.",
   deliveriesTabCurrent: "Actueel",
   deliveriesTabCompleted: "Afgerond",
   deliveriesTabCancelled: "Geannuleerd",

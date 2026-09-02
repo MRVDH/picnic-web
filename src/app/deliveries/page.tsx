@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { DeliveryCard } from "@/components/delivery/delivery-card";
+import { DeliveryList } from "@/components/delivery/delivery-list";
 import { ParcelList } from "@/components/delivery/parcel-list";
 import { SharedHeader } from "@/components/layout/shared-header";
 import { ErrorView } from "@/components/ui/error-view";
@@ -18,14 +18,18 @@ import type {
 } from "@/lib/core/delivery-types";
 import type { ApiErrorResponse } from "@/lib/core/types";
 
-type DeliveryTab = "CURRENT" | "COMPLETED" | "CANCELLED";
+/** "ALL" fetches without a status filter; the others map to Picnic's status filter. */
+type DeliveryTab = "ALL" | "CURRENT" | "COMPLETED" | "CANCELLED";
 
 type ListState =
   | { status: "loading" }
   | { status: "success"; deliveries: DeliveryListItem[] }
   | { status: "error"; message: string };
 
-const TABS: DeliveryTab[] = ["CURRENT", "COMPLETED", "CANCELLED"];
+const TABS: DeliveryTab[] = ["ALL", "CURRENT", "COMPLETED", "CANCELLED"];
+
+/** Tabs that can contain CURRENT deliveries, for which we poll live-tracking availability. */
+const TABS_WITH_CURRENT: ReadonlySet<DeliveryTab> = new Set(["ALL", "CURRENT"]);
 
 const EMPTY_LIVE_TRACKING_IDS: ReadonlySet<string> = new Set();
 
@@ -33,7 +37,7 @@ export default function DeliveriesPage() {
   const t = useTranslations();
   usePageTitle(t.deliveriesTitle);
 
-  const [activeTab, setActiveTab] = useState<DeliveryTab>("CURRENT");
+  const [activeTab, setActiveTab] = useState<DeliveryTab>("ALL");
   const [listState, setListState] = useState<ListState>({ status: "loading" });
   const [parcels, setParcels] = useState<ParcelItem[]>([]);
   const [retryCount, setRetryCount] = useState(0);
@@ -42,7 +46,8 @@ export default function DeliveriesPage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`/api/deliveries?status=${activeTab}`, { signal: controller.signal })
+    const url = activeTab === "ALL" ? "/api/deliveries" : `/api/deliveries?status=${activeTab}`;
+    fetch(url, { signal: controller.signal })
       .then((res) => res.json())
       .then((data: DeliveriesApiResponse & Partial<ApiErrorResponse>) => {
         if ("error" in data && data.error) {
@@ -77,7 +82,7 @@ export default function DeliveriesPage() {
   }, [retryCount]);
 
   useEffect(() => {
-    if (listState.status !== "success" || activeTab !== "CURRENT") return;
+    if (listState.status !== "success" || !TABS_WITH_CURRENT.has(activeTab)) return;
 
     const currentDeliveries = listState.deliveries.filter((d) => d.status === "CURRENT");
     const controller = new AbortController();
@@ -103,7 +108,7 @@ export default function DeliveriesPage() {
   }, [listState, activeTab]);
 
   const visibleLiveTrackingIds =
-    listState.status === "success" && activeTab === "CURRENT"
+    listState.status === "success" && TABS_WITH_CURRENT.has(activeTab)
       ? liveTrackingIds
       : EMPTY_LIVE_TRACKING_IDS;
 
@@ -112,19 +117,19 @@ export default function DeliveriesPage() {
     setRetryCount((c) => c + 1);
   }, []);
 
-  const emptyMessage =
-    activeTab === "CURRENT"
-      ? t.deliveriesEmptyCurrent
-      : activeTab === "COMPLETED"
-        ? t.deliveriesEmptyCompleted
-        : t.deliveriesEmptyCancelled;
+  const EMPTY_MESSAGES: Record<DeliveryTab, string> = {
+    ALL: t.deliveriesEmptyAll,
+    CURRENT: t.deliveriesEmptyCurrent,
+    COMPLETED: t.deliveriesEmptyCompleted,
+    CANCELLED: t.deliveriesEmptyCancelled,
+  };
 
-  const tabLabel = (tab: DeliveryTab) =>
-    tab === "CURRENT"
-      ? t.deliveriesTabCurrent
-      : tab === "COMPLETED"
-        ? t.deliveriesTabCompleted
-        : t.deliveriesTabCancelled;
+  const TAB_LABELS: Record<DeliveryTab, string> = {
+    ALL: t.deliveriesTabAll,
+    CURRENT: t.deliveriesTabCurrent,
+    COMPLETED: t.deliveriesTabCompleted,
+    CANCELLED: t.deliveriesTabCancelled,
+  };
 
   const deliveries = listState.status === "success" ? listState.deliveries : [];
 
@@ -149,7 +154,7 @@ export default function DeliveriesPage() {
                   : "border-card-border border bg-white text-gray-700 hover:border-gray-400"
               }`}
             >
-              {tabLabel(tab)}
+              {TAB_LABELS[tab]}
             </button>
           ))}
         </div>
@@ -161,19 +166,11 @@ export default function DeliveriesPage() {
         )}
 
         {listState.status === "success" && deliveries.length === 0 && (
-          <p className="text-text-muted text-sm">{emptyMessage}</p>
+          <p className="text-text-muted text-sm">{EMPTY_MESSAGES[activeTab]}</p>
         )}
 
         {listState.status === "success" && deliveries.length > 0 && (
-          <div className="space-y-3">
-            {deliveries.map((delivery) => (
-              <DeliveryCard
-                key={delivery.id}
-                delivery={delivery}
-                liveTrackingAvailable={visibleLiveTrackingIds.has(delivery.id)}
-              />
-            ))}
-          </div>
+          <DeliveryList deliveries={deliveries} liveTrackingIds={visibleLiveTrackingIds} />
         )}
 
         <ParcelList parcels={parcels} />
