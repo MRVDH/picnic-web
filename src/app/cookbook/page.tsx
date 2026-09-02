@@ -4,19 +4,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { CategoryDropdown } from "@/components/ui/category-dropdown";
+import { CartToast } from "@/components/cart/cart-toast";
+import { SharedHeader } from "@/components/layout/shared-header";
+import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
+import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { RecipeCard } from "@/components/recipe/recipe-card";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { useTranslations } from "@/contexts/country-context";
+import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
 import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
 
 const PAGE_SIZE = 24;
+const DEFAULT_DAYS = 7;
+
+// Stable identity so effects keyed on the recipe list don't re-run while loading.
+const EMPTY_RECIPES: RecipeItem[] = [];
 
 type RecipesState =
   | { status: "loading" }
@@ -30,13 +36,18 @@ export default function CookbookPage() {
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<(string | null)[]>([null]);
+  const [daysCount, setDaysCount] = useState(DEFAULT_DAYS);
+  const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const dismissToast = useCallback(() => setToastMessage(null), []);
 
   // Debounce search input
   useEffect(() => {
@@ -56,33 +67,43 @@ export default function CookbookPage() {
     return () => controller.abort();
   }, []);
 
-  // Fetch recipes: search takes priority over category
+  // Fetch recipes: search takes priority over category selection
   useEffect(() => {
     const controller = new AbortController();
 
-    const url = debouncedQuery
-      ? `/api/cookbook/search?q=${encodeURIComponent(debouncedQuery)}`
-      : selectedCategory
-        ? `/api/cookbook?category=${encodeURIComponent(selectedCategory)}`
-        : "/api/cookbook";
+    // Search takes priority; otherwise fetch each selected category in parallel.
+    const urls = debouncedQuery
+      ? [`/api/cookbook/search?q=${encodeURIComponent(debouncedQuery)}`]
+      : selectedCategories.map((catId) =>
+          catId ? `/api/cookbook?category=${encodeURIComponent(catId)}` : "/api/cookbook"
+        );
 
-    fetch(url, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data: CookbookApiResponse & Partial<ApiErrorResponse>) => {
-        if ("error" in data && data.error) {
-          if (data.code === "TOKEN_EXPIRED") {
+    Promise.all(urls.map((url) => fetch(url, { signal: controller.signal }).then((r) => r.json())))
+      .then((results: (CookbookApiResponse & Partial<ApiErrorResponse>)[]) => {
+        const failed = results.find((data) => "error" in data && data.error);
+        if (failed?.error) {
+          if (failed.code === "TOKEN_EXPIRED") {
             window.location.href = TOKEN_EXPIRED_REDIRECT;
             return;
           }
-          setRecipesState({ status: "error", message: data.error });
+          setRecipesState({ status: "error", message: failed.error });
           return;
         }
-        if (data.categories?.length) setCategories(data.categories);
-        const recipes = Array.isArray(data.recipes) ? data.recipes : [];
-        if (selectedCategory) {
-          setCategoryCounts((prev) => ({ ...prev, [selectedCategory]: recipes.length }));
+
+        const withCategories = results.find((data) => data.categories?.length);
+        if (withCategories?.categories) setCategories(withCategories.categories);
+
+        const seen = new Set<string>();
+        const merged: RecipeItem[] = [];
+        for (const data of results) {
+          for (const recipe of Array.isArray(data.recipes) ? data.recipes : []) {
+            if (!seen.has(recipe.id)) {
+              seen.add(recipe.id);
+              merged.push(recipe);
+            }
+          }
         }
-        setRecipesState({ status: "success", recipes });
+        setRecipesState({ status: "success", recipes: merged });
       })
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -90,115 +111,180 @@ export default function CookbookPage() {
       });
 
     return () => controller.abort();
-  }, [debouncedQuery, selectedCategory, retryCount, t.cookbookLoadError]);
+  }, [debouncedQuery, selectedCategories, retryCount, t.cookbookLoadError]);
+
+  const allRecipes = recipesState.status === "success" ? recipesState.recipes : EMPTY_RECIPES;
+  const displayedRecipes = mealPlan ?? allRecipes;
 
   // Infinite scroll: reveal PAGE_SIZE more recipes when sentinel enters viewport
-  const allRecipes = recipesState.status === "success" ? recipesState.recipes : [];
-
   useEffect(() => {
-    if (allRecipes.length === 0) return;
+    if (displayedRecipes.length === 0) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, allRecipes.length));
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, displayedRecipes.length));
         }
       },
       { threshold: 0.1 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [allRecipes.length]);
+  }, [displayedRecipes]);
 
   const handleBack = useCallback(() => router.push("/"), [router]);
 
   const handleRetry = useCallback(() => {
+    setMealPlan(null);
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
     setRetryCount((c) => c + 1);
   }, []);
 
-  const handleSelectCategory = useCallback((catId: string | null) => {
-    setSelectedCategory(catId);
+  const handleSelectCategories = useCallback((ids: (string | null)[]) => {
+    setSelectedCategories(ids);
+    setMealPlan(null);
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const visibleRecipes = allRecipes.slice(0, visibleCount);
+  const generatePlan = useCallback(() => {
+    if (allRecipes.length === 0) return;
+    const pool = [...allRecipes];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const plan: RecipeItem[] = [];
+    for (let i = 0; i < daysCount; i++) {
+      plan.push(pool[i % pool.length]);
+    }
+    setMealPlan(plan);
+    setVisibleCount(PAGE_SIZE);
+  }, [allRecipes, daysCount]);
+
+  const checkboxOptions = [
+    { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
+    { id: "__saved__", name: t.cookbookSaved, count: categoryCounts["__saved__"] },
+    ...categories.map((c) => ({
+      id: c.id as string | null,
+      name: c.name,
+      count: categoryCounts[c.id],
+    })),
+  ];
+
+  const visibleRecipes = displayedRecipes.slice(0, visibleCount);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <SharedHeader />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-        {/* Header row */}
-        <div className="mb-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
-          >
-            ← {t.backButton}
-          </button>
-          <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
-        </div>
+    <SavedRecipesProvider showToast={setToastMessage}>
+      <div className="flex min-h-full flex-1 flex-col">
+        <SharedHeader />
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          {/* Header row */}
+          <div className="mb-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
+            >
+              ← {t.backButton}
+            </button>
+            <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
+          </div>
 
-        {/* Controls row: category dropdown + search */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <CategoryDropdown
-            options={[
-              { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
-              { id: "__saved__", name: t.cookbookSaved, count: categoryCounts["__saved__"] },
-              ...categories.map((c) => ({
-                id: c.id as string | null,
-                name: c.name,
-                count: categoryCounts[c.id],
-              })),
-            ]}
-            value={selectedCategory}
-            onChange={handleSelectCategory}
-            disabled={!!debouncedQuery}
-          />
-          <RecipeSearchInput
-            value={searchInput}
-            placeholder={t.cookbookSearchPlaceholder}
-            onChange={(val) => {
-              setSearchInput(val);
-              setRecipesState({ status: "loading" });
-              setVisibleCount(PAGE_SIZE);
-            }}
-          />
-        </div>
-
-        {/* Content */}
-        {recipesState.status === "loading" && <LoadingSpinner />}
-
-        {recipesState.status === "error" && (
-          <ErrorView message={recipesState.message} onRetry={handleRetry} />
-        )}
-
-        {recipesState.status === "success" && allRecipes.length === 0 && (
-          <p className="text-text-muted text-sm">{t.noRecipes}</p>
-        )}
-
-        {recipesState.status === "success" && allRecipes.length > 0 && (
-          <>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {visibleRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
-            </div>
-
-            {/* Sentinel div: when visible, triggers next batch */}
-            {visibleCount < allRecipes.length && (
-              <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
-                <LoadingSpinner />
+          {/* Controls row */}
+          <div className="mb-6 flex flex-wrap gap-4">
+            <div className="flex flex-col gap-2">
+              <CategoryCheckboxPanel
+                options={checkboxOptions}
+                value={selectedCategories}
+                onChange={handleSelectCategories}
+                disabled={!!debouncedQuery}
+                selectAllLabel={t.mealPlanSelectAll}
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={daysCount}
+                  onChange={(e) => {
+                    setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
+                    setMealPlan(null);
+                  }}
+                  disabled={!!debouncedQuery}
+                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                />
+                <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
+                <button
+                  type="button"
+                  onClick={generatePlan}
+                  disabled={!!debouncedQuery || recipesState.status !== "success"}
+                  className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {t.mealPlanGenerate}
+                </button>
               </div>
-            )}
-          </>
-        )}
-      </main>
-    </div>
+            </div>
+            <div className="flex flex-1 items-start">
+              <RecipeSearchInput
+                value={searchInput}
+                placeholder={t.cookbookSearchPlaceholder}
+                onChange={(val) => {
+                  setSearchInput(val);
+                  setMealPlan(null);
+                  setRecipesState({ status: "loading" });
+                  setVisibleCount(PAGE_SIZE);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          {recipesState.status === "loading" && <LoadingSpinner />}
+
+          {recipesState.status === "error" && (
+            <ErrorView message={recipesState.message} onRetry={handleRetry} />
+          )}
+
+          {recipesState.status === "success" && displayedRecipes.length === 0 && (
+            <p className="text-text-muted text-sm">{t.noRecipes}</p>
+          )}
+
+          {recipesState.status === "success" && displayedRecipes.length > 0 && (
+            <>
+              {mealPlan && (
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="text-text-muted text-sm">
+                    {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={generatePlan}
+                    className="text-picnic-red text-sm font-medium hover:underline"
+                  >
+                    {t.mealPlanRegenerate}
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {visibleRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+
+              {visibleCount < displayedRecipes.length && (
+                <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
+                  <LoadingSpinner />
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+      <CartToast message={toastMessage} onDismiss={dismissToast} />
+    </SavedRecipesProvider>
   );
 }

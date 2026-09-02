@@ -17,7 +17,8 @@ async function fetchCount(client: PicnicClientInstance, categoryId: string): Pro
   try {
     const rawPage = await client.app.getPage(categoryId);
     return parseCookbookPage(rawPage).length;
-  } catch {
+  } catch (err) {
+    console.error(`[cookbook/counts] Failed to fetch count for "${categoryId}":`, err);
     return 0;
   }
 }
@@ -52,7 +53,10 @@ export async function GET(
       __saved__: savedCount,
       ...Object.fromEntries(categoryEntries),
     };
-    cache.set(cacheKey, { counts, expiresAt: Date.now() + CACHE_TTL_MS });
+    const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+    if (total > 0) {
+      cache.set(cacheKey, { counts, expiresAt: Date.now() + CACHE_TTL_MS });
+    }
     return NextResponse.json(counts);
   } catch (error) {
     if (isApiAuthError(error)) {

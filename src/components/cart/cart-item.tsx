@@ -83,6 +83,12 @@ export function CartItemCard({ item, onIncrement, onDecrement }: CartItemCardPro
             <PriceDisplay displayPrice={item.displayPrice} originalPrice={item.originalPrice} />
           </div>
         )}
+        {!item.isUnavailable && !onIncrement && !onDecrement && (
+          <div className="flex shrink-0 flex-col items-end justify-center gap-1">
+            <span className="text-foreground text-sm font-medium">×{item.quantity}</span>
+            <PriceDisplay displayPrice={item.displayPrice} originalPrice={item.originalPrice} />
+          </div>
+        )}
       </div>
 
       {/* Unavailability explanation (US4) */}

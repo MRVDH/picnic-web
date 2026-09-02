@@ -178,7 +178,13 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
           </button>
         </div>
 
-        {/* Cart icon */}
+        {/* Cart icon + deliveries */}
+        <Link
+          href="/deliveries"
+          className="hover:text-foreground shrink-0 text-sm font-medium text-gray-600 transition-colors"
+        >
+          {t.deliveriesNavLabel}
+        </Link>
         <CartBadge state={cartState} />
       </div>
       {bottomBar}
