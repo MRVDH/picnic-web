@@ -106,14 +106,8 @@ export async function POST(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const rawCart = await (client as unknown as SendRequestClient).sendRequest(
-      "POST",
-      "/cart/set_delivery_slot",
-      {
-        slot_id: body.slotId,
-      },
-      false
-    );
+    // Picnic requires x-picnic-agent / x-picnic-did for cart mutations (same as add/remove).
+    const rawCart = await client.cart.setDeliverySlot(body.slotId);
 
     const cartData = parseCartResponse(rawCart, countryCode);
 
