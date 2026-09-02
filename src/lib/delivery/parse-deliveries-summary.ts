@@ -1,14 +1,7 @@
-import type { CountryCode } from "@/lib/core/types";
 import type { DeliveryListItem, DeliveryStatus } from "@/lib/core/delivery-types";
 import { asArray, asNumber, asString, isObject } from "@/lib/core/type-guards";
-
+import type { CountryCode } from "@/lib/core/types";
 import { formatDeliveryWindowText } from "@/lib/delivery/format-delivery-window";
-
-const STATUS_ORDER: Record<string, number> = {
-  CURRENT: 0,
-  COMPLETED: 1,
-  CANCELLED: 2,
-};
 
 function parseDeliveryWindow(raw: Record<string, unknown>): {
   windowStart: string | null;
@@ -73,11 +66,10 @@ export function parseDeliveriesSummary(
     .map((entry) => mapDeliverySummary(entry, countryCode))
     .filter((item): item is DeliveryListItem => item !== null);
 
-  deliveries.sort((a, b) => {
-    const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
-    if (statusDiff !== 0) return statusDiff;
-    return b.creationTime.localeCompare(a.creationTime);
-  });
+  // Newest delivery first, like the app. Upcoming (CURRENT) deliveries have a
+  // future window, so they land on top without a separate status sort.
+  const sortKey = (d: DeliveryListItem) => d.windowStart ?? d.creationTime;
+  deliveries.sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
 
   return deliveries;
 }
