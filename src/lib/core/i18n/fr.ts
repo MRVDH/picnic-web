@@ -215,6 +215,8 @@ export const fr = {
   // Deliveries
   deliveriesTitle: "Commandes",
   deliveriesNavLabel: "Commandes",
+  deliveriesTabAll: "Toutes",
+  deliveriesEmptyAll: "Aucune commande pour l'instant.",
   deliveriesTabCurrent: "En cours",
   deliveriesTabCompleted: "Terminées",
   deliveriesTabCancelled: "Annulées",
