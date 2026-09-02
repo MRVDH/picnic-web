@@ -4,20 +4,23 @@ import { use, useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 
+import { CartToast } from "@/components/cart/cart-toast";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { AllergenBadges } from "@/components/product/allergen-badges";
 import { NutritionTable } from "@/components/product/nutrition-table";
+import { FavoriteButton } from "@/components/recipe/favorite-button";
 import { RecipeHeroImage } from "@/components/recipe/recipe-hero-image";
 import { RecipeIngredientRow } from "@/components/recipe/recipe-ingredient-row";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { formatEuroPrice } from "@/lib/core/format-price";
-import { renderMarkdownBold } from "@/lib/pml/render-markdown-bold";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { formatEuroPrice } from "@/lib/core/format-price";
 import type { ApiErrorResponse, RecipeDetail } from "@/lib/core/types";
+import { renderMarkdownBold } from "@/lib/pml/render-markdown-bold";
 
 type PageState =
   | { status: "loading" }
@@ -74,7 +77,9 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
 
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch(`/api/recipe/${encodeURIComponent(recipeId)}?portions=${portions}`, { signal: controller.signal })
+      fetch(`/api/recipe/${encodeURIComponent(recipeId)}?portions=${portions}`, {
+        signal: controller.signal,
+      })
         .then((res) => res.json())
         .then((data: RecipeDetail & Partial<ApiErrorResponse>) => {
           if (!("error" in data) || !data.error) {
@@ -95,7 +100,9 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                   }
                 : prev
             );
-            setCheckedIds(new Set(fetched.ingredients.filter((i) => !i.isCondiment).map((i) => i.id)));
+            setCheckedIds(
+              new Set(fetched.ingredients.filter((i) => !i.isCondiment).map((i) => i.id))
+            );
           }
         })
         .catch((err: unknown) => {
@@ -125,7 +132,10 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ portions, selectedIngredients }),
       });
-      if (!res.ok) { setAddState("idle"); return; }
+      if (!res.ok) {
+        setAddState("idle");
+        return;
+      }
       refresh();
       setAddState("done");
       setTimeout(() => setAddState("idle"), 2500);
@@ -150,7 +160,10 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
       <div className="flex min-h-full flex-1 flex-col">
         <SharedHeader />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-          <ErrorView message={pageState.message} onRetry={() => setPageState({ status: "loading" })} />
+          <ErrorView
+            message={pageState.message}
+            onRetry={() => setPageState({ status: "loading" })}
+          />
         </main>
       </div>
     );
@@ -168,13 +181,15 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
     const unitPrice = bundleTier ? bundleTier.pricePerUnit : ing.displayPrice;
     return sum + unitPrice * qty;
   }, 0);
-  const pricePerServing = pricePortions > 0 ? formatEuroPrice(Math.round(totalCents / pricePortions)) : null;
+  const pricePerServing =
+    pricePortions > 0 ? formatEuroPrice(Math.round(totalCents / pricePortions)) : null;
 
   const buttonLabel =
-    addState === "adding" ? t.recipeAddingToCart
-    : addState === "done" ? t.recipeAddedToCart
-    : t.recipeAddToCart;
-
+    addState === "adding"
+      ? t.recipeAddingToCart
+      : addState === "done"
+        ? t.recipeAddedToCart
+        : t.recipeAddToCart;
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -189,7 +204,8 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         </Link>
 
         {/* Hero image */}
-        <div className="mb-8 overflow-hidden rounded-2xl bg-gray-50">
+        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gray-50">
+          <FavoriteButton recipeId={recipeId} className="absolute top-3 right-3 z-10" />
           {recipe.imageId ? (
             <RecipeHeroImage imageId={recipe.imageId} countryCode={countryCode} alt={recipe.name} />
           ) : (
@@ -211,7 +227,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             >
               −
             </button>
-            <span className="mx-1 font-medium text-foreground">{portions}</span>
+            <span className="text-foreground mx-1 font-medium">{portions}</span>
             <button
               type="button"
               onClick={() => setPortions((p) => p + 1)}
@@ -221,16 +237,22 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             </button>
           </span>
           {pricePerServing && (
-            <span className={`transition-opacity duration-150 ${ingredientsRefreshing ? "opacity-40" : ""}`}>
-              <span className="font-medium text-foreground">{pricePerServing}</span>{" "}
+            <span
+              className={`transition-opacity duration-150 ${ingredientsRefreshing ? "opacity-40" : ""}`}
+            >
+              <span className="text-foreground font-medium">{pricePerServing}</span>{" "}
               <span className="text-gray-400">{t.recipePricePerServing}</span>
               <span className="mx-1.5 text-gray-300">·</span>
-              <span className="font-medium text-foreground">{formatEuroPrice(totalCents)}</span>{" "}
+              <span className="text-foreground font-medium">
+                {formatEuroPrice(totalCents)}
+              </span>{" "}
               <span className="text-gray-400">{t.recipePriceTotal}</span>
               {recipe.cookingTimeMinutes !== null && (
                 <>
                   <span className="mx-1.5 text-gray-300">·</span>
-                  <span>⏱ {recipe.cookingTimeMinutes} {t.cookingTimeMinutes}</span>
+                  <span>
+                    ⏱ {recipe.cookingTimeMinutes} {t.cookingTimeMinutes}
+                  </span>
                 </>
               )}
             </span>
@@ -243,10 +265,10 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             type="button"
             onClick={handleAddToCart}
             disabled={addState !== "idle" || ingredientsRefreshing || checkedIds.size === 0}
-            className={`mb-8 w-full rounded-xl px-6 py-3 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            className={`mb-8 w-full rounded-xl px-6 py-3 text-sm font-semibold text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${
               addState === "done"
                 ? "bg-green-500 focus:ring-green-500"
-                : "bg-picnic-red hover:bg-red-700 focus:ring-picnic-red disabled:opacity-60"
+                : "bg-picnic-red focus:ring-picnic-red hover:bg-red-700 disabled:opacity-60"
             }`}
           >
             {buttonLabel}
@@ -260,10 +282,14 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
               <div className="border-t-picnic-red h-8 w-8 animate-spin rounded-full border-4 border-gray-200" />
             </div>
           )}
-          <div className={`transition-opacity duration-150 ${ingredientsRefreshing ? "pointer-events-none opacity-40" : ""}`}>
+          <div
+            className={`transition-opacity duration-150 ${ingredientsRefreshing ? "pointer-events-none opacity-40" : ""}`}
+          >
             {mainIngredients.length > 0 && (
               <section className="mb-6">
-                <h2 className="text-foreground mb-2 text-base font-semibold">{t.recipeIngredients}</h2>
+                <h2 className="text-foreground mb-2 text-base font-semibold">
+                  {t.recipeIngredients}
+                </h2>
                 <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white px-4">
                   {mainIngredients.map((ing) => (
                     <RecipeIngredientRow
@@ -273,12 +299,14 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                       portions={pricePortions}
                       basePortion={recipe.portions}
                       checked={checkedIds.has(ing.id)}
-                      onToggle={() => setCheckedIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(ing.id)) next.delete(ing.id);
-                        else next.add(ing.id);
-                        return next;
-                      })}
+                      onToggle={() =>
+                        setCheckedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(ing.id)) next.delete(ing.id);
+                          else next.add(ing.id);
+                          return next;
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -296,12 +324,14 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                       portions={pricePortions}
                       basePortion={recipe.portions}
                       checked={checkedIds.has(ing.id)}
-                      onToggle={() => setCheckedIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(ing.id)) next.delete(ing.id);
-                        else next.add(ing.id);
-                        return next;
-                      })}
+                      onToggle={() =>
+                        setCheckedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(ing.id)) next.delete(ing.id);
+                          else next.add(ing.id);
+                          return next;
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -321,7 +351,9 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                       <span className="bg-picnic-red mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
                         {i + 1}
                       </span>
-                      <p className="text-text-dark text-sm leading-relaxed">{renderMarkdownBold(step)}</p>
+                      <p className="text-text-dark text-sm leading-relaxed">
+                        {renderMarkdownBold(step)}
+                      </p>
                     </li>
                   ))}
                 </ol>
@@ -329,7 +361,9 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
             )}
             {recipe.recipeNutritionRows.length > 0 && (
               <section className="mb-6">
-                <h2 className="text-foreground mb-2 text-base font-semibold">{t.recipeNutrition}</h2>
+                <h2 className="text-foreground mb-2 text-base font-semibold">
+                  {t.recipeNutrition}
+                </h2>
                 <p className="text-text-muted mb-2 text-xs">{t.recipePricePerServing}</p>
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <NutritionTable rows={recipe.recipeNutritionRows} />
@@ -359,9 +393,15 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
 
 export default function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const dismissToast = useCallback(() => setToastMessage(null), []);
+
   return (
     <CartProvider>
-      <RecipeDetailInner recipeId={id} />
+      <SavedRecipesProvider showToast={setToastMessage}>
+        <RecipeDetailInner recipeId={id} />
+        <CartToast message={toastMessage} onDismiss={dismissToast} />
+      </SavedRecipesProvider>
     </CartProvider>
   );
 }

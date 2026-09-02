@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -97,21 +97,29 @@ export function CartPageContent({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // Group items by their recipe (basketGroupId), keeping API order within each group.
-  const itemsByGroupId = new Map<string, CartItem[]>();
-  const otherItems: CartItem[] = [];
-  for (const item of cart.items) {
-    if (item.basketGroupId) {
-      const list = itemsByGroupId.get(item.basketGroupId) ?? [];
-      list.push(item);
-      itemsByGroupId.set(item.basketGroupId, list);
-    } else {
-      otherItems.push(item);
+  // Recomputed only when the cart data changes, not on unrelated re-renders
+  // (e.g. opening the clear-cart confirmation).
+  const { itemsByGroupId, otherItems, activeGroups } = useMemo(() => {
+    const itemsByGroupId = new Map<string, CartItem[]>();
+    const otherItems: CartItem[] = [];
+    for (const item of cart.items) {
+      if (item.basketGroupId) {
+        const list = itemsByGroupId.get(item.basketGroupId) ?? [];
+        list.push(item);
+        itemsByGroupId.set(item.basketGroupId, list);
+      } else {
+        otherItems.push(item);
+      }
     }
-  }
 
-  // Only show recipe groups that have at least one item still in the cart
-  // (handles optimistic removals before the server confirms).
-  const activeGroups = cart.recipeGroups.filter((g) => (itemsByGroupId.get(g.id)?.length ?? 0) > 0);
+    // Only show recipe groups that have at least one item still in the cart
+    // (handles optimistic removals before the server confirms).
+    const activeGroups = cart.recipeGroups.filter(
+      (g) => (itemsByGroupId.get(g.id)?.length ?? 0) > 0
+    );
+
+    return { itemsByGroupId, otherItems, activeGroups };
+  }, [cart.items, cart.recipeGroups]);
 
   return (
     <div className="space-y-6">

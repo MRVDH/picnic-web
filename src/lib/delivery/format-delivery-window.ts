@@ -71,6 +71,29 @@ export function formatTime(date: Date): string {
   return `${hours}:${minutes}`;
 }
 
+/** Delivery window label for list/detail pages. */
+export function formatDeliveryWindowText(
+  windowStart: string | null,
+  windowEnd: string | null,
+  countryCode: CountryCode
+): string {
+  if (!windowStart || !windowEnd) return "—";
+  const start = new Date(windowStart);
+  const end = new Date(windowEnd);
+  const dayLabel = getRelativeDayLabel(start, countryCode);
+  return `${dayLabel} ${formatTime(start)} - ${formatTime(end)}`;
+}
+
+/** Live ETA label, e.g. "Ankunft ca. 15:23". */
+export function formatEtaText(etaMs: number | null, countryCode: CountryCode): string | null {
+  if (etaMs === null || etaMs <= 0) return null;
+  const eta = new Date(etaMs);
+  const time = formatTime(eta);
+  if (countryCode === "DE") return `Ankunft ca. ${time}`;
+  if (countryCode === "FR") return `Arrivée vers ${time}`;
+  return `Aankomst rond ${time}`;
+}
+
 /** Localized "today"/"tomorrow", or a localized day name. */
 function getRelativeDayLabel(date: Date, countryCode: CountryCode): string {
   const today = new Date();
