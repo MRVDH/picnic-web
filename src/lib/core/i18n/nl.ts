@@ -200,7 +200,6 @@ export const nl = {
   // Discover and favorites placeholders
   discoverTitle: "Ontdek",
   favoritesTitle: "Favorieten",
-  favoritesEmpty: "Nog geen favorieten.",
 
   // Recipe detail
   recipeIngredients: "Ingrediënten",

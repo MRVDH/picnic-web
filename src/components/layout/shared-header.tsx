@@ -9,6 +9,7 @@ import { type CartBadgeState, DesktopNav, MobileTabBar } from "@/components/layo
 import { UserIcon } from "@/components/layout/nav-icons";
 import { useCartOptional } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
+import { useCartBadgeCache, writeCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
 type SharedHeaderProps = {
@@ -25,8 +26,10 @@ type SharedHeaderProps = {
  * Desktop: logo, the five app tabs inline, and the account button.
  * Mobile (< md): logo and account button on top, the five tabs fixed at the
  * bottom like the app. Fetches /api/cart on mount (unless inside a
- * CartProvider) to show the cart price badge; the badge is hidden while
- * loading, on error, or when the cart is empty.
+ * CartProvider) to show the cart price badge. Until the live cart arrives the
+ * badge shows the last known total from localStorage, so the nav does not
+ * jump on page load; the badge is hidden when there is no known total or the
+ * cart is empty.
  */
 export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHeaderProps) {
   const t = useTranslations();
@@ -65,8 +68,8 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
     };
   }, [shouldFetchIndependently]);
 
-  // Derive badge state: prefer the override, then context (reactive), then our own fetch.
-  const cartState: CartBadgeState = cartBadgeOverride
+  // Derive the live badge state: prefer the override, then context (reactive), then our own fetch.
+  const liveState: CartBadgeState = cartBadgeOverride
     ? {
         status: "ready",
         totalPrice: cartBadgeOverride.totalPrice,
@@ -81,6 +84,23 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
             totalCount: cartContext.totalCount,
           }
       : fetchedState;
+
+  // Remember the live total for the next page load, and fall back to the
+  // remembered one while this load is still fetching (or failed).
+  const cachedBadge = useCartBadgeCache();
+  const liveTotalPrice = liveState.status === "ready" ? liveState.totalPrice : null;
+  const liveTotalCount = liveState.status === "ready" ? liveState.totalCount : null;
+  useEffect(() => {
+    if (liveTotalPrice === null || liveTotalCount === null) return;
+    writeCartBadgeCache({ totalPrice: liveTotalPrice, totalCount: liveTotalCount });
+  }, [liveTotalPrice, liveTotalCount]);
+
+  const cartState: CartBadgeState =
+    liveState.status === "ready"
+      ? liveState
+      : cachedBadge
+        ? { status: "ready", ...cachedBadge }
+        : liveState;
 
   return (
     <>

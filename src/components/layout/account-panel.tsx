@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { ChevronRightIcon, CloseIcon, UserIcon } from "@/components/layout/nav-icons";
 import { useTranslations } from "@/contexts/country-context";
+import { clearCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { ProfileApiResponse, ProfileData } from "@/lib/core/user-types";
 
@@ -69,6 +70,7 @@ export function AccountPanel({ open, onClose }: AccountPanelProps) {
 
   const handleSignOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    clearCartBadgeCache();
     window.location.href = "/login";
   }, []);
 

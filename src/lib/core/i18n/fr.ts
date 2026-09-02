@@ -197,7 +197,6 @@ export const fr = {
   // Discover and favorites placeholders
   discoverTitle: "Découvrir",
   favoritesTitle: "Favoris",
-  favoritesEmpty: "Pas encore de favoris.",
 
   // Recipe detail
   recipeIngredients: "Ingrédients",

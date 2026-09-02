@@ -35,7 +35,13 @@ type NavItem = {
 /** The five tabs of the app, in the app's order. */
 function buildNavItems(t: Translations): NavItem[] {
   return [
-    { key: "discover", href: "/", label: t.navDiscover, Icon: StoreIcon, activePrefixes: [] },
+    {
+      key: "discover",
+      href: "/discover",
+      label: t.navDiscover,
+      Icon: StoreIcon,
+      activePrefixes: [],
+    },
     {
       key: "favorites",
       href: "/favorites",
@@ -68,7 +74,6 @@ function buildNavItems(t: Translations): NavItem[] {
 }
 
 function isActive(item: NavItem, pathname: string): boolean {
-  if (item.href === "/") return pathname === "/";
   if (pathname === item.href || pathname.startsWith(`${item.href}/`)) return true;
   return item.activePrefixes.some((prefix) => pathname.startsWith(prefix));
 }
