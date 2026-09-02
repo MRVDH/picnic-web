@@ -537,6 +537,44 @@ export type RecipeDetail = {
 
 export type RecipeDetailApiResponse = RecipeDetail;
 
+export type IngredientAlternative = {
+  /** selling_unit_id */
+  id: string;
+  name: string;
+  brand: string | null;
+  imageId: string | null;
+  /** Price in cents; 0 when the product is unavailable and shows no price */
+  displayPrice: number;
+  /** Strikethrough price in cents, or null when not discounted */
+  originalPrice: number | null;
+  /** Promotion badge text, e.g. "jetzt 2.29€" */
+  promotionLabel: string | null;
+  /** Package size as shown on the tile, e.g. "500g" */
+  unitQuantity: string;
+  /** Trailing tile labels such as "Vegan" or "Tiefkühl" */
+  tags: string[];
+  isUnavailable: boolean;
+  /** Reason text shown instead of a price, e.g. "Produkt nicht mehr lieferbar" */
+  unavailableReason: string | null;
+};
+
+export type IngredientAlternativeGroup = {
+  title: string;
+  alternatives: IngredientAlternative[];
+};
+
+export type IngredientEditData = {
+  ingredientId: string;
+  /** e.g. "125 g nach dem Originalrezept"; empty when the page omits it */
+  subtitle: string;
+  /** First group is the ingredient's own variants; later groups are suggestions */
+  groups: IngredientAlternativeGroup[];
+  /** selling_unit_id -> quantity, as currently saved on the account */
+  selected: Record<string, number>;
+};
+
+export type IngredientEditApiResponse = IngredientEditData;
+
 /** Recipe IDs the user has saved on their Picnic account. */
 export type SavedRecipesApiResponse = {
   recipeIds: string[];
