@@ -492,6 +492,8 @@ export type CookbookApiResponse = {
 export type RecipeIngredient = {
   /** selling_unit_id — used for cart mutations */
   id: string;
+  /** selling_group_component_id — identifies the ingredient slot, not the product */
+  ingredientId: string | null;
   name: string;
   imageId: string | null;
   /** Price in cents */

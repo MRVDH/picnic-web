@@ -123,6 +123,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
       .filter((ing) => checkedIds.has(ing.id))
       .map((ing) => ({
         id: ing.id,
+        ingredientId: ing.ingredientId,
         count: Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions)),
       }));
     try {

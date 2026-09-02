@@ -7,7 +7,7 @@ import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 
-type SelectedIngredient = { id: string; count: number };
+type SelectedIngredient = { id: string; count: number; ingredientId?: string | null };
 
 type RequestBody = {
   portions: number;
@@ -58,7 +58,15 @@ export async function POST(
             product_id: item.id,
             count: item.count,
             selling_unit_contexts: [
-              { type: "SELLING_GROUP", selling_group_id: id, selling_group_creator_type: "PIM" },
+              { type: "MEAL_PLAN", day_relative_to_slot: 999, number_of_servings: portions },
+              {
+                type: "SELLING_GROUP",
+                selling_group_id: id,
+                selling_group_creator_type: "PIM",
+                selling_group_component_id: item.ingredientId ?? null,
+                selling_group_component_type: "CORE",
+                selling_group_component_swap_type: null,
+              },
             ],
           },
           true
