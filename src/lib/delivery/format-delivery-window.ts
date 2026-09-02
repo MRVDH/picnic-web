@@ -19,6 +19,51 @@ const MONTH_ABBREVIATIONS: Record<CountryCode, readonly string[]> = {
   FR: ["janv", "févr", "mars", "avr", "mai", "juin", "juil", "août", "sept", "oct", "nov", "déc"],
 };
 
+const MONTH_NAMES: Record<CountryCode, readonly string[]> = {
+  NL: [
+    "januari",
+    "februari",
+    "maart",
+    "april",
+    "mei",
+    "juni",
+    "juli",
+    "augustus",
+    "september",
+    "oktober",
+    "november",
+    "december",
+  ],
+  DE: [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+  ],
+  FR: [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+  ],
+};
+
 const RELATIVE_LABELS: Record<CountryCode, { today: string; tomorrow: string }> = {
   NL: { today: "Vandaag", tomorrow: "Morgen" },
   DE: { today: "Heute", tomorrow: "Morgen" },
@@ -82,6 +127,21 @@ export function formatDeliveryWindowText(
   const end = new Date(windowEnd);
   const dayLabel = getRelativeDayLabel(start, countryCode);
   return `${dayLabel} ${formatTime(start)} - ${formatTime(end)}`;
+}
+
+/**
+ * Full date for history rows, e.g. "28 oktober 2024" / "28. Oktober 2024" /
+ * "28 octobre 2024". Returns "" for an empty or unparseable timestamp.
+ */
+export function formatLongDate(isoTimestamp: string, countryCode: CountryCode): string {
+  if (!isoTimestamp) return "";
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = date.getDate();
+  const month = MONTH_NAMES[countryCode][date.getMonth()];
+  const year = date.getFullYear();
+  if (countryCode === "DE") return `${day}. ${month} ${year}`;
+  return `${day} ${month} ${year}`;
 }
 
 /** Live ETA label, e.g. "Ankunft ca. 15:23". */
