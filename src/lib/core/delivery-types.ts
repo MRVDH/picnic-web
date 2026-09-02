@@ -93,9 +93,14 @@ export type DeliveryTrackingData = {
 
 export type ParcelItem = {
   id: string;
+  /** Carrier handling the parcel, e.g. "DHL". */
   carrier: string;
+  /** False once the parcel has left Picnic and tracking is done. */
+  active: boolean;
+  /** Raw Picnic status code, e.g. "HANDED_OVER". */
   status: string;
   statusTimestamp: string;
+  /** Carrier tracking link; only seen as null so far (all test parcels were already delivered). */
   trackingUrl: string | null;
 };
 
