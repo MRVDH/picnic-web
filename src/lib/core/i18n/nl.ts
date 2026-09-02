@@ -178,6 +178,30 @@ export const nl = {
   // Auth
   signOut: "Uitloggen",
 
+  // App navigation
+  navMainAriaLabel: "Hoofdnavigatie",
+  navDiscover: "Ontdek",
+  navFavorites: "Favorieten",
+  navCooking: "Koken",
+  navSearch: "Zoeken",
+  navCart: "Mandje",
+  navAccount: "Account",
+  closeLabel: "Sluiten",
+
+  // Account panel
+  accountParcels: "Pakketservice",
+  accountWallet: "Portemonnee",
+  accountFriends: "Vriendenkorting",
+  accountReminders: "Boodschappenwekker",
+  accountSupport: "Klantenservice",
+  accountFaq: "Veelgestelde vragen",
+  comingSoon: "Binnenkort",
+
+  // Discover and favorites placeholders
+  discoverTitle: "Ontdek",
+  favoritesTitle: "Favorieten",
+  favoritesEmpty: "Nog geen favorieten.",
+
   // Recipe detail
   recipeIngredients: "Ingrediënten",
   recipeSteps: "Bereiding",

@@ -175,6 +175,30 @@ export const fr = {
   // Auth
   signOut: "Se déconnecter",
 
+  // App navigation
+  navMainAriaLabel: "Navigation principale",
+  navDiscover: "Découvrir",
+  navFavorites: "Favoris",
+  navCooking: "Cuisine",
+  navSearch: "Recherche",
+  navCart: "Panier",
+  navAccount: "Compte",
+  closeLabel: "Fermer",
+
+  // Account panel
+  accountParcels: "Service colis",
+  accountWallet: "Portefeuille",
+  accountFriends: "Parrainage",
+  accountReminders: "Rappel courses",
+  accountSupport: "Service client",
+  accountFaq: "Questions fréquentes",
+  comingSoon: "Bientôt",
+
+  // Discover and favorites placeholders
+  discoverTitle: "Découvrir",
+  favoritesTitle: "Favoris",
+  favoritesEmpty: "Pas encore de favoris.",
+
   // Recipe detail
   recipeIngredients: "Ingrédients",
   recipeSteps: "Préparation",
