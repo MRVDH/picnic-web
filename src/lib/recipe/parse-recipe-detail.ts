@@ -1,5 +1,7 @@
-import { cleanMarkdown, collectMarkdowns, stripColorTags } from "@/lib/pml/pml-helpers";
 import type { AllergenInfo, NutritionRow, RecipeDetail, RecipeIngredient } from "@/lib/core/types";
+import type { AnalyticsContext } from "@/lib/pml/pml-helpers";
+import { cleanMarkdown, collectMarkdowns, stripColorTags } from "@/lib/pml/pml-helpers";
+import { extractPromotionLabel } from "@/lib/product/extract-card-data";
 
 const ALLERGEN_CONFIRMED_BG = "#fef3c7";
 const ALLERGEN_CONFIRMED_TEXT = "#92400e";
@@ -313,8 +315,14 @@ function parseAllergensFromMarkdowns(markdowns: string[]): AllergenInfo {
     }
 
     if (/^(zutaten|ingrediënten|so wird|bereiding|schritt|stap)\b/i.test(clean)) break;
-    if (/zutaten.*enthalten|ingrediënten.*bevatten/i.test(clean)) { afterIngredientHeader = true; continue; }
-    if (/kann enthalten|kan bevatten/i.test(clean)) { inMayContain = true; continue; }
+    if (/zutaten.*enthalten|ingrediënten.*bevatten/i.test(clean)) {
+      afterIngredientHeader = true;
+      continue;
+    }
+    if (/kann enthalten|kan bevatten/i.test(clean)) {
+      inMayContain = true;
+      continue;
+    }
     if (/keine allergene|geen allergenen|enthält keine|bevat geen/i.test(clean)) continue;
     if (!clean || clean.length > 40) continue;
 
@@ -337,6 +345,13 @@ function parseAllergensFromMarkdowns(markdowns: string[]): AllergenInfo {
 }
 
 /**
+ * Matches text that is only a quantity/package size, with no product name:
+ * "500 g", "1,5 l", "2 x 400 ml", "6 Stück", "10 stuks", "1 st".
+ */
+const QUANTITY_ONLY_RE =
+  /^\d+(?:[.,]\d+)?\s*(?:x\s*\d+(?:[.,]\d+)?\s*)?(?:g|kg|ml|cl|l|st|stk|stuk|stuks|st[üu]ck|pack|packs|portie|portion(?:en)?)\.?$/i;
+
+/**
  * Walk the recipe Fusion page and collect ingredient tile display names,
  * keyed by the product_id found in the product analytics context.
  * These are the short "recipe" names (e.g. "Champignons weiß") as opposed to
@@ -347,7 +362,10 @@ function buildIngredientTileNameMap(rawPage: unknown): Map<string, string> {
 
   function getMarkdowns(obj: unknown, acc: string[]): void {
     if (!obj || typeof obj !== "object") return;
-    if (Array.isArray(obj)) { obj.forEach((v) => getMarkdowns(v, acc)); return; }
+    if (Array.isArray(obj)) {
+      obj.forEach((v) => getMarkdowns(v, acc));
+      return;
+    }
     const o = obj as PmlRecord;
     if (typeof o.markdown === "string") acc.push(o.markdown);
     for (const v of Object.values(o)) getMarkdowns(v, acc);
@@ -355,7 +373,10 @@ function buildIngredientTileNameMap(rawPage: unknown): Map<string, string> {
 
   function walk(obj: unknown, depth: number): void {
     if (depth > 60 || !obj || typeof obj !== "object") return;
-    if (Array.isArray(obj)) { obj.forEach((v) => walk(v, depth + 1)); return; }
+    if (Array.isArray(obj)) {
+      obj.forEach((v) => walk(v, depth + 1));
+      return;
+    }
     const o = obj as PmlRecord;
     if (o.type === "PML" && o.analytics && o.pml) {
       const ctxs = (o.analytics as { contexts?: unknown[] }).contexts ?? [];
@@ -368,19 +389,37 @@ function buildIngredientTileNameMap(rawPage: unknown): Map<string, string> {
           typeof ((c as PmlRecord).data as PmlRecord | undefined)?.product_id === "string"
       );
       if (productCtx) {
-        const productId = ((productCtx.data as PmlRecord).product_id as string);
+        const productId = (productCtx.data as PmlRecord).product_id as string;
+        // The promotion tier label ("Family", "Prijskampioen") renders as its own
+        // line above the name and clears every check below. The API reports its
+        // exact text in the analytics contexts, so drop that line rather than
+        // guessing at the label vocabulary. Undefined when the tile has no label,
+        // which never equals a candidate.
+        const promotionLabel = extractPromotionLabel(ctxs as AnalyticsContext[])?.toLowerCase();
         const markdowns: string[] = [];
         getMarkdowns(o.pml, markdowns);
         const clean = markdowns
-          .map((t) => t.replace(/#\([^)]+\)/g, "").replace(/\*\*/g, "").replace(/\xa0/g, " ").trim())
+          .map((t) =>
+            t
+              .replace(/#\([^)]+\)/g, "")
+              .replace(/\*\*/g, "")
+              .replace(/\xa0/g, " ")
+              .trim()
+          )
           .filter(Boolean);
         const name = clean.find(
           (t) =>
             !/^[><%]/.test(t) &&
             !/^-?\d+%/.test(t) &&
-            !/^\d+[.,]\d+$/.test(t) &&
             !/€/.test(t) &&
-            !/jetzt|nu\s+tijdelijk/i.test(t)
+            !/jetzt|nu\s+tijdelijk/i.test(t) &&
+            // A product name always contains letters. This rejects the tile's
+            // quantity-stepper value ("1") and any other bare number.
+            /\p{L}{2}/u.test(t) &&
+            // Quantity lines ("500 g", "1 Stück", "2 x 400 ml") sit above the name
+            // in the tile; without this they win and the real name is never used.
+            !QUANTITY_ONLY_RE.test(t) &&
+            t.toLowerCase() !== promotionLabel
         );
         if (name && productId && !result.has(productId)) result.set(productId, name);
         return;
@@ -444,9 +483,10 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
 
     const tile = tileMap.get(unit.selling_unit_id);
     const recipeInfo = recipeQtyMap.get(unit.selling_unit_id) ?? null;
-    // Tile name from the recipe page PML takes priority over the catalog name
-    const displayName =
-      tileNameByUnitId.get(unit.selling_unit_id) ?? tile?.name ?? unit.selling_unit_id;
+    // Tile name from the recipe page PML takes priority over the catalog name.
+    // Deliberately left empty when neither is known: the API route fills it from
+    // the product detail page, and a selling_unit_id here would block that.
+    const displayName = tileNameByUnitId.get(unit.selling_unit_id) ?? tile?.name ?? "";
     ingredients.push({
       id: unit.selling_unit_id,
       name: displayName,
@@ -466,7 +506,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
 
   // ── 5. Parse sections from the flat markdown stream ───────────────────────
   const allMarkdowns = collectMarkdowns(rawPage);
-const steps = parseStepsFromMarkdowns(allMarkdowns);
+  const steps = parseStepsFromMarkdowns(allMarkdowns);
   const stepsPortionWarning = parseStepsWarningFromMarkdowns(allMarkdowns);
   const recipeNutritionRows = parseNutritionFromMarkdowns(allMarkdowns);
   const allergens = parseAllergensFromMarkdowns(allMarkdowns);
