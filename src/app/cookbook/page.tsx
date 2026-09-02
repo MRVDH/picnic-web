@@ -134,7 +134,7 @@ export default function CookbookPage() {
     return () => observer.disconnect();
   }, [displayedRecipes]);
 
-  const handleBack = useCallback(() => router.push("/"), [router]);
+  const handleBack = useCallback(() => router.push("/search"), [router]);
 
   const handleRetry = useCallback(() => {
     setMealPlan(null);

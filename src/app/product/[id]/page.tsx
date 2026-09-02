@@ -4,10 +4,8 @@ import { use, useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { AccordionSection } from "@/components/ui/accordion-section";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { AllergenBadges } from "@/components/product/allergen-badges";
-import { ErrorView } from "@/components/ui/error-view";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { NutritionTable } from "@/components/product/nutrition-table";
 import { ProductDescription } from "@/components/product/product-description";
 import { ProductGallery } from "@/components/product/product-gallery";
@@ -16,7 +14,9 @@ import { ProductInfoHeader } from "@/components/product/product-info-header";
 import { ProductLabels } from "@/components/product/product-labels";
 import { ProductPriceSection } from "@/components/product/product-price-section";
 import { ProductSlider } from "@/components/product/product-slider";
-import { SharedHeader } from "@/components/layout/shared-header";
+import { AccordionSection } from "@/components/ui/accordion-section";
+import { ErrorView } from "@/components/ui/error-view";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -117,7 +117,7 @@ function NotFoundView() {
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="mb-4 text-5xl">:(</div>
       <p className="text-lg text-gray-600">Product niet gevonden</p>
-      <Link href="/" className="text-picnic-red mt-4 text-sm hover:underline">
+      <Link href="/search" className="text-picnic-red mt-4 text-sm hover:underline">
         Terug naar zoeken
       </Link>
     </div>

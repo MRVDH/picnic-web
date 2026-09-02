@@ -5,9 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
-import { SharedHeader } from "@/components/layout/shared-header";
 import { SubcategoryView } from "@/components/category/subcategory-view";
 import type { SubcategoriesState } from "@/components/category/subcategory-view";
+import { SharedHeader } from "@/components/layout/shared-header";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -63,7 +63,7 @@ export default function CategorySubcategoriesPage() {
   }, [categoryId, retryCount, categoryFallbackTitle, subcategoriesLoadError]);
 
   const handleBack = useCallback(() => {
-    router.push("/");
+    router.push("/search");
   }, [router]);
 
   const handleSubcategoryTap = useCallback(

@@ -72,7 +72,7 @@ export default function ShortcutProductsPage() {
   }, [pageId, title, retryCount, t.productsLoadError]);
 
   const handleBack = useCallback(() => {
-    router.push("/");
+    router.push("/search");
   }, [router]);
 
   const handleRetry = useCallback(() => {
