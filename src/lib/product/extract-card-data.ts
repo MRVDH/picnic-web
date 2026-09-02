@@ -1,4 +1,11 @@
 // Per-tile data extraction for converting PML selling-unit tiles into Product metadata.
+import type {
+  Badge,
+  BadgeVariant,
+  Highlight,
+  PromoPlacement,
+  SubtitleIcon,
+} from "@/lib/core/types";
 import type { AnalyticsContext, PmlNode } from "@/lib/pml/pml-helpers";
 import {
   cleanMarkdown,
@@ -8,7 +15,6 @@ import {
   stripColorTags,
 } from "@/lib/pml/pml-helpers";
 import { collectLabels } from "@/lib/pml/pml-product-helpers";
-import type { Badge, BadgeVariant, Highlight, PromoPlacement, SubtitleIcon } from "@/lib/core/types";
 
 /** Extract a promotion label from the analytics contexts (e.g. "3 voor €5"). */
 export function extractPromotionLabel(contexts: AnalyticsContext[] | undefined): string | null {
@@ -157,7 +163,9 @@ function splitFlankingIcons(row: PmlNode): {
 
   const firstTextIdx = tokens.findIndex((t) => t.kind === "text");
   if (firstTextIdx === -1) {
-    const firstIcon = tokens.find((t): t is { kind: "icon"; icon: SubtitleIcon } => t.kind === "icon");
+    const firstIcon = tokens.find(
+      (t): t is { kind: "icon"; icon: SubtitleIcon } => t.kind === "icon"
+    );
     return { leading: firstIcon?.icon ?? null, trailing: null };
   }
   const lastTextIdx = tokens.map((t) => t.kind).lastIndexOf("text");
@@ -306,7 +314,9 @@ export function extractTextStackInfo(
       const highlightColor = extractInnerColor(md);
       if (highlightColor) {
         result.highlight = { text: clean, color: highlightColor };
-      } else {
+      } else if (!/^\d+[.,]\d{2}$/.test(clean) && !clean.startsWith("€")) {
+        // Picnic often puts the price in the row after the name when there
+        // is no brand. Do not treat a bare price as a brand label.
         result.brand = clean;
       }
     }
