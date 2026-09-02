@@ -1,0 +1,100 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+import { useParams, useRouter } from "next/navigation";
+
+import { CartToast } from "@/components/cart/cart-toast";
+import { SubcategoryView } from "@/components/category/subcategory-view";
+import type { SubcategoriesState } from "@/components/category/subcategory-view";
+import { CartProvider } from "@/contexts/cart-context";
+import { useTranslations } from "@/contexts/country-context";
+import { usePageTitle } from "@/hooks/use-page-title";
+import type { CategoryItem, SubcategoriesApiResponse } from "@/lib/category/category-types";
+import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { ApiErrorResponse } from "@/lib/core/types";
+
+export default function CategorySubcategoriesPage() {
+  const { categoryId } = useParams<{ categoryId: string }>();
+  const router = useRouter();
+
+  const [state, setState] = useState<SubcategoriesState>({ status: "loading" });
+  const [retryCount, setRetryCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const dismissToast = useCallback(() => setToastMessage(null), []);
+
+  const t = useTranslations();
+  const { categoryFallbackTitle, subcategoriesLoadError } = t;
+  const categoryName = state.status === "success" ? state.title : undefined;
+  usePageTitle(categoryName);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch(`/api/categories/${encodeURIComponent(categoryId)}/subcategories`, {
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((data: SubcategoriesApiResponse & Partial<ApiErrorResponse>) => {
+        if ("error" in data && data.error) {
+          if (data.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
+            return;
+          }
+          setState({ status: "error", message: data.error });
+          return;
+        }
+        setState({
+          status: "success",
+          title: data.title ?? categoryFallbackTitle,
+          subcategories: Array.isArray(data.subcategories) ? data.subcategories : [],
+        });
+      })
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setState({
+          status: "error",
+          message: subcategoriesLoadError,
+        });
+      });
+
+    return () => controller.abort();
+  }, [categoryId, retryCount, categoryFallbackTitle, subcategoriesLoadError]);
+
+  const handleBack = useCallback(() => {
+    router.push("/search");
+  }, [router]);
+
+  const handleSubcategoryTap = useCallback(
+    (subcategory: CategoryItem) => {
+      router.push(
+        `/categories/${encodeURIComponent(categoryId)}/${encodeURIComponent(subcategory.id)}`
+      );
+    },
+    [categoryId, router]
+  );
+
+  const handleRetry = useCallback(() => {
+    setState({ status: "loading" });
+    setRetryCount((c) => c + 1);
+  }, []);
+
+  const displayName = state.status === "success" ? state.title : t.categoryFallbackTitle;
+
+  return (
+    <CartProvider showToast={setToastMessage}>
+      <div className="flex min-h-full flex-1 flex-col">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          <SubcategoryView
+            categoryName={displayName}
+            state={state}
+            onBack={handleBack}
+            onRetry={handleRetry}
+            onSubcategoryTap={handleSubcategoryTap}
+          />
+        </main>
+        <CartToast message={toastMessage} onDismiss={dismissToast} />
+      </div>
+    </CartProvider>
+  );
+}

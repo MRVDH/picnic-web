@@ -3,104 +3,56 @@
 import { useEffect, useState } from "react";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { AccountPanel } from "@/components/layout/account-panel";
 import { type CartBadgeState, DesktopNav, MobileTabBar } from "@/components/layout/app-nav";
 import { UserIcon } from "@/components/layout/nav-icons";
-import { useCartOptional } from "@/contexts/cart-context";
+import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { useTranslations } from "@/contexts/country-context";
+import { useHeaderSections } from "@/contexts/header-sections-context";
 import { useCartBadgeCache, writeCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import type { ApiErrorResponse, CartData } from "@/lib/core/types";
 
-type SharedHeaderProps = {
-  bottomBar?: React.ReactNode;
-  cartBadgeOverride?: {
-    totalPrice: number;
-    totalCount: number;
-  } | null;
-};
-
 /**
- * Sticky header shared across all authenticated pages, plus the mobile tab bar.
+ * Header and mobile tab bar for all authenticated pages. Rendered once by the
+ * (app) layout, so it stays mounted across client-side navigation.
  *
- * Desktop: logo, the five app tabs inline, and the account button.
- * Mobile (< md): logo and account button on top, the five tabs fixed at the
- * bottom like the app. Fetches /api/cart on mount (unless inside a
- * CartProvider) to show the cart price badge. Until the live cart arrives the
- * badge shows the last known total from localStorage, so the nav does not
- * jump on page load; the badge is hidden when there is no known total or the
- * cart is empty.
+ * Desktop: logo, the five app tabs inline, and the account button. Mobile
+ * (< md): logo and account button on top, the five tabs fixed at the bottom.
+ *
+ * The cart badge reads the shared badge store (last known total, persisted in
+ * localStorage): CartProvider and the cart page write to it whenever their
+ * totals change, and this header refreshes it from /api/cart on every route
+ * change so pages without a cart context (checkout, deliveries) stay current.
+ * The badge is hidden until a total is known or when the cart is empty.
  */
-export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHeaderProps) {
+export function SharedHeader() {
   const t = useTranslations();
-  const cartContext = useCartOptional();
+  const pathname = usePathname();
+  const sections = useHeaderSections();
   const [accountOpen, setAccountOpen] = useState(false);
-  const [fetchedState, setFetchedState] = useState<CartBadgeState>({ status: "loading" });
-
-  // Only fetch independently when NOT inside a CartProvider.
-  const shouldFetchIndependently = !cartContext;
 
   useEffect(() => {
-    if (!shouldFetchIndependently) return;
-
     const controller = new AbortController();
 
     fetch("/api/cart", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: CartData | ApiErrorResponse) => {
-        if ("error" in data) {
-          setFetchedState({ status: "error" });
-          return;
-        }
-        setFetchedState({
-          status: "ready",
-          totalPrice: data.totalPrice,
-          totalCount: data.totalCount,
-        });
+        if ("error" in data) return;
+        writeCartBadgeCache({ totalPrice: data.totalPrice, totalCount: data.totalCount });
       })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setFetchedState({ status: "error" });
+      .catch(() => {
+        // Aborted or failed: the badge keeps showing the last known total.
       });
 
-    return () => {
-      controller.abort();
-    };
-  }, [shouldFetchIndependently]);
+    return () => controller.abort();
+  }, [pathname]);
 
-  // Derive the live badge state: prefer the override, then context (reactive), then our own fetch.
-  const liveState: CartBadgeState = cartBadgeOverride
-    ? {
-        status: "ready",
-        totalPrice: cartBadgeOverride.totalPrice,
-        totalCount: cartBadgeOverride.totalCount,
-      }
-    : cartContext
-      ? cartContext.isLoading
-        ? { status: "loading" }
-        : {
-            status: "ready",
-            totalPrice: cartContext.totalPrice,
-            totalCount: cartContext.totalCount,
-          }
-      : fetchedState;
-
-  // Remember the live total for the next page load, and fall back to the
-  // remembered one while this load is still fetching (or failed).
   const cachedBadge = useCartBadgeCache();
-  const liveTotalPrice = liveState.status === "ready" ? liveState.totalPrice : null;
-  const liveTotalCount = liveState.status === "ready" ? liveState.totalCount : null;
-  useEffect(() => {
-    if (liveTotalPrice === null || liveTotalCount === null) return;
-    writeCartBadgeCache({ totalPrice: liveTotalPrice, totalCount: liveTotalCount });
-  }, [liveTotalPrice, liveTotalCount]);
-
-  const cartState: CartBadgeState =
-    liveState.status === "ready"
-      ? liveState
-      : cachedBadge
-        ? { status: "ready", ...cachedBadge }
-        : liveState;
+  const cartState: CartBadgeState = cachedBadge
+    ? { status: "ready", ...cachedBadge }
+    : { status: "loading" };
 
   return (
     <>
@@ -127,7 +79,7 @@ export function SharedHeader({ bottomBar, cartBadgeOverride = null }: SharedHead
             <UserIcon className="h-6 w-6" />
           </button>
         </div>
-        {bottomBar}
+        {sections.length > 0 && <SectionNavBar sections={sections} />}
       </header>
 
       <MobileTabBar cartState={cartState} />
