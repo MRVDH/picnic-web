@@ -18,6 +18,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
+import { writeCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import { createMutationQueue } from "@/lib/cart/mutation-queue";
 import type { BundleProgress, BundleThreshold, CartData } from "@/lib/core/types";
 
@@ -122,6 +123,12 @@ export function CartProvider({ children, showToast }: CartProviderProps) {
   useEffect(() => {
     showToastRef.current = showToast;
   }, [showToast]);
+
+  // Publish totals to the persistent header badge (it lives outside this provider).
+  useEffect(() => {
+    if (isLoading) return;
+    writeCartBadgeCache({ totalPrice, totalCount });
+  }, [isLoading, totalPrice, totalCount]);
 
   // Reconcile state from a server response.
   const reconcileFromServer = useCallback((cart: CartData) => {

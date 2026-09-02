@@ -22,7 +22,7 @@ export function EmptyView() {
       <div className="mb-4 text-5xl">🛒</div>
       <p className="text-foreground text-lg font-semibold">{t.emptyCartTitle}</p>
       <p className="mt-1 text-sm text-gray-500">{t.emptyCartText}</p>
-      <Link href="/" className="text-picnic-red mt-4 text-sm hover:underline">
+      <Link href="/search" className="text-picnic-red mt-4 text-sm hover:underline">
         {t.goToSearch}
       </Link>
     </div>

@@ -81,7 +81,7 @@ export function ParcelList({ parcels }: ParcelListProps) {
   const processed = parcels.filter((p) => !p.active);
 
   return (
-    <section className="mt-10">
+    <section id="parcels" className="mt-10 scroll-mt-20">
       <h2 className="text-foreground text-xl font-bold">{t.deliveriesParcelsTitle}</h2>
       <p className="text-text-muted mb-5 text-sm">{t.deliveriesParcelsSubtitle}</p>
       <div className="space-y-6">
