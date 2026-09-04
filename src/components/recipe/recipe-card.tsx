@@ -29,10 +29,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     <div className="border-card-border bg-card-bg relative flex flex-col overflow-hidden rounded-lg border shadow-sm transition-shadow hover:shadow-md">
       <FavoriteButton recipeId={recipe.id} className="absolute top-2 right-2 z-10" />
 
-      <Link
-        href={`/recipe/${recipe.id}`}
-        className="flex flex-1 flex-col"
-      >
+      <Link href={`/recipe/${recipe.id}`} className="flex flex-1 flex-col">
         <div className="relative h-40 w-full bg-gray-50">
           <Image
             src={imageSrc}
