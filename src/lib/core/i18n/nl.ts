@@ -214,6 +214,13 @@ export const nl = {
   recipePriceTotal: "totaal",
   recipeAllergens: "Bevat",
   recipeMayContain: "Kan bevatten",
+  recipeEditIngredient: "Ingrediënt aanpassen",
+  recipeEditSave: "Opslaan",
+  recipeEditSaving: "Opslaan...",
+  recipeEditCancel: "Annuleren",
+  recipeEditLoadError: "Alternatieven konden niet worden geladen.",
+  recipeEditSaveError: "Ingrediënt kon niet worden aangepast.",
+  recipeEditUnavailable: "Niet meer leverbaar",
   recipeNutrition: "Voedingswaarde",
 
   // Toast / error view

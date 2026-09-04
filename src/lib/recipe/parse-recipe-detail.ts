@@ -489,6 +489,7 @@ export function parseRecipeDetail(rawPage: unknown, recipeId: string): RecipeDet
     const displayName = tileNameByUnitId.get(unit.selling_unit_id) ?? tile?.name ?? "";
     ingredients.push({
       id: unit.selling_unit_id,
+      ingredientId: unit.ingredient_id ?? null,
       name: displayName,
       imageId: tile?.imageId ?? null,
       displayPrice: tile?.displayPrice ?? 0,

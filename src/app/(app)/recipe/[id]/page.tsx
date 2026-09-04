@@ -8,6 +8,7 @@ import { CartToast } from "@/components/cart/cart-toast";
 import { AllergenBadges } from "@/components/product/allergen-badges";
 import { NutritionTable } from "@/components/product/nutrition-table";
 import { FavoriteButton } from "@/components/recipe/favorite-button";
+import { IngredientEditModal } from "@/components/recipe/ingredient-edit-modal";
 import { RecipeHeroImage } from "@/components/recipe/recipe-hero-image";
 import { RecipeIngredientRow } from "@/components/recipe/recipe-ingredient-row";
 import { ErrorView } from "@/components/ui/error-view";
@@ -40,6 +41,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
   const [addState, setAddState] = useState<AddState>("idle");
   const [confirmedPortions, setConfirmedPortions] = useState<number | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
+  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
 
   usePageTitle(pageState.status === "success" ? pageState.recipe.name : t.cookbookTitle);
 
@@ -70,6 +72,28 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
     return () => controller.abort();
   }, [recipeId, t.recipeLoadError]);
 
+  /** Merge a freshly fetched recipe into page state; shared by the portions
+   *  debounce below and by the ingredient editor's save handler. */
+  const applyFetchedRecipe = useCallback((fetched: RecipeDetail, forPortions: number) => {
+    setConfirmedPortions(forPortions);
+    setPageState((prev) =>
+      prev.status === "success"
+        ? {
+            status: "success",
+            recipe: {
+              ...prev.recipe,
+              portions: fetched.portions,
+              ingredients: fetched.ingredients,
+              steps: fetched.steps,
+              stepsPortionWarning: fetched.stepsPortionWarning,
+              recipeNutritionRows: fetched.recipeNutritionRows,
+            },
+          }
+        : prev
+    );
+    setCheckedIds(new Set(fetched.ingredients.filter((i) => !i.isCondiment).map((i) => i.id)));
+  }, []);
+
   useEffect(() => {
     if (pageState.status !== "success") return;
     if (confirmedPortions === null || confirmedPortions === portions) return;
@@ -82,26 +106,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
         .then((res) => res.json())
         .then((data: RecipeDetail & Partial<ApiErrorResponse>) => {
           if (!("error" in data) || !data.error) {
-            const fetched = data as RecipeDetail;
-            setConfirmedPortions(portions);
-            setPageState((prev) =>
-              prev.status === "success"
-                ? {
-                    status: "success",
-                    recipe: {
-                      ...prev.recipe,
-                      portions: fetched.portions,
-                      ingredients: fetched.ingredients,
-                      steps: fetched.steps,
-                      stepsPortionWarning: fetched.stepsPortionWarning,
-                      recipeNutritionRows: fetched.recipeNutritionRows,
-                    },
-                  }
-                : prev
-            );
-            setCheckedIds(
-              new Set(fetched.ingredients.filter((i) => !i.isCondiment).map((i) => i.id))
-            );
+            applyFetchedRecipe(data as RecipeDetail, portions);
           }
         })
         .catch((err: unknown) => {
@@ -113,7 +118,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [portions, confirmedPortions, pageState.status, recipeId]);
+  }, [portions, confirmedPortions, pageState.status, recipeId, applyFetchedRecipe]);
 
   const handleAddToCart = useCallback(async () => {
     if (pageState.status !== "success" || addState !== "idle") return;
@@ -123,6 +128,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
       .filter((ing) => checkedIds.has(ing.id))
       .map((ing) => ({
         id: ing.id,
+        ingredientId: ing.ingredientId,
         count: Math.max(1, Math.ceil((ing.quantity * portions) / recipe.portions)),
       }));
     try {
@@ -303,6 +309,11 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                           return next;
                         })
                       }
+                      onEdit={
+                        ing.ingredientId
+                          ? () => setEditingIngredientId(ing.ingredientId)
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -327,6 +338,11 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
                           else next.add(ing.id);
                           return next;
                         })
+                      }
+                      onEdit={
+                        ing.ingredientId
+                          ? () => setEditingIngredientId(ing.ingredientId)
+                          : undefined
                       }
                     />
                   ))}
@@ -379,6 +395,26 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
               mayContainLabel={t.recipeMayContain}
             />
           </section>
+        )}
+        {editingIngredientId && (
+          <IngredientEditModal
+            recipeId={recipeId}
+            ingredientId={editingIngredientId}
+            portions={pricePortions}
+            onClose={() => setEditingIngredientId(null)}
+            onSaved={() => {
+              setEditingIngredientId(null);
+              fetch(`/api/recipe/${encodeURIComponent(recipeId)}?portions=${pricePortions}`)
+                .then((res) => res.json())
+                .then((data: RecipeDetail & Partial<ApiErrorResponse>) => {
+                  if (!("error" in data) || !data.error) {
+                    applyFetchedRecipe(data as RecipeDetail, pricePortions);
+                  }
+                })
+                .catch(() => {});
+              refresh();
+            }}
+          />
         )}
       </main>
     </div>

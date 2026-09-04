@@ -211,6 +211,13 @@ export const de = {
   recipePriceTotal: "gesamt",
   recipeAllergens: "Enthält",
   recipeMayContain: "Kann enthalten",
+  recipeEditIngredient: "Zutat anpassen",
+  recipeEditSave: "Speichern",
+  recipeEditSaving: "Wird gespeichert...",
+  recipeEditCancel: "Abbrechen",
+  recipeEditLoadError: "Alternativen konnten nicht geladen werden.",
+  recipeEditSaveError: "Zutat konnte nicht angepasst werden.",
+  recipeEditUnavailable: "Produkt nicht mehr lieferbar",
   recipeNutrition: "Nährwerte",
 
   // Toast / error view
