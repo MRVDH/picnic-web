@@ -11,8 +11,9 @@ const GROUP_ID_PREFIX = "editable-selling-unit-list-";
 const SUBHEADER_ID_PREFIX = "editable-selling-unit-list-subheader-";
 const TILE_ID_RE = /^core_selling_unit_(s\d+)_stepper_state$/;
 const PRICE_RE = /^\d+[.,]\d{2}$/;
+/** Package size line, e.g. "500 g", "400 gram", "1 kilo", "6 stuks", "2 pièces". */
 const QUANTITY_RE =
-  /^\d+(?:[.,]\d+)?\s*(?:x\s*\d+(?:[.,]\d+)?\s*)?(?:g|kg|ml|cl|l|st|stk|stuks?|st[üu]ck|pack)\.?$/i;
+  /^\d+(?:[.,]\d+)?\s*(?:x\s*\d+(?:[.,]\d+)?\s*)?(?:g|gram|kg|kilo|ml|milliliter|cl|l|liter|litre|st|stk|stuks?|st[üu]ck|pi[eè]ces?|pcs?|pack|pak)\.?$/i;
 /** Every tile repeats the same page background image before the product image. */
 const BACKGROUND_IMAGE_PREFIX = "picnic-page/";
 /** A real name has at least two letters; this rejects "300g" and bare numbers. */
@@ -100,7 +101,16 @@ function parseTile(node: PmlRecord, sellingUnitId: string): IngredientAlternativ
       ? strikethrough
       : null;
 
-  const quantityIndex = lines.findIndex((line) => QUANTITY_RE.test(line));
+  // Unit words differ per country ("400 gram" on NL, "500 g" on DE), so fall back
+  // to position: the size always follows the price block.
+  const lastPriceIndex = lines.reduce(
+    (last, line, index) => (PRICE_RE.test(line) ? index : last),
+    -1
+  );
+  const afterPriceIndex = lastPriceIndex >= 0 ? lastPriceIndex + 1 : -1;
+  const matchedIndex = lines.findIndex((line) => QUANTITY_RE.test(line));
+  const quantityIndex =
+    matchedIndex >= 0 ? matchedIndex : afterPriceIndex < lines.length ? afterPriceIndex : -1;
   const unitQuantity = quantityIndex >= 0 ? lines[quantityIndex] : "";
 
   const name =
