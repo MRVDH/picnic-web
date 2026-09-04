@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import Image from "next/image";
 
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { formatEuroPrice } from "@/lib/core/format-price";
@@ -72,17 +73,26 @@ export function IngredientEditModal({
     return () => controller.abort();
   }, [recipeId, ingredientId, portions, t.recipeEditLoadError]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const select = useCallback((alternative: IngredientAlternative) => {
     if (alternative.isUnavailable) return;
     // Picking a different product replaces the selection, as the app does.
-    setQuantities((prev) => (prev[alternative.id] ? {} : { [alternative.id]: 1 }));
+    setQuantities({ [alternative.id]: 1 });
   }, []);
 
   const setCount = useCallback((id: string, delta: number) => {
     setQuantities((prev) => {
-      const next = Math.max(0, (prev[id] ?? 0) + delta);
-      if (next === 0) return {};
-      return { [id]: next };
+      // Only touch this unit: a saved selection can hold several units at once.
+      const { [id]: current = 0, ...rest } = prev;
+      const next = Math.max(0, current + delta);
+      return next === 0 ? rest : { ...rest, [id]: next };
     });
   }, []);
 
@@ -117,20 +127,23 @@ export function IngredientEditModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ingredient-edit-title"
         className="bg-card-bg flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-foreground text-lg font-bold">{t.recipeEditIngredient}</h2>
+          <h2 id="ingredient-edit-title" className="text-foreground text-lg font-bold">
+            {t.recipeEditIngredient}
+          </h2>
           {loadState.status === "ready" && loadState.data.subtitle && (
             <p className="text-text-muted mt-1 text-sm">{loadState.data.subtitle}</p>
           )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5">
-          {loadState.status === "loading" && (
-            <p className="text-text-muted py-8 text-center text-sm">…</p>
-          )}
+          {loadState.status === "loading" && <LoadingSpinner />}
           {loadState.status === "error" && (
             <p className="py-8 text-center text-sm text-red-600">{loadState.message}</p>
           )}
@@ -146,6 +159,8 @@ export function IngredientEditModal({
                       countryCode={countryCode}
                       count={quantities[alternative.id] ?? 0}
                       unavailableLabel={t.recipeEditUnavailable}
+                      addLabel={t.addOneAriaLabel}
+                      removeLabel={t.removeOneAriaLabel}
                       onSelect={() => select(alternative)}
                       onIncrement={() => setCount(alternative.id, 1)}
                       onDecrement={() => setCount(alternative.id, -1)}
@@ -186,6 +201,8 @@ type AlternativeRowProps = {
   countryCode: CountryCode;
   count: number;
   unavailableLabel: string;
+  addLabel: string;
+  removeLabel: string;
   onSelect: () => void;
   onIncrement: () => void;
   onDecrement: () => void;
@@ -196,6 +213,8 @@ function AlternativeRow({
   countryCode,
   count,
   unavailableLabel,
+  addLabel,
+  removeLabel,
   onSelect,
   onIncrement,
   onDecrement,
@@ -254,7 +273,7 @@ function AlternativeRow({
           <button
             type="button"
             onClick={onDecrement}
-            aria-label="-"
+            aria-label={removeLabel}
             className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-sm"
           >
             −
@@ -263,7 +282,7 @@ function AlternativeRow({
           <button
             type="button"
             onClick={onIncrement}
-            aria-label="+"
+            aria-label={addLabel}
             className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-sm"
           >
             +
@@ -274,6 +293,7 @@ function AlternativeRow({
           type="button"
           role="radio"
           aria-checked={false}
+          aria-label={alternative.name}
           disabled={alternative.isUnavailable}
           onClick={onSelect}
           className="h-6 w-6 shrink-0 rounded-full border-2 border-gray-300 disabled:opacity-40"
