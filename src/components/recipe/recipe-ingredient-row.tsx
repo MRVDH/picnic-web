@@ -5,7 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { useCountryCode } from "@/contexts/country-context";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { formatEuroPrice } from "@/lib/core/format-price";
 import { buildImageUrl } from "@/lib/core/image-url";
 import type { RecipeIngredient } from "@/lib/core/types";
@@ -43,6 +43,7 @@ export function RecipeIngredientRow({
   onEdit,
 }: RecipeIngredientRowProps) {
   const countryCode = useCountryCode();
+  const t = useTranslations();
   const [imgSrc, setImgSrc] = useState(
     ingredient.imageId ? buildImageUrl(ingredient.imageId, countryCode) : PLACEHOLDER
   );
@@ -135,7 +136,7 @@ export function RecipeIngredientRow({
         <button
           type="button"
           onClick={onEdit}
-          aria-label={ingredient.name}
+          aria-label={`${t.recipeEditIngredient}: ${ingredient.name}`}
           className="hover:text-foreground ml-2 shrink-0 rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
