@@ -174,6 +174,8 @@ export const nl = {
   mealPlanGenerate: "Plan genereren",
   mealPlanRegenerate: "Opnieuw genereren",
   mealPlanSummary: "{n} recepten geselecteerd",
+  mealPlanNotEnoughRecipes:
+    "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
 
   // Auth
   signOut: "Uitloggen",

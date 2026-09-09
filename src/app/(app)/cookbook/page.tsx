@@ -156,13 +156,20 @@ export default function CookbookPage() {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    const plan: RecipeItem[] = [];
-    for (let i = 0; i < daysCount; i++) {
-      plan.push(pool[i % pool.length]);
-    }
-    setMealPlan(plan);
+    // Cap at the pool size instead of wrapping around with `% pool.length`:
+    // wrapping re-pushed the same RecipeItem once daysCount exceeded the pool,
+    // producing duplicate ids that collided as React keys further down.
+    const planLength = Math.min(daysCount, pool.length);
+    setMealPlan(pool.slice(0, planLength));
     setVisibleCount(PAGE_SIZE);
-  }, [allRecipes, daysCount]);
+    if (planLength < daysCount) {
+      setToastMessage(
+        t.mealPlanNotEnoughRecipes
+          .replace("{available}", String(planLength))
+          .replace("{requested}", String(daysCount))
+      );
+    }
+  }, [allRecipes, daysCount, t.mealPlanNotEnoughRecipes]);
 
   const checkboxOptions = [
     { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },

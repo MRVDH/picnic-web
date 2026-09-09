@@ -171,6 +171,8 @@ export const fr = {
   mealPlanGenerate: "Générer le plan",
   mealPlanRegenerate: "Régénérer",
   mealPlanSummary: "{n} recettes sélectionnées",
+  mealPlanNotEnoughRecipes:
+    "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
 
   // Auth
   signOut: "Se déconnecter",
