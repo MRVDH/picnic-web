@@ -18,10 +18,10 @@ function nChooseK(n: number, k: number): number {
  * `fixed` recipes (so new picks are chosen to minimize waste against what's
  * already locked in, not in isolation). Tie-broken by lowest total price.
  *
- * Exhaustive search when C(candidate pool, slots) fits within
- * EXHAUSTIVE_LIMIT (shrinking the pool as needed) — guarantees the optimal
- * result. Otherwise falls back to greedy: try each candidate as a starting
- * pick, greedily add the next-best addition by score, for every candidate.
+ * Exhaustive search when C(candidates, slots) fits within EXHAUSTIVE_LIMIT —
+ * guarantees the optimal result. Otherwise falls back to greedy across all
+ * candidates: try each as a starting pick, greedily add the next-best
+ * addition by score, for every candidate.
  */
 export function findBestCombinations(
   candidates: RecipeDetail[],
@@ -30,6 +30,12 @@ export function findBestCombinations(
   topK: number
 ): MealPlanCombination[] {
   if (slots <= 0 || candidates.length === 0) return [];
+
+  // Filter out recipes already in fixed to avoid double-scoring if a recipe
+  // appears in both sets.
+  const fixedIds = new Set(fixed.map((r) => r.id));
+  const selectable = candidates.filter((r) => !fixedIds.has(r.id));
+  if (selectable.length === 0) return [];
 
   const seen = new Map<string, MealPlanCombination>();
 
@@ -43,13 +49,8 @@ export function findBestCombinations(
     seen.set(key, { recipeIds: combo.map((r) => r.id), packagesSaved, totalPriceCents });
   }
 
-  // Shrink the candidate pool so C(pool, slots) stays within the exhaustive limit.
-  let candidateCap = candidates.length;
-  while (candidateCap > slots && nChooseK(candidateCap, slots) > EXHAUSTIVE_LIMIT) {
-    candidateCap--;
-  }
-  const useExhaustive = nChooseK(candidateCap, slots) <= EXHAUSTIVE_LIMIT;
-  const pool = useExhaustive ? candidates.slice(0, candidateCap) : candidates;
+  const useExhaustive = nChooseK(selectable.length, slots) <= EXHAUSTIVE_LIMIT;
+  const pool = selectable;
 
   if (useExhaustive) {
     function combine(start: number, current: RecipeDetail[]) {
