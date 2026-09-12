@@ -15,3 +15,10 @@ export const MAX_TITLE_CONTEXT_LENGTH = 60;
 
 /** sessionStorage key for checkout payment session (order + transaction ids). */
 export const CHECKOUT_STORAGE_KEY = "picnic_checkout_session";
+
+/**
+ * Max recipes fetched per meal-plan search call. Keeps the lightweight
+ * per-candidate page fetch fast and avoids hammering the Picnic API; the
+ * combination search's exhaustive/greedy split handles pools this size fine.
+ */
+export const MEAL_PLAN_MAX_CANDIDATES = 40;
