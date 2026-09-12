@@ -176,6 +176,21 @@ export const nl = {
   mealPlanSummary: "{n} recepten geselecteerd",
   mealPlanNotEnoughRecipes:
     "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
+  mealPlanPeople: "personen",
+  mealPlanConfirmLabel: "Recept behouden in plan",
+  mealPlanRegenerateDisabledHint: "Vink een recept uit om opnieuw te genereren",
+  mealPlanRecent: "Recent voedingsplan",
+  mealPlanClear: "Plan wissen",
+  mealPlanViewShoppingList: "Boodschappenlijst bekijken",
+  mealPlanPackagesSaved: "{n} verpakkingen bespaard",
+  mealPlanSharedWith: "Ook gebruikt in {recipe}",
+  mealPlanAddAllToCart: "Alles toevoegen aan winkelmandje",
+  mealPlanAddingToCart: "Toevoegen...",
+  mealPlanAddedToCart: "Toegevoegd!",
+  mealPlanGenerateError: "Het plan kon niet worden gegenereerd.",
+  mealPlanShoppingListTitle: "Boodschappenlijst",
+  mealPlanShoppingListError: "Boodschappenlijst kon niet worden geladen.",
+  mealPlanTotal: "Totaal",
 
   // Auth
   signOut: "Uitloggen",

@@ -173,6 +173,21 @@ export const fr = {
   mealPlanSummary: "{n} recettes sélectionnées",
   mealPlanNotEnoughRecipes:
     "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
+  mealPlanPeople: "personnes",
+  mealPlanConfirmLabel: "Garder cette recette dans le plan",
+  mealPlanRegenerateDisabledHint: "Décochez une recette pour régénérer",
+  mealPlanRecent: "Plan de repas récent",
+  mealPlanClear: "Effacer le plan",
+  mealPlanViewShoppingList: "Voir la liste de courses",
+  mealPlanPackagesSaved: "{n} emballages économisés",
+  mealPlanSharedWith: "Aussi utilisé dans {recipe}",
+  mealPlanAddAllToCart: "Tout ajouter au panier",
+  mealPlanAddingToCart: "Ajout en cours…",
+  mealPlanAddedToCart: "Ajouté !",
+  mealPlanGenerateError: "Le plan n'a pas pu être généré.",
+  mealPlanShoppingListTitle: "Liste de courses",
+  mealPlanShoppingListError: "La liste de courses n'a pas pu être chargée.",
+  mealPlanTotal: "Total",
 
   // Auth
   signOut: "Se déconnecter",
