@@ -580,6 +580,65 @@ export type SavedRecipesApiResponse = {
   recipeIds: string[];
 };
 
+// ─── Meal Plan ───────────────────────────────────────────────────────────────
+
+/**
+ * One recipe combination returned by the waste-minimizing search, scored by
+ * how many packages buying the combination together saves versus buying for
+ * each recipe separately.
+ */
+export type MealPlanCombination = {
+  recipeIds: string[];
+  /** Packages saved by consolidating shared ingredients across this combination. */
+  packagesSaved: number;
+  /** Best-effort total price in cents (owner-assigned unit prices; not a checkout total). */
+  totalPriceCents: number;
+};
+
+/** One consolidated shopping-list line, after merging an ingredient across all plan recipes. */
+export type MealPlanShoppingItem = {
+  /** Grouping key: selling_group_component_id, falling back to the selling_unit_id. */
+  ingredientId: string;
+  /** The specific selling_unit_id to add to cart — always the owner recipe's own unit. */
+  ownerSellingUnitId: string;
+  name: string;
+  imageId: string | null;
+  /** Packages to actually buy (fractional per-recipe quantities summed, then rounded up once). */
+  packagesNeeded: number;
+  /** Price per package in cents, from the owner recipe's ingredient entry. */
+  unitPriceCents: number;
+  /** Recipe id whose cart line carries this item; other recipes sharing it omit it. */
+  ownerRecipeId: string;
+  /** Every recipe id in the plan that uses this ingredient; length 1 = not shared. */
+  usedInRecipeIds: string[];
+};
+
+export type MealPlanSearchRequest = {
+  /** Recipe ids to search within, already capped client-side (see MEAL_PLAN_MAX_CANDIDATES). */
+  candidateIds: string[];
+  /** Already-confirmed recipe ids to keep; scored against, never replaced. */
+  fixedIds: string[];
+  /** How many new recipes to pick (days − fixedIds.length). */
+  slots: number;
+  people: number;
+};
+
+export type MealPlanSearchResponse = {
+  combinations: MealPlanCombination[];
+};
+
+export type MealPlanShoppingListRequest = {
+  recipeIds: string[];
+  people: number;
+};
+
+export type MealPlanShoppingListResponse = {
+  recipes: { id: string; name: string; imageId: string | null }[];
+  items: MealPlanShoppingItem[];
+  totalPriceCents: number;
+  packagesSaved: number;
+};
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
