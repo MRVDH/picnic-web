@@ -82,12 +82,31 @@ function buildIngredientGroups(recipes: RecipeDetail[]): IngredientGroup[] {
     ownerSellingUnitId: e.ownerSellingUnitId,
     name: e.name,
     imageId: e.imageId,
-    packagesNeeded: Math.max(1, Math.ceil(e.rawTotal)),
+    // Epsilon absorbs float drift from summing fractional quantities (e.g. 1/3 + 1/3 + 1/3).
+    packagesNeeded: Math.max(1, Math.ceil(e.rawTotal - 1e-9)),
     individualPackages: e.individualPackages,
     unitPriceCents: e.ownerUnitPriceCents,
     ownerRecipeId: e.ownerRecipeId,
     usedInRecipeIds: e.usedInRecipeIds,
   }));
+}
+
+/**
+ * Compute packages saved and total price from ingredient groups.
+ * Private helper used by both scoreCombination and consolidateForDisplay
+ * to ensure the two stay in sync.
+ */
+function computeScore(groups: IngredientGroup[]): {
+  packagesSaved: number;
+  totalPriceCents: number;
+} {
+  let packagesSaved = 0;
+  let totalPriceCents = 0;
+  for (const g of groups) {
+    packagesSaved += Math.max(0, g.individualPackages - g.packagesNeeded);
+    totalPriceCents += g.packagesNeeded * g.unitPriceCents;
+  }
+  return { packagesSaved, totalPriceCents };
 }
 
 /**
@@ -100,13 +119,7 @@ export function scoreCombination(recipes: RecipeDetail[]): {
   totalPriceCents: number;
 } {
   const groups = buildIngredientGroups(recipes);
-  let packagesSaved = 0;
-  let totalPriceCents = 0;
-  for (const g of groups) {
-    packagesSaved += Math.max(0, g.individualPackages - g.packagesNeeded);
-    totalPriceCents += g.packagesNeeded * g.unitPriceCents;
-  }
-  return { packagesSaved, totalPriceCents };
+  return computeScore(groups);
 }
 
 /**
@@ -129,10 +142,6 @@ export function consolidateForDisplay(recipes: RecipeDetail[]): {
     ownerRecipeId: g.ownerRecipeId,
     usedInRecipeIds: g.usedInRecipeIds,
   }));
-  const packagesSaved = groups.reduce(
-    (sum, g) => sum + Math.max(0, g.individualPackages - g.packagesNeeded),
-    0
-  );
-  const totalPriceCents = groups.reduce((sum, g) => sum + g.packagesNeeded * g.unitPriceCents, 0);
+  const { packagesSaved, totalPriceCents } = computeScore(groups);
   return { items, packagesSaved, totalPriceCents };
 }
