@@ -27,17 +27,22 @@ export async function POST(
     );
   }
 
-  let body: MealPlanShoppingListRequest;
+  let body: unknown;
   try {
-    body = (await request.json()) as MealPlanShoppingListRequest;
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const recipeIds = Array.isArray(body.recipeIds)
-    ? body.recipeIds.filter((id) => RECIPE_ID_RE.test(id)).slice(0, MAX_RECIPES)
+  if (typeof body !== "object" || body === null) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const typedBody = body as MealPlanShoppingListRequest;
+  const recipeIds = Array.isArray(typedBody.recipeIds)
+    ? typedBody.recipeIds.filter((id) => RECIPE_ID_RE.test(id)).slice(0, MAX_RECIPES)
     : [];
-  const people = Number.isInteger(body.people) ? body.people : 0;
+  const people = Number.isInteger(typedBody.people) ? typedBody.people : 0;
 
   if (recipeIds.length === 0) {
     return NextResponse.json({ error: "recipeIds must not be empty" }, { status: 400 });
@@ -59,6 +64,17 @@ export async function POST(
     }
 
     if (recipes.length === 0) {
+      // Same reasoning as the search route: an expired token rejects every
+      // recipe, and that must surface as TOKEN_EXPIRED, not a generic 502.
+      const authFailed = results.some(
+        (result) => result.status === "rejected" && isApiAuthError(result.reason)
+      );
+      if (authFailed) {
+        return NextResponse.json(
+          { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },
+          { status: 401 }
+        );
+      }
       return NextResponse.json({ error: "Failed to load any recipe in the plan" }, { status: 502 });
     }
 
