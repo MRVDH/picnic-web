@@ -5,20 +5,35 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
+import { PlanRecipeCard } from "@/components/meal-plan/plan-recipe-card";
+import { ShoppingListModal } from "@/components/meal-plan/shopping-list-modal";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
+import {
+  clearMealPlanCache,
+  useMealPlanCache,
+  writeMealPlanCache,
+} from "@/hooks/use-meal-plan-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { MEAL_PLAN_MAX_CANDIDATES, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
-import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
+import type {
+  ApiErrorResponse,
+  CookbookApiResponse,
+  MealPlanSearchRequest,
+  MealPlanSearchResponse,
+  RecipeItem,
+} from "@/lib/core/types";
 
 const PAGE_SIZE = 24;
 const DEFAULT_DAYS = 7;
+const DEFAULT_PEOPLE = 2;
 
 // Stable identity so effects keyed on the recipe list don't re-run while loading.
 const EMPTY_RECIPES: RecipeItem[] = [];
@@ -37,7 +52,12 @@ export default function CookbookPage() {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [selectedCategories, setSelectedCategories] = useState<(string | null)[]>([null]);
   const [daysCount, setDaysCount] = useState(DEFAULT_DAYS);
+  const [peopleCount, setPeopleCount] = useState(DEFAULT_PEOPLE);
   const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
+  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [retryCount, setRetryCount] = useState(0);
@@ -45,6 +65,7 @@ export default function CookbookPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const cachedPlan = useMealPlanCache();
 
   const dismissToast = useCallback(() => setToastMessage(null), []);
 
@@ -145,31 +166,130 @@ export default function CookbookPage() {
   const handleSelectCategories = useCallback((ids: (string | null)[]) => {
     setSelectedCategories(ids);
     setMealPlan(null);
+    setConfirmedIds(new Set());
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const generatePlan = useCallback(() => {
-    if (allRecipes.length === 0) return;
-    const pool = [...allRecipes];
-    for (let i = pool.length - 1; i > 0; i--) {
+  // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
+  // would mean 40+ Picnic page requests per click. Excludes recipes already fixed
+  // (confirmed) since those are never candidates for replacement.
+  function sampleCandidates(excludeIds: Set<string>): RecipeItem[] {
+    const shuffled = allRecipes.filter((r) => !excludeIds.has(r.id));
+    for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    // Cap at the pool size instead of wrapping around with `% pool.length`:
-    // wrapping re-pushed the same RecipeItem once daysCount exceeded the pool,
-    // producing duplicate ids that collided as React keys further down.
-    const planLength = Math.min(daysCount, pool.length);
-    setMealPlan(pool.slice(0, planLength));
+    return shuffled.slice(0, MEAL_PLAN_MAX_CANDIDATES);
+  }
+
+  const runSearch = useCallback(
+    async (fixedRecipes: RecipeItem[]) => {
+      if (allRecipes.length === 0) return;
+      const slots = daysCount - fixedRecipes.length;
+      if (slots < 1) return;
+
+      setPlanLoading(true);
+      setPlanError(null);
+
+      const fixedIdSet = new Set(fixedRecipes.map((r) => r.id));
+      const candidatePool = sampleCandidates(fixedIdSet);
+
+      try {
+        const requestBody: MealPlanSearchRequest = {
+          candidateIds: candidatePool.map((r) => r.id),
+          fixedIds: fixedRecipes.map((r) => r.id),
+          slots,
+          people: peopleCount,
+        };
+        const res = await fetch("/api/meal-plan/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        const data: MealPlanSearchResponse & Partial<ApiErrorResponse> = await res.json();
+        if (!res.ok || "error" in data) {
+          if ("code" in data && data.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
+            return;
+          }
+          setPlanError(t.mealPlanGenerateError);
+          return;
+        }
+
+        const best = data.combinations[0];
+        const pickedIds = best ? best.recipeIds : [];
+        const byId = new Map(allRecipes.map((r) => [r.id, r]));
+        const picked = pickedIds
+          .map((id) => byId.get(id))
+          .filter((r): r is RecipeItem => r !== undefined);
+        const nextPlan = [...fixedRecipes, ...picked];
+
+        setMealPlan(nextPlan);
+        setConfirmedIds(fixedIdSet);
+        setVisibleCount(PAGE_SIZE);
+        if (nextPlan.length < daysCount) {
+          setToastMessage(
+            t.mealPlanNotEnoughRecipes
+              .replace("{available}", String(nextPlan.length))
+              .replace("{requested}", String(daysCount))
+          );
+        }
+      } catch {
+        setPlanError(t.mealPlanGenerateError);
+      } finally {
+        setPlanLoading(false);
+      }
+    },
+    [allRecipes, daysCount, peopleCount, t.mealPlanGenerateError, t.mealPlanNotEnoughRecipes]
+  );
+
+  const handleGenerate = useCallback(() => {
+    void runSearch([]);
+  }, [runSearch]);
+
+  const handleRegenerate = useCallback(() => {
+    const fixedRecipes = (mealPlan ?? []).filter((r) => confirmedIds.has(r.id));
+    void runSearch(fixedRecipes);
+  }, [mealPlan, confirmedIds, runSearch]);
+
+  const toggleConfirmed = useCallback((recipeId: string) => {
+    setConfirmedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(recipeId)) next.delete(recipeId);
+      else next.add(recipeId);
+      return next;
+    });
+  }, []);
+
+  // Auto-save whenever the confirmed set changes. Never auto-clears when it becomes
+  // empty — only the explicit "Clear plan" action (handleClearPlan below) does that.
+  useEffect(() => {
+    if (!mealPlan) return;
+    const confirmedRecipes = mealPlan.filter((r) => confirmedIds.has(r.id));
+    if (confirmedRecipes.length === 0) return;
+    writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
+  }, [mealPlan, confirmedIds, daysCount, peopleCount]);
+
+  const handleLoadRecent = useCallback(() => {
+    if (!cachedPlan) return;
+    setDaysCount(cachedPlan.days);
+    setPeopleCount(cachedPlan.people);
+    setMealPlan(cachedPlan.recipes);
+    setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
     setVisibleCount(PAGE_SIZE);
-    if (planLength < daysCount) {
-      setToastMessage(
-        t.mealPlanNotEnoughRecipes
-          .replace("{available}", String(planLength))
-          .replace("{requested}", String(daysCount))
-      );
-    }
-  }, [allRecipes, daysCount, t.mealPlanNotEnoughRecipes]);
+  }, [cachedPlan]);
+
+  const handleClearPlan = useCallback(() => {
+    clearMealPlanCache();
+    setConfirmedIds(new Set());
+  }, []);
+
+  const regenerateDisabled =
+    !!debouncedQuery ||
+    recipesState.status !== "success" ||
+    planLoading ||
+    confirmedIds.size >= daysCount;
 
   const checkboxOptions = [
     { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
@@ -218,20 +338,52 @@ export default function CookbookPage() {
                   onChange={(e) => {
                     setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
                     setMealPlan(null);
+                    setConfirmedIds(new Set());
                   }}
                   disabled={!!debouncedQuery}
                   className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={peopleCount}
+                  onChange={(e) =>
+                    setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))
+                  }
+                  disabled={!!debouncedQuery}
+                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                />
+                <span className="text-text-muted text-sm">{t.mealPlanPeople}</span>
                 <button
                   type="button"
-                  onClick={generatePlan}
-                  disabled={!!debouncedQuery || recipesState.status !== "success"}
+                  onClick={handleGenerate}
+                  disabled={!!debouncedQuery || recipesState.status !== "success" || planLoading}
                   className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {t.mealPlanGenerate}
                 </button>
+                {cachedPlan && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleLoadRecent}
+                      className="text-picnic-red text-sm font-medium hover:underline"
+                    >
+                      {t.mealPlanRecent}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearPlan}
+                      className="text-text-muted text-sm font-medium hover:underline"
+                    >
+                      {t.mealPlanClear}
+                    </button>
+                  </>
+                )}
               </div>
+              {planError && <p className="text-sm text-red-600">{planError}</p>}
             </div>
             <div className="flex flex-1 items-start">
               <RecipeSearchInput
@@ -261,23 +413,41 @@ export default function CookbookPage() {
           {recipesState.status === "success" && displayedRecipes.length > 0 && (
             <>
               {mealPlan && (
-                <div className="mb-4 flex items-center gap-3">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
                   <span className="text-text-muted text-sm">
                     {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
                   </span>
                   <button
                     type="button"
-                    onClick={generatePlan}
-                    className="text-picnic-red text-sm font-medium hover:underline"
+                    onClick={handleRegenerate}
+                    disabled={regenerateDisabled}
+                    title={regenerateDisabled ? t.mealPlanRegenerateDisabledHint : undefined}
+                    className="text-picnic-red text-sm font-medium hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
                   >
                     {t.mealPlanRegenerate}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShoppingListOpen(true)}
+                    className="text-picnic-red text-sm font-medium hover:underline"
+                  >
+                    {t.mealPlanViewShoppingList}
                   </button>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {visibleRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
+                {visibleRecipes.map((recipe) =>
+                  mealPlan ? (
+                    <PlanRecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      confirmed={confirmedIds.has(recipe.id)}
+                      onToggleConfirmed={toggleConfirmed}
+                    />
+                  ) : (
+                    <RecipeCard key={recipe.id} recipe={recipe} />
+                  )
+                )}
               </div>
 
               {visibleCount < displayedRecipes.length && (
@@ -290,6 +460,15 @@ export default function CookbookPage() {
         </main>
       </div>
       <CartToast message={toastMessage} onDismiss={dismissToast} />
+      {shoppingListOpen && mealPlan && (
+        <CartProvider showToast={setToastMessage}>
+          <ShoppingListModal
+            recipeIds={mealPlan.map((r) => r.id)}
+            people={peopleCount}
+            onClose={() => setShoppingListOpen(false)}
+          />
+        </CartProvider>
+      )}
     </SavedRecipesProvider>
   );
 }
