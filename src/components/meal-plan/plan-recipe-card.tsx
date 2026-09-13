@@ -8,13 +8,19 @@ type PlanRecipeCardProps = {
   recipe: RecipeItem;
   confirmed: boolean;
   onToggleConfirmed: (recipeId: string) => void;
+  disabled?: boolean;
 };
 
 /**
  * Wraps the generic RecipeCard with a "keep this recipe" checkbox for the
  * meal-plan grid, opposite the card's own favorite-button corner.
  */
-export function PlanRecipeCard({ recipe, confirmed, onToggleConfirmed }: PlanRecipeCardProps) {
+export function PlanRecipeCard({
+  recipe,
+  confirmed,
+  onToggleConfirmed,
+  disabled = false,
+}: PlanRecipeCardProps) {
   const t = useTranslations();
   return (
     <div className="relative">
@@ -26,8 +32,9 @@ export function PlanRecipeCard({ recipe, confirmed, onToggleConfirmed }: PlanRec
           type="checkbox"
           checked={confirmed}
           onChange={() => onToggleConfirmed(recipe.id)}
+          disabled={disabled}
           aria-label={t.mealPlanConfirmLabel}
-          className="accent-picnic-red h-4 w-4"
+          className="accent-picnic-red h-4 w-4 disabled:cursor-not-allowed disabled:opacity-40"
         />
       </label>
       <RecipeCard recipe={recipe} />
