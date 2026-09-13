@@ -145,39 +145,54 @@ export function ShoppingListModal({ recipeIds, people, onClose }: ShoppingListMo
               <p className="text-picnic-red py-3 text-sm font-medium">
                 {t.mealPlanPackagesSaved.replace("{n}", String(loadState.data.packagesSaved))}
               </p>
-              <div className="divide-y divide-gray-100">
-                {loadState.data.items.map((item) => {
-                  const sharedWith = loadState.data.recipes.find(
-                    (r) => r.id !== item.ownerRecipeId && item.usedInRecipeIds.includes(r.id)
-                  );
-                  return (
-                    <div key={item.ingredientId} className="flex items-center gap-3 py-3">
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-50">
-                        <Image
-                          src={
-                            item.imageId ? buildImageUrl(item.imageId, countryCode) : PLACEHOLDER
-                          }
-                          alt={item.name}
-                          fill
-                          unoptimized
-                          className="object-contain p-1"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-text-dark truncate text-sm font-medium">{item.name}</p>
-                        {sharedWith && (
-                          <p className="text-text-muted text-xs">
-                            {t.mealPlanSharedWith.replace("{recipe}", sharedWith.name)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-text-dark shrink-0 text-sm font-medium">
-                        {item.packagesNeeded}× {formatEuroPrice(item.unitPriceCents)}
-                      </div>
+              {loadState.data.recipes.map((recipe) => {
+                const recipeItems = loadState.data.items.filter(
+                  (item) => item.ownerRecipeId === recipe.id
+                );
+                if (recipeItems.length === 0) return null;
+                return (
+                  <section key={recipe.id} className="py-3">
+                    <h3 className="text-text-muted mb-2 text-sm font-medium">{recipe.name}</h3>
+                    <div className="divide-y divide-gray-100">
+                      {recipeItems.map((item) => {
+                        const sharedWith = loadState.data.recipes.find(
+                          (r) => r.id !== item.ownerRecipeId && item.usedInRecipeIds.includes(r.id)
+                        );
+                        return (
+                          <div key={item.ingredientId} className="flex items-center gap-3 py-3">
+                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-50">
+                              <Image
+                                src={
+                                  item.imageId
+                                    ? buildImageUrl(item.imageId, countryCode)
+                                    : PLACEHOLDER
+                                }
+                                alt={item.name}
+                                fill
+                                unoptimized
+                                className="object-contain p-1"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-text-dark truncate text-sm font-medium">
+                                {item.name}
+                              </p>
+                              {sharedWith && (
+                                <p className="text-text-muted text-xs">
+                                  {t.mealPlanSharedWith.replace("{recipe}", sharedWith.name)}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-text-dark shrink-0 text-sm font-medium">
+                              {item.packagesNeeded}× {formatEuroPrice(item.unitPriceCents)}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </section>
+                );
+              })}
             </>
           )}
         </div>

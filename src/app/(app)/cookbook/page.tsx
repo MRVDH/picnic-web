@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -171,23 +171,23 @@ export default function CookbookPage() {
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
-  // would mean 40+ Picnic page requests per click. Excludes recipes already fixed
-  // (confirmed) since those are never candidates for replacement.
-  function sampleCandidates(excludeIds: Set<string>): RecipeItem[] {
-    const shuffled = allRecipes.filter((r) => !excludeIds.has(r.id));
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, MEAL_PLAN_MAX_CANDIDATES);
-  }
-
   const runSearch = useCallback(
     async (fixedRecipes: RecipeItem[]) => {
       if (allRecipes.length === 0) return;
       const slots = daysCount - fixedRecipes.length;
       if (slots < 1) return;
+
+      // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
+      // would mean 40+ Picnic page requests per click. Excludes recipes already fixed
+      // (confirmed) since those are never candidates for replacement.
+      function sampleCandidates(excludeIds: Set<string>): RecipeItem[] {
+        const shuffled = allRecipes.filter((r) => !excludeIds.has(r.id));
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, MEAL_PLAN_MAX_CANDIDATES);
+      }
 
       setPlanLoading(true);
       setPlanError(null);
@@ -302,6 +302,7 @@ export default function CookbookPage() {
   ];
 
   const visibleRecipes = displayedRecipes.slice(0, visibleCount);
+  const planRecipeIds = useMemo(() => (mealPlan ? mealPlan.map((r) => r.id) : []), [mealPlan]);
 
   return (
     <SavedRecipesProvider showToast={setToastMessage}>
@@ -392,6 +393,7 @@ export default function CookbookPage() {
                 onChange={(val) => {
                   setSearchInput(val);
                   setMealPlan(null);
+                  setConfirmedIds(new Set());
                   setRecipesState({ status: "loading" });
                   setVisibleCount(PAGE_SIZE);
                 }}
@@ -443,6 +445,7 @@ export default function CookbookPage() {
                       recipe={recipe}
                       confirmed={confirmedIds.has(recipe.id)}
                       onToggleConfirmed={toggleConfirmed}
+                      disabled={planLoading}
                     />
                   ) : (
                     <RecipeCard key={recipe.id} recipe={recipe} />
@@ -463,7 +466,7 @@ export default function CookbookPage() {
       {shoppingListOpen && mealPlan && (
         <CartProvider showToast={setToastMessage}>
           <ShoppingListModal
-            recipeIds={mealPlan.map((r) => r.id)}
+            recipeIds={planRecipeIds}
             people={peopleCount}
             onClose={() => setShoppingListOpen(false)}
           />
