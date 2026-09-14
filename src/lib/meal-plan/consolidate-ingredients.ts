@@ -1,3 +1,4 @@
+import { packageFraction } from "@/lib/meal-plan/package-fraction";
 import type { MealPlanShoppingItem, RecipeDetail } from "@/lib/core/types";
 
 type IngredientGroup = {
@@ -15,10 +16,9 @@ type IngredientGroup = {
 };
 
 /**
- * Group every non-condiment ingredient across `recipes` by ingredient id
- * (falling back to the selling-unit id, matching parseRecipeDetail's own
- * dedup convention), computing the real packages-needed vs. packages you'd
- * buy shopping each recipe separately.
+ * Group every non-condiment ingredient across `recipes` by selling-unit id
+ * (the product), computing the real packages-needed vs. packages you'd buy
+ * shopping each recipe separately.
  *
  * The "owner" of a group is the recipe needing the largest individual share
  * — its own selling_unit_id is what actually gets added to cart (see
@@ -27,14 +27,14 @@ type IngredientGroup = {
  */
 function buildIngredientGroups(recipes: RecipeDetail[]): IngredientGroup[] {
   type Entry = {
-    ingredientId: string;
+    ownerIngredientId: string | null;
     name: string;
     imageId: string | null;
     rawTotal: number;
     individualPackages: number;
     ownerRecipeId: string;
     ownerSellingUnitId: string;
-    ownerQuantity: number;
+    ownerNeed: number;
     ownerUnitPriceCents: number;
     usedInRecipeIds: string[];
   };
@@ -44,32 +44,39 @@ function buildIngredientGroups(recipes: RecipeDetail[]): IngredientGroup[] {
     const seenInRecipe = new Set<string>();
     for (const ing of recipe.ingredients) {
       if (ing.isCondiment) continue;
-      const key = ing.ingredientId ?? ing.id;
+      // Group by product, not by ing.ingredientId: that is a
+      // selling_group_component_id, a slot within one recipe, so it never
+      // matches across recipes and every group would hold exactly one recipe.
+      const key = ing.id;
       if (seenInRecipe.has(key)) continue;
       seenInRecipe.add(key);
 
-      const individual = Math.max(1, Math.ceil(ing.quantity));
+      // `quantity` is always 1 from the API; the real fractional need comes
+      // from the tile text when its unit compares to the package size.
+      const need = packageFraction(ing.recipeQuantityText, ing.recipePackageSize) ?? ing.quantity;
+      const individual = Math.max(1, Math.ceil(need));
       const existing = groups.get(key);
       if (existing) {
-        existing.rawTotal += ing.quantity;
+        existing.rawTotal += need;
         existing.individualPackages += individual;
         existing.usedInRecipeIds.push(recipe.id);
-        if (ing.quantity > existing.ownerQuantity) {
+        if (need > existing.ownerNeed) {
           existing.ownerRecipeId = recipe.id;
           existing.ownerSellingUnitId = ing.id;
-          existing.ownerQuantity = ing.quantity;
+          existing.ownerIngredientId = ing.ingredientId;
+          existing.ownerNeed = need;
           existing.ownerUnitPriceCents = ing.displayPrice;
         }
       } else {
         groups.set(key, {
-          ingredientId: key,
+          ownerIngredientId: ing.ingredientId,
           name: ing.name,
           imageId: ing.imageId,
-          rawTotal: ing.quantity,
+          rawTotal: need,
           individualPackages: individual,
           ownerRecipeId: recipe.id,
           ownerSellingUnitId: ing.id,
-          ownerQuantity: ing.quantity,
+          ownerNeed: need,
           ownerUnitPriceCents: ing.displayPrice,
           usedInRecipeIds: [recipe.id],
         });
@@ -78,7 +85,9 @@ function buildIngredientGroups(recipes: RecipeDetail[]): IngredientGroup[] {
   }
 
   return Array.from(groups.values()).map((e) => ({
-    ingredientId: e.ingredientId,
+    // The owner's slot id, which its add-to-cart call needs as the
+    // selling_group_component_id; falls back to the product id.
+    ingredientId: e.ownerIngredientId ?? e.ownerSellingUnitId,
     ownerSellingUnitId: e.ownerSellingUnitId,
     name: e.name,
     imageId: e.imageId,
