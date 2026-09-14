@@ -597,13 +597,21 @@ export type MealPlanCombination = {
 
 /** One consolidated shopping-list line, after merging an ingredient across all plan recipes. */
 export type MealPlanShoppingItem = {
-  /** Grouping key: selling_group_component_id, falling back to the selling_unit_id. */
+  /**
+   * The owner recipe's selling_group_component_id, sent as the
+   * selling_group_component_id when adding to cart. Falls back to the
+   * selling_unit_id when the recipe page exposes no slot id.
+   */
   ingredientId: string;
-  /** The specific selling_unit_id to add to cart — always the owner recipe's own unit. */
+  /** Grouping key and cart product id: the selling_unit_id the owner recipe uses. */
   ownerSellingUnitId: string;
   name: string;
   imageId: string | null;
-  /** Packages to actually buy (fractional per-recipe quantities summed, then rounded up once). */
+  /**
+   * Packages to actually buy: each recipe's fractional need (derived from the
+   * ingredient tile's "(125 g benötigt)" against its "500g" package) summed
+   * first, then rounded up once.
+   */
   packagesNeeded: number;
   /** Price per package in cents, from the owner recipe's ingredient entry. */
   unitPriceCents: number;

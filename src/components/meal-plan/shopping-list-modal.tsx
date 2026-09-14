@@ -159,7 +159,7 @@ export function ShoppingListModal({ recipeIds, people, onClose }: ShoppingListMo
                           (r) => r.id !== item.ownerRecipeId && item.usedInRecipeIds.includes(r.id)
                         );
                         return (
-                          <div key={item.ingredientId} className="flex items-center gap-3 py-3">
+                          <div key={item.ownerSellingUnitId} className="flex items-center gap-3 py-3">
                             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-50">
                               <Image
                                 src={
