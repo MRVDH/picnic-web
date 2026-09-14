@@ -14,9 +14,13 @@
  *   "(1 Dose benötigt)" + pack "400g"        → 1      the unit names the package itself
  *   "(6 Stk. benötigt)" + unitQuantity "12 Stück" → 0.5 piece count stated by the pack
  *
- * Spoon units ("1 EL" of a 55g jar) are deliberately NOT converted: dried herbs
- * run ~2 g per tablespoon and salt ~18 g, so any nominal density would
- * under-count by up to 9x and tell the user to buy too little.
+ * Spoon units convert too, but only upward. Against a volume package a
+ * tablespoon is exactly 15 ml; against a weight package the mass depends on a
+ * density we cannot know (a tablespoon of dried herbs is ~2 g, of yoghurt
+ * ~16 g), so the conversion assumes the densest food there is. The estimate can
+ * then only overshoot — and overshooting is already what the caller's
+ * whole-package fallback does, so a capped spoon is strictly closer to the
+ * truth while still never telling the user to buy too little.
  */
 
 type Measure = { value: number; unit: string };
@@ -36,6 +40,15 @@ const CONTAINER_UNITS =
 
 /** Units counting pieces, resolvable only when the pack states how many it holds. */
 const PIECE_UNITS = /^(stk|st[üu]ck|stuks|stuk|st)\.?$/i;
+
+/** Spoon volumes. EL/TL are the same abbreviations in German and Dutch. */
+const SPOON_ML: Record<string, number> = { el: 15, tl: 5 };
+
+/**
+ * Mass ceiling per spoon: the spoon's volume at ~1.5 g/ml, the density of the
+ * heaviest foods (honey, salt), rounded up. Used only against weight packages.
+ */
+const SPOON_MAX_G: Record<string, number> = { el: 25, tl: 8 };
 
 function parseNumber(raw: string): number {
   return parseFloat(raw.replace(",", "."));
@@ -100,6 +113,17 @@ export function packageFraction(
   if (PIECE_UNITS.test(needed.unit)) {
     const perPack = findPieceCount(recipePackageSize) ?? findPieceCount(unitQuantity);
     return perPack ? needed.value / perPack : null;
+  }
+
+  // Spoons: exact against a volume package, capped high against a weight one.
+  const spoonKey = needed.unit.toLowerCase().replace(/\.$/, "");
+  if (SPOON_ML[spoonKey] !== undefined) {
+    const packSize =
+      normalize(findMeasure(recipePackageSize)) ?? normalize(findMeasure(unitQuantity));
+    if (!packSize || !(packSize.value > 0)) return null;
+    return packSize.base === "ml"
+      ? (needed.value * SPOON_ML[spoonKey]) / packSize.value
+      : (needed.value * SPOON_MAX_G[spoonKey]) / packSize.value;
   }
 
   const neededBase = normalize(needed);
