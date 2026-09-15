@@ -9,8 +9,11 @@ import { PlanRecipeCard } from "@/components/meal-plan/plan-recipe-card";
 import { ShoppingListModal } from "@/components/meal-plan/shopping-list-modal";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
+import { Button } from "@/components/ui/button";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
+import { Chip } from "@/components/ui/chip";
 import { ErrorView } from "@/components/ui/error-view";
+import { IndeterminateCheckbox } from "@/components/ui/indeterminate-checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
@@ -20,6 +23,7 @@ import {
   useMealPlanCache,
   writeMealPlanCache,
 } from "@/hooks/use-meal-plan-cache";
+import type { MealPlanCacheEntry } from "@/hooks/use-meal-plan-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { MEAL_PLAN_MAX_CANDIDATES, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
@@ -54,6 +58,9 @@ export default function CookbookPage() {
   const [daysCount, setDaysCount] = useState(DEFAULT_DAYS);
   const [peopleCount, setPeopleCount] = useState(DEFAULT_PEOPLE);
   const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
+  // True while the grid shows the plan restored from the cache, i.e. while the
+  // "recent meal plan" chip is in its selected state.
+  const [recentPlanOpen, setRecentPlanOpen] = useState(false);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -158,6 +165,7 @@ export default function CookbookPage() {
 
   const handleRetry = useCallback(() => {
     setMealPlan(null);
+    setRecentPlanOpen(false);
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
     setRetryCount((c) => c + 1);
@@ -166,15 +174,16 @@ export default function CookbookPage() {
   const handleSelectCategories = useCallback((ids: (string | null)[]) => {
     setSelectedCategories(ids);
     setMealPlan(null);
+    setRecentPlanOpen(false);
     setConfirmedIds(new Set());
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
   const runSearch = useCallback(
-    async (fixedRecipes: RecipeItem[]) => {
+    async (fixedRecipes: RecipeItem[], days = daysCount, people = peopleCount) => {
       if (allRecipes.length === 0) return;
-      const slots = daysCount - fixedRecipes.length;
+      const slots = days - fixedRecipes.length;
       if (slots < 1) return;
 
       // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
@@ -200,7 +209,7 @@ export default function CookbookPage() {
           candidateIds: candidatePool.map((r) => r.id),
           fixedIds: fixedRecipes.map((r) => r.id),
           slots,
-          people: peopleCount,
+          people,
         };
         const res = await fetch("/api/meal-plan/search", {
           method: "POST",
@@ -228,11 +237,11 @@ export default function CookbookPage() {
         setMealPlan(nextPlan);
         setConfirmedIds(fixedIdSet);
         setVisibleCount(PAGE_SIZE);
-        if (nextPlan.length < daysCount) {
+        if (nextPlan.length < days) {
           setToastMessage(
             t.mealPlanNotEnoughRecipes
               .replace("{available}", String(nextPlan.length))
-              .replace("{requested}", String(daysCount))
+              .replace("{requested}", String(days))
           );
         }
       } catch {
@@ -244,14 +253,41 @@ export default function CookbookPage() {
     [allRecipes, daysCount, peopleCount, t.mealPlanGenerateError, t.mealPlanNotEnoughRecipes]
   );
 
-  const handleGenerate = useCallback(() => {
-    void runSearch([]);
-  }, [runSearch]);
+  /** Restores the cached plan and puts the chip into its selected state. */
+  const openRecentPlan = useCallback((entry: MealPlanCacheEntry) => {
+    setDaysCount(entry.days);
+    setPeopleCount(entry.people);
+    setMealPlan(entry.recipes);
+    setConfirmedIds(new Set(entry.recipes.map((r) => r.id)));
+    setRecentPlanOpen(true);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
-  const handleRegenerate = useCallback(() => {
+  const handleContinuePlanning = useCallback(() => {
+    // The button reads "continue planning" whenever a saved plan exists, so with
+    // the chip still unselected it selects it first and continues from there.
+    // The cached day/people counts go to runSearch directly — setState has not
+    // applied them yet at this point. A plan already on screen is continued as
+    // it is, so restoring the cache never discards it.
+    if (cachedPlan && !recentPlanOpen && !mealPlan) {
+      openRecentPlan(cachedPlan);
+      void runSearch(cachedPlan.recipes, cachedPlan.days, cachedPlan.people);
+      return;
+    }
     const fixedRecipes = (mealPlan ?? []).filter((r) => confirmedIds.has(r.id));
+    // Keeping nothing builds a plan from scratch, so it is no longer the saved one.
+    if (fixedRecipes.length === 0) setRecentPlanOpen(false);
     void runSearch(fixedRecipes);
-  }, [mealPlan, confirmedIds, runSearch]);
+  }, [cachedPlan, recentPlanOpen, openRecentPlan, mealPlan, confirmedIds, runSearch]);
+
+  /** Master checkbox above the grid: all confirmed → none, otherwise → all. */
+  const toggleAllConfirmed = useCallback(() => {
+    setConfirmedIds((prev) => {
+      const plan = mealPlan ?? [];
+      const allOn = plan.length > 0 && plan.every((r) => prev.has(r.id));
+      return allOn ? new Set<string>() : new Set(plan.map((r) => r.id));
+    });
+  }, [mealPlan]);
 
   const toggleConfirmed = useCallback((recipeId: string) => {
     setConfirmedIds((prev) => {
@@ -271,21 +307,32 @@ export default function CookbookPage() {
     writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
   }, [mealPlan, confirmedIds, daysCount, peopleCount]);
 
-  const handleLoadRecent = useCallback(() => {
-    if (!cachedPlan) return;
-    setDaysCount(cachedPlan.days);
-    setPeopleCount(cachedPlan.people);
-    setMealPlan(cachedPlan.recipes);
-    setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
-    setVisibleCount(PAGE_SIZE);
-  }, [cachedPlan]);
+  /** Chip body: opens the cached plan, or leaves it again when already open. */
+  const handleToggleRecent = useCallback(() => {
+    if (recentPlanOpen) {
+      setMealPlan(null);
+      setConfirmedIds(new Set());
+      setRecentPlanOpen(false);
+      setVisibleCount(PAGE_SIZE);
+      return;
+    }
+    if (cachedPlan) openRecentPlan(cachedPlan);
+  }, [cachedPlan, recentPlanOpen, openRecentPlan]);
 
+  /** Chip delete icon: drops the cached plan, and the view of it if it is open. */
   const handleClearPlan = useCallback(() => {
     clearMealPlanCache();
     setConfirmedIds(new Set());
-  }, []);
+    if (recentPlanOpen) {
+      setMealPlan(null);
+      setRecentPlanOpen(false);
+      setVisibleCount(PAGE_SIZE);
+    }
+  }, [recentPlanOpen]);
 
-  const regenerateDisabled =
+  // Continuing needs at least one free slot: a day count above the number of
+  // recipes kept. Lowering the day count below that count disables it again.
+  const continueDisabled =
     !!debouncedQuery ||
     recipesState.status !== "success" ||
     planLoading ||
@@ -300,6 +347,10 @@ export default function CookbookPage() {
       count: categoryCounts[c.id],
     })),
   ];
+
+  const confirmedInPlan = mealPlan ? mealPlan.filter((r) => confirmedIds.has(r.id)).length : 0;
+  const allConfirmed = !!mealPlan && mealPlan.length > 0 && confirmedInPlan === mealPlan.length;
+  const someConfirmed = confirmedInPlan > 0 && !allConfirmed;
 
   const visibleRecipes = displayedRecipes.slice(0, visibleCount);
   const planRecipeIds = useMemo(() => (mealPlan ? mealPlan.map((r) => r.id) : []), [mealPlan]);
@@ -336,13 +387,9 @@ export default function CookbookPage() {
                   min={1}
                   max={30}
                   value={daysCount}
-                  onChange={(e) => {
-                    setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
-                    setMealPlan(null);
-                    setConfirmedIds(new Set());
-                  }}
+                  onChange={(e) => setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))))}
                   disabled={!!debouncedQuery}
-                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
                 <input
@@ -354,34 +401,27 @@ export default function CookbookPage() {
                     setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))
                   }
                   disabled={!!debouncedQuery}
-                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <span className="text-text-muted text-sm">{t.mealPlanPeople}</span>
-                <button
+                <Button
                   type="button"
-                  onClick={handleGenerate}
-                  disabled={!!debouncedQuery || recipesState.status !== "success" || planLoading}
-                  className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={handleContinuePlanning}
+                  loading={planLoading}
+                  disabled={continueDisabled}
+                  title={continueDisabled ? t.mealPlanContinueDisabledHint : undefined}
                 >
-                  {t.mealPlanGenerate}
-                </button>
+                  {cachedPlan ? t.mealPlanContinue : t.mealPlanGenerate}
+                </Button>
                 {cachedPlan && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleLoadRecent}
-                      className="text-picnic-red text-sm font-medium hover:underline"
-                    >
-                      {t.mealPlanRecent}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleClearPlan}
-                      className="text-text-muted text-sm font-medium hover:underline"
-                    >
-                      {t.mealPlanClear}
-                    </button>
-                  </>
+                  <Chip
+                    label={t.mealPlanRecent}
+                    selected={recentPlanOpen}
+                    onClick={handleToggleRecent}
+                    onDelete={handleClearPlan}
+                    deleteLabel={t.mealPlanClear}
+                    disabled={planLoading}
+                  />
                 )}
               </div>
               {planError && <p className="text-sm text-red-600">{planError}</p>}
@@ -393,6 +433,7 @@ export default function CookbookPage() {
                 onChange={(val) => {
                   setSearchInput(val);
                   setMealPlan(null);
+                  setRecentPlanOpen(false);
                   setConfirmedIds(new Set());
                   setRecipesState({ status: "loading" });
                   setVisibleCount(PAGE_SIZE);
@@ -415,26 +456,23 @@ export default function CookbookPage() {
           {recipesState.status === "success" && displayedRecipes.length > 0 && (
             <>
               {mealPlan && (
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                  <span className="text-text-muted text-sm">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <span className="text-text-muted mr-1 text-sm">
                     {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleRegenerate}
-                    disabled={regenerateDisabled}
-                    title={regenerateDisabled ? t.mealPlanRegenerateDisabledHint : undefined}
-                    className="text-picnic-red text-sm font-medium hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
-                  >
-                    {t.mealPlanRegenerate}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShoppingListOpen(true)}
-                    className="text-picnic-red text-sm font-medium hover:underline"
-                  >
+                  <label className="text-text-muted mr-1 flex cursor-pointer items-center gap-2 text-sm select-none">
+                    <IndeterminateCheckbox
+                      checked={allConfirmed}
+                      indeterminate={someConfirmed}
+                      onChange={toggleAllConfirmed}
+                      disabled={planLoading}
+                      className="disabled:cursor-not-allowed disabled:opacity-40"
+                    />
+                    {t.mealPlanSelectAllRecipes}
+                  </label>
+                  <Button type="button" onClick={() => setShoppingListOpen(true)}>
                     {t.mealPlanViewShoppingList}
-                  </button>
+                  </Button>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

@@ -172,13 +172,15 @@ export const nl = {
   mealPlanSelectAll: "Alles selecteren",
   mealPlanDays: "dagen",
   mealPlanGenerate: "Plan genereren",
-  mealPlanRegenerate: "Opnieuw genereren",
+  mealPlanContinue: "verder plannen",
   mealPlanSummary: "{n} recepten geselecteerd",
   mealPlanNotEnoughRecipes:
     "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
   mealPlanPeople: "personen",
   mealPlanConfirmLabel: "Recept behouden in plan",
-  mealPlanRegenerateDisabledHint: "Vink een recept uit om opnieuw te genereren",
+  mealPlanSelectAllRecipes: "Alle recepten selecteren",
+  mealPlanContinueDisabledHint:
+    "Verhoog het aantal dagen of vink een recept uit om verder te plannen",
   mealPlanRecent: "Recent voedingsplan",
   mealPlanClear: "Plan wissen",
   mealPlanViewShoppingList: "Boodschappenlijst bekijken",

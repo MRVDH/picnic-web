@@ -169,13 +169,15 @@ export const fr = {
   mealPlanSelectAll: "Tout sélectionner",
   mealPlanDays: "jours",
   mealPlanGenerate: "Générer le plan",
-  mealPlanRegenerate: "Régénérer",
+  mealPlanContinue: "continuer la planification",
   mealPlanSummary: "{n} recettes sélectionnées",
   mealPlanNotEnoughRecipes:
     "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
   mealPlanPeople: "personnes",
   mealPlanConfirmLabel: "Garder cette recette dans le plan",
-  mealPlanRegenerateDisabledHint: "Décochez une recette pour régénérer",
+  mealPlanSelectAllRecipes: "Sélectionner toutes les recettes",
+  mealPlanContinueDisabledHint:
+    "Augmentez le nombre de jours ou décochez une recette pour continuer",
   mealPlanRecent: "Plan de repas récent",
   mealPlanClear: "Effacer le plan",
   mealPlanViewShoppingList: "Voir la liste de courses",

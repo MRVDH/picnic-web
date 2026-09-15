@@ -62,6 +62,32 @@
   --color-gray-600: var(--picnic-gray-600);
   --color-gray-700: var(--picnic-gray-700);
   --font-sans: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --animate-spinner-rotate: spinner-rotate 1.4s linear infinite;
+  --animate-spinner-dash: spinner-dash 1.4s ease-in-out infinite;
+}
+
+/* Material-style indeterminate spinner: the arc rotates while its length and
+   offset animate, so it stretches and contracts instead of sweeping evenly.
+   Used by CircularProgress. */
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner-dash {
+  0% {
+    stroke-dasharray: 1px, 200px;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -15px;
+  }
+  100% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -125px;
+  }
 }
 
 html {
