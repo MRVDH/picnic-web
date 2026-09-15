@@ -265,18 +265,17 @@ export default function CookbookPage() {
     [mealPlan, confirmedIds, cachedPlan]
   );
 
+  const allConfirmed = !!mealPlan && mealPlan.length > 0 && keptRecipes.length === mealPlan.length;
+  const someConfirmed = !!mealPlan && keptRecipes.length > 0 && !allConfirmed;
+
   const handleContinuePlanning = useCallback(() => {
     void runSearch(keptRecipes);
   }, [keptRecipes, runSearch]);
 
   /** Master checkbox above the grid: all confirmed → none, otherwise → all. */
   const toggleAllConfirmed = useCallback(() => {
-    setConfirmedIds((prev) => {
-      const plan = mealPlan ?? [];
-      const allOn = plan.length > 0 && plan.every((r) => prev.has(r.id));
-      return allOn ? new Set<string>() : new Set(plan.map((r) => r.id));
-    });
-  }, [mealPlan]);
+    setConfirmedIds(allConfirmed ? new Set() : new Set((mealPlan ?? []).map((r) => r.id)));
+  }, [allConfirmed, mealPlan]);
 
   const toggleConfirmed = useCallback((recipeId: string) => {
     setConfirmedIds((prev) => {
@@ -287,14 +286,28 @@ export default function CookbookPage() {
     });
   }, []);
 
-  // Auto-save whenever the confirmed set changes. Never auto-clears when it becomes
-  // empty — only the explicit "Clear plan" action (handleClearPlan below) does that.
+  // The saved plan mirrors the confirmed recipes of the plan on screen. Clearing
+  // every checkbox therefore drops it and the chip with it, leaving the plan
+  // itself displayed — the state a freshly generated plan starts in. With no
+  // plan on screen there is nothing to mirror, so the saved plan survives
+  // leaving the view.
   useEffect(() => {
     if (!mealPlan) return;
     const confirmedRecipes = mealPlan.filter((r) => confirmedIds.has(r.id));
-    if (confirmedRecipes.length === 0) return;
+    if (confirmedRecipes.length === 0) {
+      clearMealPlanCache();
+      return;
+    }
     writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
   }, [mealPlan, confirmedIds, daysCount, peopleCount]);
+
+  /** Chip delete icon: drops the saved plan and closes the view of it. */
+  const handleClearPlan = useCallback(() => {
+    clearMealPlanCache();
+    setConfirmedIds(new Set());
+    setMealPlan(null);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
   /** Chip body: opens the saved plan, or leaves it again when already open. */
   const handleToggleRecent = useCallback(() => {
@@ -311,17 +324,6 @@ export default function CookbookPage() {
     setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
     setVisibleCount(PAGE_SIZE);
   }, [cachedPlan, mealPlan]);
-
-  /** Chip delete icon: drops the saved plan and closes the view of it. */
-  const handleClearPlan = useCallback(() => {
-    clearMealPlanCache();
-    setConfirmedIds(new Set());
-    setMealPlan(null);
-    setVisibleCount(PAGE_SIZE);
-  }, []);
-
-  const allConfirmed = !!mealPlan && mealPlan.length > 0 && keptRecipes.length === mealPlan.length;
-  const someConfirmed = !!mealPlan && keptRecipes.length > 0 && !allConfirmed;
 
   // Continuing needs a free slot: a day count above what it would keep.
   const continueDisabled =
