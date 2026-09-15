@@ -20,10 +20,10 @@ import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import {
   clearMealPlanCache,
+  readMealPlanCache,
   useMealPlanCache,
   writeMealPlanCache,
 } from "@/hooks/use-meal-plan-cache";
-import type { MealPlanCacheEntry } from "@/hooks/use-meal-plan-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { MEAL_PLAN_MAX_CANDIDATES, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
@@ -58,9 +58,6 @@ export default function CookbookPage() {
   const [daysCount, setDaysCount] = useState(DEFAULT_DAYS);
   const [peopleCount, setPeopleCount] = useState(DEFAULT_PEOPLE);
   const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
-  // True while the grid shows the plan restored from the cache, i.e. while the
-  // "recent meal plan" chip is in its selected state.
-  const [recentPlanOpen, setRecentPlanOpen] = useState(false);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -81,6 +78,15 @@ export default function CookbookPage() {
     const timer = setTimeout(() => setDebouncedQuery(searchInput.trim()), DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Adopt the saved plan's day and people counts on first load, so a reload
+  // shows the same numbers that selecting the chip would restore.
+  useEffect(() => {
+    const entry = readMealPlanCache();
+    if (!entry) return;
+    setDaysCount(entry.days);
+    setPeopleCount(entry.people);
+  }, []);
 
   // Fetch category counts once on mount (non-blocking)
   useEffect(() => {
@@ -165,7 +171,6 @@ export default function CookbookPage() {
 
   const handleRetry = useCallback(() => {
     setMealPlan(null);
-    setRecentPlanOpen(false);
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
     setRetryCount((c) => c + 1);
@@ -174,16 +179,15 @@ export default function CookbookPage() {
   const handleSelectCategories = useCallback((ids: (string | null)[]) => {
     setSelectedCategories(ids);
     setMealPlan(null);
-    setRecentPlanOpen(false);
     setConfirmedIds(new Set());
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
   const runSearch = useCallback(
-    async (fixedRecipes: RecipeItem[], days = daysCount, people = peopleCount) => {
+    async (fixedRecipes: RecipeItem[]) => {
       if (allRecipes.length === 0) return;
-      const slots = days - fixedRecipes.length;
+      const slots = daysCount - fixedRecipes.length;
       if (slots < 1) return;
 
       // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
@@ -209,7 +213,7 @@ export default function CookbookPage() {
           candidateIds: candidatePool.map((r) => r.id),
           fixedIds: fixedRecipes.map((r) => r.id),
           slots,
-          people,
+          people: peopleCount,
         };
         const res = await fetch("/api/meal-plan/search", {
           method: "POST",
@@ -237,11 +241,11 @@ export default function CookbookPage() {
         setMealPlan(nextPlan);
         setConfirmedIds(fixedIdSet);
         setVisibleCount(PAGE_SIZE);
-        if (nextPlan.length < days) {
+        if (nextPlan.length < daysCount) {
           setToastMessage(
             t.mealPlanNotEnoughRecipes
               .replace("{available}", String(nextPlan.length))
-              .replace("{requested}", String(days))
+              .replace("{requested}", String(daysCount))
           );
         }
       } catch {
@@ -253,32 +257,17 @@ export default function CookbookPage() {
     [allRecipes, daysCount, peopleCount, t.mealPlanGenerateError, t.mealPlanNotEnoughRecipes]
   );
 
-  /** Restores the cached plan and puts the chip into its selected state. */
-  const openRecentPlan = useCallback((entry: MealPlanCacheEntry) => {
-    setDaysCount(entry.days);
-    setPeopleCount(entry.people);
-    setMealPlan(entry.recipes);
-    setConfirmedIds(new Set(entry.recipes.map((r) => r.id)));
-    setRecentPlanOpen(true);
-    setVisibleCount(PAGE_SIZE);
-  }, []);
+  // What a "continue planning" run keeps: the confirmed recipes while a plan is
+  // on screen, otherwise the saved plan itself. Continuing never starts from
+  // scratch — unchecking every recipe is what does that.
+  const keptRecipes = useMemo(
+    () => (mealPlan ? mealPlan.filter((r) => confirmedIds.has(r.id)) : (cachedPlan?.recipes ?? [])),
+    [mealPlan, confirmedIds, cachedPlan]
+  );
 
   const handleContinuePlanning = useCallback(() => {
-    // The button reads "continue planning" whenever a saved plan exists, so with
-    // the chip still unselected it selects it first and continues from there.
-    // The cached day/people counts go to runSearch directly — setState has not
-    // applied them yet at this point. A plan already on screen is continued as
-    // it is, so restoring the cache never discards it.
-    if (cachedPlan && !recentPlanOpen && !mealPlan) {
-      openRecentPlan(cachedPlan);
-      void runSearch(cachedPlan.recipes, cachedPlan.days, cachedPlan.people);
-      return;
-    }
-    const fixedRecipes = (mealPlan ?? []).filter((r) => confirmedIds.has(r.id));
-    // Keeping nothing builds a plan from scratch, so it is no longer the saved one.
-    if (fixedRecipes.length === 0) setRecentPlanOpen(false);
-    void runSearch(fixedRecipes);
-  }, [cachedPlan, recentPlanOpen, openRecentPlan, mealPlan, confirmedIds, runSearch]);
+    void runSearch(keptRecipes);
+  }, [keptRecipes, runSearch]);
 
   /** Master checkbox above the grid: all confirmed → none, otherwise → all. */
   const toggleAllConfirmed = useCallback(() => {
@@ -307,36 +296,39 @@ export default function CookbookPage() {
     writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
   }, [mealPlan, confirmedIds, daysCount, peopleCount]);
 
-  /** Chip body: opens the cached plan, or leaves it again when already open. */
+  /** Chip body: opens the saved plan, or leaves it again when already open. */
   const handleToggleRecent = useCallback(() => {
-    if (recentPlanOpen) {
+    if (mealPlan) {
       setMealPlan(null);
       setConfirmedIds(new Set());
-      setRecentPlanOpen(false);
       setVisibleCount(PAGE_SIZE);
       return;
     }
-    if (cachedPlan) openRecentPlan(cachedPlan);
-  }, [cachedPlan, recentPlanOpen, openRecentPlan]);
+    if (!cachedPlan) return;
+    setDaysCount(cachedPlan.days);
+    setPeopleCount(cachedPlan.people);
+    setMealPlan(cachedPlan.recipes);
+    setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
+    setVisibleCount(PAGE_SIZE);
+  }, [cachedPlan, mealPlan]);
 
-  /** Chip delete icon: drops the cached plan, and the view of it if it is open. */
+  /** Chip delete icon: drops the saved plan and closes the view of it. */
   const handleClearPlan = useCallback(() => {
     clearMealPlanCache();
     setConfirmedIds(new Set());
-    if (recentPlanOpen) {
-      setMealPlan(null);
-      setRecentPlanOpen(false);
-      setVisibleCount(PAGE_SIZE);
-    }
-  }, [recentPlanOpen]);
+    setMealPlan(null);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
-  // Continuing needs at least one free slot: a day count above the number of
-  // recipes kept. Lowering the day count below that count disables it again.
+  const allConfirmed = !!mealPlan && mealPlan.length > 0 && keptRecipes.length === mealPlan.length;
+  const someConfirmed = !!mealPlan && keptRecipes.length > 0 && !allConfirmed;
+
+  // Continuing needs a free slot: a day count above what it would keep.
   const continueDisabled =
     !!debouncedQuery ||
     recipesState.status !== "success" ||
     planLoading ||
-    confirmedIds.size >= daysCount;
+    keptRecipes.length >= daysCount;
 
   const checkboxOptions = [
     { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
@@ -347,10 +339,6 @@ export default function CookbookPage() {
       count: categoryCounts[c.id],
     })),
   ];
-
-  const confirmedInPlan = mealPlan ? mealPlan.filter((r) => confirmedIds.has(r.id)).length : 0;
-  const allConfirmed = !!mealPlan && mealPlan.length > 0 && confirmedInPlan === mealPlan.length;
-  const someConfirmed = confirmedInPlan > 0 && !allConfirmed;
 
   const visibleRecipes = displayedRecipes.slice(0, visibleCount);
   const planRecipeIds = useMemo(() => (mealPlan ? mealPlan.map((r) => r.id) : []), [mealPlan]);
@@ -416,7 +404,7 @@ export default function CookbookPage() {
                 {cachedPlan && (
                   <Chip
                     label={t.mealPlanRecent}
-                    selected={recentPlanOpen}
+                    selected={mealPlan !== null}
                     onClick={handleToggleRecent}
                     onDelete={handleClearPlan}
                     deleteLabel={t.mealPlanClear}
@@ -433,7 +421,6 @@ export default function CookbookPage() {
                 onChange={(val) => {
                   setSearchInput(val);
                   setMealPlan(null);
-                  setRecentPlanOpen(false);
                   setConfirmedIds(new Set());
                   setRecipesState({ status: "loading" });
                   setVisibleCount(PAGE_SIZE);
