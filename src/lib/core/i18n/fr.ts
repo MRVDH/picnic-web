@@ -171,7 +171,6 @@ export const fr = {
   mealPlanDays: "jours",
   mealPlanGenerate: "Générer le plan",
   mealPlanContinue: "continuer la planification",
-  mealPlanSummary: "{n} recettes sélectionnées",
   mealPlanNotEnoughRecipes:
     "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
   mealPlanPeople: "personnes",

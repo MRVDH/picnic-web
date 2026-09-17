@@ -367,9 +367,10 @@ export default function CookbookPage() {
             />
           </div>
 
-          {/* Controls row */}
-          <div className="mb-6 flex flex-wrap gap-4">
-            <div className="flex flex-col gap-2">
+          {/* Controls. The first row holds the filters, or the plan actions while
+              planning; the day and people row below it stays put either way. */}
+          <div className="mb-6 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-2">
+            {!planningView && (
               <CategoryCheckboxPanel
                 options={checkboxOptions}
                 value={selectedCategories}
@@ -377,52 +378,8 @@ export default function CookbookPage() {
                 disabled={!!debouncedQuery}
                 selectAllLabel={t.mealPlanSelectAll}
               />
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={daysCount}
-                  onChange={(e) => setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))))}
-                  disabled={!!debouncedQuery}
-                  className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                />
-                <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={peopleCount}
-                  onChange={(e) =>
-                    setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))
-                  }
-                  disabled={!!debouncedQuery}
-                  className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                />
-                <span className="text-text-muted text-sm">{t.mealPlanPeople}</span>
-                <Button
-                  type="button"
-                  onClick={handleContinuePlanning}
-                  loading={planLoading}
-                  disabled={continueDisabled}
-                  title={continueDisabled ? t.mealPlanContinueDisabledHint : undefined}
-                >
-                  {cachedPlan ? t.mealPlanContinue : t.mealPlanGenerate}
-                </Button>
-                {cachedPlan && (
-                  <Chip
-                    label={t.mealPlanRecent}
-                    selected={planningView}
-                    onClick={handleToggleRecent}
-                    onDelete={handleClearPlan}
-                    deleteLabel={t.mealPlanClear}
-                    disabled={planLoading}
-                  />
-                )}
-              </div>
-              {planError && <p className="text-sm text-red-600">{planError}</p>}
-            </div>
-            <div className="flex flex-1 items-start">
+            )}
+            {!planningView && (
               <RecipeSearchInput
                 value={searchInput}
                 placeholder={t.cookbookSearchPlaceholder}
@@ -434,7 +391,66 @@ export default function CookbookPage() {
                   setVisibleCount(PAGE_SIZE);
                 }}
               />
+            )}
+            {planningView && mealPlan && mealPlan.length > 0 && (
+              <div className="col-start-1 flex flex-wrap items-center gap-2">
+                <label className="text-text-muted flex cursor-pointer items-center gap-2 text-sm select-none">
+                  <IndeterminateCheckbox
+                    checked={allConfirmed}
+                    indeterminate={someConfirmed}
+                    onChange={toggleAllConfirmed}
+                    disabled={planLoading}
+                    className="disabled:cursor-not-allowed disabled:opacity-40"
+                  />
+                  {t.mealPlanSelectAllRecipes} ({keptRecipes.length}/{mealPlan.length})
+                </label>
+                <Button type="button" onClick={() => setShoppingListOpen(true)}>
+                  {t.mealPlanViewShoppingList}
+                </Button>
+              </div>
+            )}
+            <div className="col-start-1 flex flex-wrap items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={daysCount}
+                onChange={(e) => setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))))}
+                disabled={!!debouncedQuery}
+                className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={peopleCount}
+                onChange={(e) => setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))}
+                disabled={!!debouncedQuery}
+                className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <span className="text-text-muted text-sm">{t.mealPlanPeople}</span>
+              <Button
+                type="button"
+                onClick={handleContinuePlanning}
+                loading={planLoading}
+                disabled={continueDisabled}
+                title={continueDisabled ? t.mealPlanContinueDisabledHint : undefined}
+              >
+                {cachedPlan ? t.mealPlanContinue : t.mealPlanGenerate}
+              </Button>
+              {cachedPlan && (
+                <Chip
+                  label={t.mealPlanRecent}
+                  selected={planningView}
+                  onClick={handleToggleRecent}
+                  onDelete={handleClearPlan}
+                  deleteLabel={t.mealPlanClear}
+                  disabled={planLoading}
+                />
+              )}
             </div>
+            {planError && <p className="col-start-1 text-sm text-red-600">{planError}</p>}
           </div>
 
           {/* Content */}
@@ -450,26 +466,6 @@ export default function CookbookPage() {
 
           {recipesState.status === "success" && displayedRecipes.length > 0 && (
             <>
-              {mealPlan && (
-                <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <span className="text-text-muted mr-1 text-sm">
-                    {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
-                  </span>
-                  <label className="text-text-muted mr-1 flex cursor-pointer items-center gap-2 text-sm select-none">
-                    <IndeterminateCheckbox
-                      checked={allConfirmed}
-                      indeterminate={someConfirmed}
-                      onChange={toggleAllConfirmed}
-                      disabled={planLoading}
-                      className="disabled:cursor-not-allowed disabled:opacity-40"
-                    />
-                    {t.mealPlanSelectAllRecipes}
-                  </label>
-                  <Button type="button" onClick={() => setShoppingListOpen(true)}>
-                    {t.mealPlanViewShoppingList}
-                  </Button>
-                </div>
-              )}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {visibleRecipes.map((recipe) =>
                   mealPlan ? (
