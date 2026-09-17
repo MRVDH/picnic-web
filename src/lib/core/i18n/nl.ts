@@ -168,7 +168,6 @@ export const nl = {
   mealPlanDays: "dagen",
   mealPlanGenerate: "Plan genereren",
   mealPlanContinue: "verder plannen",
-  mealPlanSummary: "{n} recepten geselecteerd",
   mealPlanNotEnoughRecipes:
     "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
   mealPlanPeople: "personen",

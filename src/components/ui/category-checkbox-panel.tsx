@@ -65,7 +65,7 @@ export function CategoryCheckboxPanel({
         type="button"
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
-        className={`focus:ring-picnic-red border-card-border bg-card-bg flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
+        className={`focus:ring-picnic-red border-card-border bg-card-bg flex h-8 w-full items-center justify-between gap-3 rounded-full border px-3.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
       >
         <span className="text-foreground truncate">{t.cookbookCategoryLabel}</span>
         <svg

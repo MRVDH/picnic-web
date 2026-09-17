@@ -32,6 +32,10 @@
   --text-dark: #333333;
   --text-muted: #5b534e;
   --text-bio-green: #628003;
+
+  /* Measured by SharedHeader at runtime; sticky page elements offset by it so
+     no layout has to hardcode the header's height. */
+  --header-height: 0px;
 }
 
 @theme inline {
