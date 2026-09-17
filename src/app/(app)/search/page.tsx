@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CartToast } from "@/components/cart/cart-toast";
 import { CategoryGrid } from "@/components/category/category-grid";
 import { ShortcutList } from "@/components/category/shortcut-list";
+import { SearchBar } from "@/components/search/search-bar";
 import { ResultsView } from "@/components/search/results-view";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -189,6 +190,15 @@ function SearchPage() {
     <CartProvider showToast={setToastMessage}>
       <div className="flex min-h-full flex-1 flex-col">
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          <div className="mb-8">
+            <SearchBar
+              key={urlQuery}
+              onSearch={handleSearch}
+              isLoading={searchState.status === "loading"}
+              initialQuery={urlQuery}
+            />
+          </div>
+
           {searchState.status === "idle" && (
             <CategoryBrowser
               categoriesState={categoriesState}
