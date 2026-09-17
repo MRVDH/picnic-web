@@ -7,6 +7,8 @@ import { PlanRecipeCard } from "@/components/meal-plan/plan-recipe-card";
 import { ShoppingListModal } from "@/components/meal-plan/shopping-list-modal";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
+import { BackLink } from "@/components/ui/back-link";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
 import { Chip } from "@/components/ui/chip";
@@ -16,7 +18,6 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
-import { useBackNavigation } from "@/hooks/use-back-navigation";
 import {
   clearMealPlanCache,
   readMealPlanCache,
@@ -48,7 +49,6 @@ type RecipesState =
 
 export default function CookbookPage() {
   const t = useTranslations();
-  usePageTitle(t.cookbookTitle);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
@@ -68,6 +68,10 @@ export default function CookbookPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const cachedPlan = useMealPlanCache();
+
+  // The grid shows the planning view whenever a plan is on screen.
+  const planningView = mealPlan !== null;
+  usePageTitle(planningView ? t.mealPlanPageTitle : t.cookbookTitle);
 
   const dismissToast = useCallback(() => setToastMessage(null), []);
 
@@ -164,8 +168,6 @@ export default function CookbookPage() {
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [displayedRecipes]);
-
-  const handleBack = useBackNavigation("/search");
 
   const handleRetry = useCallback(() => {
     setMealPlan(null);
@@ -307,12 +309,17 @@ export default function CookbookPage() {
     setVisibleCount(PAGE_SIZE);
   }, []);
 
+  /** Leaves the planning view and shows the full recipe list again. */
+  const closePlan = useCallback(() => {
+    setMealPlan(null);
+    setConfirmedIds(new Set());
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+
   /** Chip body: opens the saved plan, or leaves it again when already open. */
   const handleToggleRecent = useCallback(() => {
     if (mealPlan) {
-      setMealPlan(null);
-      setConfirmedIds(new Set());
-      setVisibleCount(PAGE_SIZE);
+      closePlan();
       return;
     }
     if (!cachedPlan) return;
@@ -321,7 +328,7 @@ export default function CookbookPage() {
     setMealPlan(cachedPlan.recipes);
     setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
     setVisibleCount(PAGE_SIZE);
-  }, [cachedPlan, mealPlan]);
+  }, [cachedPlan, mealPlan, closePlan]);
 
   // Continuing needs a free slot: a day count above what it would keep.
   const continueDisabled =
@@ -348,15 +355,21 @@ export default function CookbookPage() {
       <div className="flex min-h-full flex-1 flex-col">
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
           {/* Header row */}
-          <div className="mb-4 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <BackLink
+              fallbackHref="/search"
+              className="text-picnic-red hover:text-picnic-red-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
             >
-              ← {t.backButton}
-            </button>
-            <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
+              {t.backButton}
+            </BackLink>
+            <Breadcrumb
+              label={t.breadcrumbLabel}
+              items={
+                planningView
+                  ? [{ label: t.cookbookTitle, onClick: closePlan }, { label: t.mealPlanPageTitle }]
+                  : [{ label: t.cookbookTitle }]
+              }
+            />
           </div>
 
           {/* Controls row */}
@@ -404,7 +417,7 @@ export default function CookbookPage() {
                 {cachedPlan && (
                   <Chip
                     label={t.mealPlanRecent}
-                    selected={mealPlan !== null}
+                    selected={planningView}
                     onClick={handleToggleRecent}
                     onDelete={handleClearPlan}
                     deleteLabel={t.mealPlanClear}

@@ -142,6 +142,7 @@ export const nl = {
 
   // Category products view
   backButton: "Terug",
+  breadcrumbLabel: "Navigatiepad",
   noProductsInCategory: "Geen producten gevonden in deze categorie.",
   productSingular: "product",
   productPlural: "producten",
@@ -173,6 +174,7 @@ export const nl = {
   mealPlanPeople: "personen",
   mealPlanConfirmLabel: "Recept behouden in plan",
   mealPlanSelectAllRecipes: "Alle recepten selecteren",
+  mealPlanPageTitle: "Receptenplanning",
   mealPlanContinueDisabledHint:
     "Verhoog het aantal dagen of vink een recept uit om verder te plannen",
   mealPlanRecent: "Recent voedingsplan",

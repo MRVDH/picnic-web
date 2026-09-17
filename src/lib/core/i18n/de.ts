@@ -139,6 +139,7 @@ export const de = {
 
   // Category products view
   backButton: "Zurück",
+  breadcrumbLabel: "Navigationspfad",
   noProductsInCategory: "Keine Produkte in dieser Kategorie gefunden.",
   productSingular: "Produkt",
   productPlural: "Produkte",
@@ -170,6 +171,7 @@ export const de = {
   mealPlanPeople: "Personen",
   mealPlanConfirmLabel: "Rezept im Plan behalten",
   mealPlanSelectAllRecipes: "Alle Rezepte auswählen",
+  mealPlanPageTitle: "Rezepte Planung",
   mealPlanContinueDisabledHint: "Mehr Tage eintragen oder ein Rezept abwählen, um weiterzuplanen",
   mealPlanRecent: "Letzter Essensplan",
   mealPlanClear: "Plan löschen",
