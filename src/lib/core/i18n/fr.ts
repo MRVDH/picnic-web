@@ -145,6 +145,7 @@ export const fr = {
 
   // Category products view
   backButton: "Retour",
+  breadcrumbLabel: "Fil d'Ariane",
   noProductsInCategory: "Aucun produit trouvé dans cette catégorie.",
   productSingular: "produit",
   productPlural: "produits",
@@ -176,6 +177,7 @@ export const fr = {
   mealPlanPeople: "personnes",
   mealPlanConfirmLabel: "Garder cette recette dans le plan",
   mealPlanSelectAllRecipes: "Sélectionner toutes les recettes",
+  mealPlanPageTitle: "Planification des recettes",
   mealPlanContinueDisabledHint:
     "Augmentez le nombre de jours ou décochez une recette pour continuer",
   mealPlanRecent: "Plan de repas récent",

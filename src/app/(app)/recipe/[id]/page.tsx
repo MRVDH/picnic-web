@@ -2,8 +2,6 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 
-import Link from "next/link";
-
 import { CartToast } from "@/components/cart/cart-toast";
 import { AllergenBadges } from "@/components/product/allergen-badges";
 import { NutritionTable } from "@/components/product/nutrition-table";
@@ -11,6 +9,7 @@ import { FavoriteButton } from "@/components/recipe/favorite-button";
 import { IngredientEditModal } from "@/components/recipe/ingredient-edit-modal";
 import { RecipeHeroImage } from "@/components/recipe/recipe-hero-image";
 import { RecipeIngredientRow } from "@/components/recipe/recipe-ingredient-row";
+import { BackLink } from "@/components/ui/back-link";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider, useCart } from "@/contexts/cart-context";
@@ -198,12 +197,7 @@ function RecipeDetailInner({ recipeId }: { recipeId: string }) {
     <div className="flex min-h-full flex-1 flex-col">
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         {/* Back link */}
-        <Link
-          href="/cookbook"
-          className="text-text-muted hover:text-foreground mb-6 inline-flex items-center gap-1 text-sm transition-colors"
-        >
-          ← {t.cookbookTitle}
-        </Link>
+        <BackLink href="/cookbook" label={t.cookbookTitle} className="mb-6" />
 
         {/* Hero image */}
         <div className="relative mb-8 overflow-hidden rounded-2xl bg-gray-50">

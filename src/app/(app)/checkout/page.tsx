@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
@@ -10,7 +9,7 @@ import { OrderSummary } from "@/components/cart/order-summary";
 import { CheckoutIssueModal } from "@/components/checkout/checkout-issue-modal";
 import { CheckoutPaymentPanel } from "@/components/checkout/checkout-payment-panel";
 import { DeliverySlotBanner } from "@/components/delivery/delivery-slot-banner";
-import { BackArrowIcon } from "@/components/ui/back-arrow-icon";
+import { BackLink } from "@/components/ui/back-link";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "@/contexts/country-context";
@@ -183,13 +182,7 @@ export default function CheckoutPage() {
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         <div className="mb-6">
-          <Link
-            href="/cart"
-            className="text-picnic-red mb-4 inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-red-700"
-          >
-            <BackArrowIcon />
-            {t.cartTitle}
-          </Link>
+          <BackLink href="/cart" label={t.cartTitle} className="mb-4" />
           <h1 className="text-foreground text-2xl font-bold">{t.checkoutPageTitle}</h1>
         </div>
 
