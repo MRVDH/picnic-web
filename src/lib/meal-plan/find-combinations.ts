@@ -13,6 +13,52 @@ function nChooseK(n: number, k: number): number {
 }
 
 /**
+ * Improve a finished greedy combination by swapping one recipe at a time.
+ *
+ * Greedy commits every pick from a partial combination, so a recipe that only
+ * pays off alongside two others never wins a step — at the time it is judged,
+ * the partners that would make it worthwhile are not in the combination yet.
+ * Once the combination is complete that information exists, so each pick can be
+ * re-examined in full context: replace every selected recipe with every
+ * unselected one, take the best improvement, and repeat until no single swap
+ * helps. Terminates because each round strictly raises a bounded score.
+ *
+ * One round costs slots x (pool - slots) scores, a few hundred next to the
+ * thousands greedy already spends. Only the greedy branch needs it; the
+ * exhaustive branch is optimal by construction.
+ */
+function refineBySwapping(
+  selected: RecipeDetail[],
+  pool: RecipeDetail[],
+  fixed: RecipeDetail[]
+): RecipeDetail[] {
+  let current = selected;
+  let currentScore = scoreCombination([...fixed, ...current]).packagesSaved;
+
+  for (;;) {
+    const selectedIds = new Set(current.map((r) => r.id));
+    const outside = pool.filter((r) => !selectedIds.has(r.id));
+    let bestScore = currentScore;
+    let bestCombo: RecipeDetail[] | null = null;
+
+    for (let i = 0; i < current.length; i++) {
+      for (const replacement of outside) {
+        const trial = current.map((r, j) => (j === i ? replacement : r));
+        const { packagesSaved } = scoreCombination([...fixed, ...trial]);
+        if (packagesSaved > bestScore) {
+          bestScore = packagesSaved;
+          bestCombo = trial;
+        }
+      }
+    }
+
+    if (!bestCombo) return current;
+    current = bestCombo;
+    currentScore = bestScore;
+  }
+}
+
+/**
  * Find the top `topK` combinations of `slots` new recipes from `candidates`
  * that maximize packages saved, scored together with the already-confirmed
  * `fixed` recipes (so new picks are chosen to minimize waste against what's
@@ -21,7 +67,9 @@ function nChooseK(n: number, k: number): number {
  * Exhaustive search when C(candidates, slots) fits within EXHAUSTIVE_LIMIT —
  * guarantees the optimal result. Otherwise falls back to greedy across all
  * candidates: try each as a starting pick, greedily add the next-best
- * addition by score, for every candidate.
+ * addition by score, then refine the finished combination with
+ * {@link refineBySwapping}, which recovers most of what greedy's early
+ * commitments cost.
  */
 export function findBestCombinations(
   candidates: RecipeDetail[],
@@ -82,7 +130,7 @@ export function findBestCombinations(
         selected.push(bestRecipe);
         selectedIds.add(bestRecipe.id);
       }
-      if (selected.length === slots) addResult(selected);
+      if (selected.length === slots) addResult(refineBySwapping(selected, pool, fixed));
     }
   }
 
