@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CartToast } from "@/components/cart/cart-toast";
 import { PlanRecipeCard } from "@/components/meal-plan/plan-recipe-card";
 import { ShoppingListModal } from "@/components/meal-plan/shopping-list-modal";
-import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
 import { BackLink } from "@/components/ui/back-link";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -301,6 +300,45 @@ export default function CookbookPage() {
     writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
   }, [mealPlan, confirmedIds, daysCount, peopleCount]);
 
+  /**
+   * Checking a card in the full recipe list puts that recipe straight into the
+   * saved plan. The saved plan is the only state involved: the checked set is
+   * read back out of it, and `useMealPlanCache` re-renders on every write, so
+   * no second copy has to be kept in sync. The effect above only mirrors a plan
+   * that is on screen, so it never runs here and the two writers stay apart.
+   */
+  const toggleManual = useCallback(
+    (recipeId: string) => {
+      const current = cachedPlan?.recipes ?? [];
+      const without = current.filter((r) => r.id !== recipeId);
+      if (without.length !== current.length) {
+        if (without.length === 0) {
+          clearMealPlanCache();
+          return;
+        }
+        writeMealPlanCache({ recipes: without, days: daysCount, people: peopleCount });
+        return;
+      }
+      const recipe = allRecipes.find((r) => r.id === recipeId);
+      if (!recipe) return;
+      writeMealPlanCache({
+        recipes: [...current, recipe],
+        days: daysCount,
+        people: peopleCount,
+      });
+    },
+    [cachedPlan, allRecipes, daysCount, peopleCount]
+  );
+
+  // Ids the full recipe list shows as checked, and whether the plan is full.
+  // At capacity only the unchecked boxes lock, so a recipe can still be swapped
+  // out for another without leaving the list.
+  const manualIds = useMemo(
+    () => new Set((cachedPlan?.recipes ?? []).map((r) => r.id)),
+    [cachedPlan]
+  );
+  const planAtCapacity = manualIds.size >= daysCount;
+
   /** Chip delete icon: drops the saved plan and closes the view of it. */
   const handleClearPlan = useCallback(() => {
     clearMealPlanCache();
@@ -482,7 +520,14 @@ export default function CookbookPage() {
                       disabled={planLoading}
                     />
                   ) : (
-                    <RecipeCard key={recipe.id} recipe={recipe} />
+                    <PlanRecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      confirmed={manualIds.has(recipe.id)}
+                      onToggleConfirmed={toggleManual}
+                      disabled={planLoading || (planAtCapacity && !manualIds.has(recipe.id))}
+                      label={t.mealPlanAddLabel}
+                    />
                   )
                 )}
               </div>

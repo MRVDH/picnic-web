@@ -169,6 +169,7 @@ export const fr = {
     "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
   mealPlanPeople: "personnes",
   mealPlanConfirmLabel: "Garder cette recette dans le plan",
+  mealPlanAddLabel: "Ajouter cette recette au plan",
   mealPlanSelectAllRecipes: "Sélectionner toutes les recettes",
   mealPlanPageTitle: "Planification des recettes",
   mealPlanContinueDisabledHint:

@@ -169,6 +169,7 @@ export const de = {
     "Nur {available} von {requested} Rezepten in den gewählten Kategorien verfügbar — Plan auf {available} Tage begrenzt.",
   mealPlanPeople: "Personen",
   mealPlanConfirmLabel: "Rezept im Plan behalten",
+  mealPlanAddLabel: "Rezept zum Plan hinzufügen",
   mealPlanSelectAllRecipes: "Alle Rezepte auswählen",
   mealPlanPageTitle: "Rezepte Planung",
   mealPlanContinueDisabledHint: "Mehr Tage eintragen oder ein Rezept abwählen, um weiterzuplanen",

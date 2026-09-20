@@ -172,6 +172,7 @@ export const nl = {
     "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
   mealPlanPeople: "personen",
   mealPlanConfirmLabel: "Recept behouden in plan",
+  mealPlanAddLabel: "Recept aan plan toevoegen",
   mealPlanSelectAllRecipes: "Alle recepten selecteren",
   mealPlanPageTitle: "Receptenplanning",
   mealPlanContinueDisabledHint:
