@@ -57,14 +57,16 @@ export default function CookbookPage() {
   const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [planLoading, setPlanLoading] = useState(false);
-  const [planError, setPlanError] = useState<string | null>(null);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // One outlet for every transient message on this page, so a rate limit, a
+  // failed plan and a cart confirmation all appear the same way and clear
+  // themselves. Errors ask to be read, so they are given longer.
+  const [toast, setToast] = useState<{ text: string; variant: "info" | "error" } | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const cachedPlan = useMealPlanCache();
 
@@ -72,7 +74,9 @@ export default function CookbookPage() {
   const planningView = mealPlan !== null;
   usePageTitle(planningView ? t.mealPlanPageTitle : t.cookbookTitle);
 
-  const dismissToast = useCallback(() => setToastMessage(null), []);
+  const dismissToast = useCallback(() => setToast(null), []);
+  const showInfo = useCallback((text: string) => setToast({ text, variant: "info" }), []);
+  const showError = useCallback((text: string) => setToast({ text, variant: "error" }), []);
 
   // Debounce search input
   useEffect(() => {
@@ -202,7 +206,7 @@ export default function CookbookPage() {
       }
 
       setPlanLoading(true);
-      setPlanError(null);
+      setToast(null);
 
       const fixedIdSet = new Set(fixedRecipes.map((r) => r.id));
       const candidatePool = sampleCandidates(fixedIdSet);
@@ -228,10 +232,10 @@ export default function CookbookPage() {
           // The edge throttled us. The session is untouched and the block lifts
           // on its own, so say so and stay put rather than bounce to login.
           if ("code" in data && data.code === "RATE_LIMITED") {
-            setPlanError(t.mealPlanRateLimited);
+            showError(t.mealPlanRateLimited);
             return;
           }
-          setPlanError(t.mealPlanGenerateError);
+          showError(t.mealPlanGenerateError);
           return;
         }
 
@@ -247,14 +251,14 @@ export default function CookbookPage() {
         setConfirmedIds(fixedIdSet);
         setVisibleCount(PAGE_SIZE);
         if (nextPlan.length < daysCount) {
-          setToastMessage(
+          showInfo(
             t.mealPlanNotEnoughRecipes
               .replace("{available}", String(nextPlan.length))
               .replace("{requested}", String(daysCount))
           );
         }
       } catch {
-        setPlanError(t.mealPlanGenerateError);
+        showError(t.mealPlanGenerateError);
       } finally {
         setPlanLoading(false);
       }
@@ -263,6 +267,8 @@ export default function CookbookPage() {
       allRecipes,
       daysCount,
       peopleCount,
+      showError,
+      showInfo,
       t.mealPlanGenerateError,
       t.mealPlanRateLimited,
       t.mealPlanNotEnoughRecipes,
@@ -402,7 +408,7 @@ export default function CookbookPage() {
   const planRecipeIds = useMemo(() => (mealPlan ? mealPlan.map((r) => r.id) : []), [mealPlan]);
 
   return (
-    <SavedRecipesProvider showToast={setToastMessage}>
+    <SavedRecipesProvider showToast={showInfo}>
       <div className="flex min-h-full flex-1 flex-col">
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
           {/* Header row */}
@@ -506,7 +512,6 @@ export default function CookbookPage() {
                 />
               )}
             </div>
-            {planError && <p className="col-start-1 text-sm text-red-600">{planError}</p>}
           </div>
 
           {/* Content */}
@@ -554,9 +559,9 @@ export default function CookbookPage() {
           )}
         </main>
       </div>
-      <CartToast message={toastMessage} onDismiss={dismissToast} />
+      <CartToast message={toast?.text ?? null} variant={toast?.variant} onDismiss={dismissToast} />
       {shoppingListOpen && mealPlan && (
-        <CartProvider showToast={setToastMessage}>
+        <CartProvider showToast={showInfo}>
           <ShoppingListModal
             recipeIds={planRecipeIds}
             people={peopleCount}
