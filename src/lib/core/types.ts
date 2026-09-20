@@ -650,7 +650,12 @@ export type MealPlanShoppingListResponse = {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
-export type AuthErrorCode = "TOKEN_EXPIRED" | "TOKEN_INVALID" | "API_UNREACHABLE";
+export type AuthErrorCode =
+  | "TOKEN_EXPIRED"
+  | "TOKEN_INVALID"
+  | "API_UNREACHABLE"
+  /** Blocked by the edge in front of the API after too many requests; clears on its own. */
+  | "RATE_LIMITED";
 
 /** Response shape from the /api/auth/login route. */
 export type AuthApiResponse =

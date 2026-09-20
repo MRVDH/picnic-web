@@ -188,6 +188,7 @@ export const de = {
   mealPlanAddingToCart: "Wird hinzugefügt…",
   mealPlanAddedToCart: "Hinzugefügt!",
   mealPlanGenerateError: "Der Plan konnte nicht generiert werden.",
+  mealPlanRateLimited: "Zu viele Anfragen. Warte kurz und versuche es erneut.",
   mealPlanShoppingListTitle: "Einkaufsliste",
   mealPlanShoppingListError: "Einkaufsliste konnte nicht geladen werden.",
   mealPlanTotal: "Gesamt",

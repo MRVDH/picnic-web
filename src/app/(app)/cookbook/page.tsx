@@ -225,6 +225,12 @@ export default function CookbookPage() {
             window.location.href = TOKEN_EXPIRED_REDIRECT;
             return;
           }
+          // The edge throttled us. The session is untouched and the block lifts
+          // on its own, so say so and stay put rather than bounce to login.
+          if ("code" in data && data.code === "RATE_LIMITED") {
+            setPlanError(t.mealPlanRateLimited);
+            return;
+          }
           setPlanError(t.mealPlanGenerateError);
           return;
         }
@@ -253,7 +259,14 @@ export default function CookbookPage() {
         setPlanLoading(false);
       }
     },
-    [allRecipes, daysCount, peopleCount, t.mealPlanGenerateError, t.mealPlanNotEnoughRecipes]
+    [
+      allRecipes,
+      daysCount,
+      peopleCount,
+      t.mealPlanGenerateError,
+      t.mealPlanRateLimited,
+      t.mealPlanNotEnoughRecipes,
+    ]
   );
 
   // What a "continue planning" run keeps: the confirmed recipes while a plan is

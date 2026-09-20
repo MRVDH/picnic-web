@@ -192,6 +192,7 @@ export const nl = {
   mealPlanAddingToCart: "Toevoegen...",
   mealPlanAddedToCart: "Toegevoegd!",
   mealPlanGenerateError: "Het plan kon niet worden gegenereerd.",
+  mealPlanRateLimited: "Te veel verzoeken. Wacht een minuutje en probeer opnieuw.",
   mealPlanShoppingListTitle: "Boodschappenlijst",
   mealPlanShoppingListError: "Boodschappenlijst kon niet worden geladen.",
   mealPlanTotal: "Totaal",
