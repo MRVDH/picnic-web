@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { fetchCachedPage } from "@/lib/core/page-cache";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
@@ -15,7 +16,7 @@ const CACHE_TTL_MS = 60 * 60 * 1000;
 
 async function fetchCount(client: PicnicClientInstance, categoryId: string): Promise<number> {
   try {
-    const rawPage = await client.app.getPage(categoryId);
+    const rawPage = await fetchCachedPage(client, `/pages/${categoryId}`);
     return parseCookbookPage(rawPage).length;
   } catch (err) {
     console.error(`[cookbook/counts] Failed to fetch count for "${categoryId}":`, err);

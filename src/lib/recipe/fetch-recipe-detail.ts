@@ -1,5 +1,6 @@
 import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { INGREDIENT_CONCURRENCY } from "@/lib/core/constants";
+import { fetchCachedPage } from "@/lib/core/page-cache";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import type { RecipeDetail, RecipeIngredient } from "@/lib/core/types";
 import {
@@ -25,21 +26,17 @@ export async function fetchRecipePage(
   const portionsParam = portions ? `&portions=${portions}` : "";
 
   try {
-    return await (client as unknown as SendRequestClient).sendRequest(
-      "GET",
-      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`,
-      null,
-      true
+    return await fetchCachedPage(
+      client,
+      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`
     );
   } catch {
     // Fall through to the alternative endpoint
   }
 
-  return (client as unknown as SendRequestClient).sendRequest(
-    "GET",
-    `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`,
-    null,
-    true
+  return fetchCachedPage(
+    client,
+    `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`
   );
 }
 
@@ -59,11 +56,9 @@ async function enrichIngredients(
     uniqueIds,
     async (unitId) => {
       try {
-        const rawPage = await client.sendRequest(
-          "GET",
-          `/pages/product-details-page-root?id=${encodeURIComponent(unitId)}`,
-          null,
-          true
+        const rawPage = await fetchCachedPage(
+          client,
+          `/pages/product-details-page-root?id=${encodeURIComponent(unitId)}`
         );
         const tile = extractProductTileData(rawPage, unitId);
         const nutritionRows = extractProductNutritionRows(rawPage);
