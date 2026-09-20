@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/core/api-error";
+import { isApiAuthError, isUpstreamBlockError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { MEAL_PLAN_MAX_CANDIDATES, RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
@@ -30,10 +30,11 @@ async function fetchLightweight(
     const rawPage = await fetchRecipePage(client, id, portions);
     return parseRecipeDetail(rawPage, id);
   } catch (error) {
-    // An expired token fails every candidate identically — let it reach the
-    // outer handler so the client gets TOKEN_EXPIRED and redirects to login,
-    // instead of a silently empty plan. Other per-recipe failures are tolerated.
-    if (isApiAuthError(error)) throw error;
+    // An expired token, or a block from the edge, fails every candidate
+    // identically — let either reach the outer handler so the client is told
+    // what happened, instead of showing a silently empty plan. Other per-recipe
+    // failures are tolerated.
+    if (isApiAuthError(error) || isUpstreamBlockError(error)) throw error;
     return null;
   }
 }
@@ -105,6 +106,12 @@ export async function POST(
     const combinations = findBestCombinations(candidates, effectiveSlots, fixed, TOP_K);
     return NextResponse.json({ combinations });
   } catch (error) {
+    if (isUpstreamBlockError(error)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment.", code: "RATE_LIMITED" as const },
+        { status: 503 }
+      );
+    }
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },

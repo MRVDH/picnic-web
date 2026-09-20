@@ -183,6 +183,7 @@ export const fr = {
   mealPlanAddingToCart: "Ajout en cours…",
   mealPlanAddedToCart: "Ajouté !",
   mealPlanGenerateError: "Le plan n'a pas pu être généré.",
+  mealPlanRateLimited: "Trop de requêtes. Patiente un instant et réessaie.",
   mealPlanShoppingListTitle: "Liste de courses",
   mealPlanShoppingListError: "La liste de courses n'a pas pu être chargée.",
   mealPlanTotal: "Total",

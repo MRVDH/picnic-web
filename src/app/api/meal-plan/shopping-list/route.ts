@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isApiAuthError } from "@/lib/core/api-error";
+import { isApiAuthError, isUpstreamBlockError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { MEAL_PLAN_RECIPE_CONCURRENCY } from "@/lib/core/constants";
@@ -80,6 +80,13 @@ export async function POST(
     if (recipes.length === 0) {
       // Same reasoning as the search route: an expired token rejects every
       // recipe, and that must surface as TOKEN_EXPIRED, not a generic 502.
+      const blocked = results.some((result) => !result.ok && isUpstreamBlockError(result.error));
+      if (blocked) {
+        return NextResponse.json(
+          { error: "Too many requests. Please wait a moment.", code: "RATE_LIMITED" as const },
+          { status: 503 }
+        );
+      }
       const authFailed = results.some((result) => !result.ok && isApiAuthError(result.error));
       if (authFailed) {
         return NextResponse.json(
