@@ -1,3 +1,5 @@
+import { mapWithConcurrency } from "@/lib/core/concurrency";
+import { INGREDIENT_CONCURRENCY } from "@/lib/core/constants";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import type { RecipeDetail, RecipeIngredient } from "@/lib/core/types";
 import {
@@ -53,8 +55,9 @@ async function enrichIngredients(
   };
   const tileMap = new Map<string, TileEntry>();
 
-  await Promise.all(
-    uniqueIds.map(async (unitId) => {
+  await mapWithConcurrency(
+    uniqueIds,
+    async (unitId) => {
       try {
         const rawPage = await client.sendRequest(
           "GET",
@@ -68,7 +71,8 @@ async function enrichIngredients(
       } catch {
         // leave as stub
       }
-    })
+    },
+    INGREDIENT_CONCURRENCY
   );
 
   return ingredients.map((ing) => {
