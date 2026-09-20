@@ -22,3 +22,12 @@ export const CHECKOUT_STORAGE_KEY = "picnic_checkout_session";
  * combination search's exhaustive/greedy split handles pools this size fine.
  */
 export const MEAL_PLAN_MAX_CANDIDATES = 40;
+
+/**
+ * Upstream fan-out caps. These nest: a shopping list runs
+ * MEAL_PLAN_RECIPE_CONCURRENCY recipes at a time and each enriches
+ * INGREDIENT_CONCURRENCY ingredients, so the peak is their product.
+ */
+export const RECIPE_PAGE_CONCURRENCY = 5;
+export const MEAL_PLAN_RECIPE_CONCURRENCY = 3;
+export const INGREDIENT_CONCURRENCY = 5;

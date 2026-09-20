@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { mapWithConcurrency } from "@/lib/core/concurrency";
+import { MEAL_PLAN_RECIPE_CONCURRENCY } from "@/lib/core/constants";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type {
   ApiErrorResponse,
@@ -55,20 +57,30 @@ export async function POST(
     const countryCode = readCountryCode(request);
     const client = buildPicnicClient(token, countryCode);
 
-    const results = await Promise.allSettled(
-      recipeIds.map((id) => fetchRecipeDetail(client, id, people))
+    // Capped rather than fired at once: each recipe additionally fetches a
+    // product page per ingredient, so an unbounded fan-out here is what put the
+    // whole plan over the upstream limit. Failures stay per-recipe, as before.
+    type Attempt = { ok: true; recipe: RecipeDetail } | { ok: false; error: unknown };
+    const results = await mapWithConcurrency<string, Attempt>(
+      recipeIds,
+      async (id) => {
+        try {
+          return { ok: true, recipe: await fetchRecipeDetail(client, id, people) };
+        } catch (error) {
+          return { ok: false, error };
+        }
+      },
+      MEAL_PLAN_RECIPE_CONCURRENCY
     );
     const recipes: RecipeDetail[] = [];
     for (const result of results) {
-      if (result.status === "fulfilled") recipes.push(result.value);
+      if (result.ok) recipes.push(result.recipe);
     }
 
     if (recipes.length === 0) {
       // Same reasoning as the search route: an expired token rejects every
       // recipe, and that must surface as TOKEN_EXPIRED, not a generic 502.
-      const authFailed = results.some(
-        (result) => result.status === "rejected" && isApiAuthError(result.reason)
-      );
+      const authFailed = results.some((result) => !result.ok && isApiAuthError(result.error));
       if (authFailed) {
         return NextResponse.json(
           { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },

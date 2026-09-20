@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { MEAL_PLAN_MAX_CANDIDATES } from "@/lib/core/constants";
+import { mapWithConcurrency } from "@/lib/core/concurrency";
+import { MEAL_PLAN_MAX_CANDIDATES, RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import type {
@@ -17,24 +18,6 @@ import { parseRecipeDetail } from "@/lib/recipe/parse-recipe-detail";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 const TOP_K = 5;
-
-/** Max simultaneous Picnic page requests — one Generate click can ask for 40+
- *  recipes, and firing them all at once risks upstream rate limiting. */
-const FETCH_CONCURRENCY = 5;
-
-/** Resolve `worker` over `items`, at most FETCH_CONCURRENCY at a time, preserving order. */
-async function mapWithConcurrency<T, R>(items: T[], worker: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  async function run(): Promise<void> {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await worker(items[index]);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(FETCH_CONCURRENCY, items.length) }, run));
-  return results;
-}
 
 /** Lightweight fetch for the search phase: raw page + parse only, no per-ingredient
  *  enrichment — scoring only needs quantities/condiment flags/stub prices. */
@@ -100,11 +83,15 @@ export async function POST(
     const countryCode = readCountryCode(request);
     const client = buildPicnicClient(token, countryCode);
 
-    const candidateResults = await mapWithConcurrency(candidateIds, (id) =>
-      fetchLightweight(client, id, people)
+    const candidateResults = await mapWithConcurrency(
+      candidateIds,
+      (id) => fetchLightweight(client, id, people),
+      RECIPE_PAGE_CONCURRENCY
     );
-    const fixedResults = await mapWithConcurrency(fixedIds, (id) =>
-      fetchLightweight(client, id, people)
+    const fixedResults = await mapWithConcurrency(
+      fixedIds,
+      (id) => fetchLightweight(client, id, people),
+      RECIPE_PAGE_CONCURRENCY
     );
 
     const candidates = candidateResults.filter((r): r is RecipeDetail => r !== null);
