@@ -15,7 +15,6 @@ import { useTranslations } from "@/contexts/country-context";
 import { usePublishHeaderSections } from "@/contexts/header-sections-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
-import { resolveDeepLinkRoute } from "@/lib/core/deep-link-route";
 import type { ApiErrorResponse, Product, SearchApiResponse, SearchSection } from "@/lib/core/types";
 import type { RscPageModel } from "@/lib/rsc/rsc-page-types";
 
@@ -156,14 +155,6 @@ function SearchPage() {
       });
   }, [searchState.status, categoriesState.status, t.categoriesLoadError]);
 
-  const handleOpenDeepLink = useCallback(
-    (deepLink: string, title: string) => {
-      const route = resolveDeepLinkRoute(deepLink, title);
-      if (route) router.push(route);
-    },
-    [router]
-  );
-
   return (
     <CartProvider showToast={setToastMessage}>
       <div className="flex min-h-full flex-1 flex-col">
@@ -177,12 +168,7 @@ function SearchPage() {
             />
           </div>
 
-          {searchState.status === "idle" && (
-            <CategoryBrowser
-              categoriesState={categoriesState}
-              onOpenDeepLink={handleOpenDeepLink}
-            />
-          )}
+          {searchState.status === "idle" && <CategoryBrowser categoriesState={categoriesState} />}
           {searchState.status === "loading" && <LoadingSpinner />}
           {searchState.status === "error" && <ErrorView message={searchState.message} />}
           {searchState.status === "success" && (
@@ -202,17 +188,12 @@ function SearchPage() {
 
 // ─── Category browser sub-view ───────────────────────────────────────────────
 
-type CategoryBrowserProps = {
-  categoriesState: CategoriesState;
-  onOpenDeepLink: (deepLink: string, title: string) => void;
-};
-
-function CategoryBrowser({ categoriesState, onOpenDeepLink }: CategoryBrowserProps) {
+function CategoryBrowser({ categoriesState }: { categoriesState: CategoriesState }) {
   if (categoriesState.status === "loading") return <LoadingSpinner />;
   if (categoriesState.status === "error") {
     return <ErrorView message={categoriesState.message} />;
   }
   if (categoriesState.status !== "success") return null;
 
-  return <RscPageView page={categoriesState.page} onOpenDeepLink={onOpenDeepLink} />;
+  return <RscPageView page={categoriesState.page} />;
 }

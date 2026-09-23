@@ -10,6 +10,12 @@ const PicnicClient = require("picnic-api") as typeof import("picnic-api");
 export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
 
 /**
+ * True when a page was served in a different format than requested: `getPage`
+ * got a React Server Components payload (use `getRscPage`), or the other way around.
+ */
+export const isUnexpectedPageFormatError = PicnicClient.isUnexpectedPageFormatError;
+
+/**
  * Create a new PicnicClient instance with the given auth token.
  * Must only be called server-side (route handlers).
  *

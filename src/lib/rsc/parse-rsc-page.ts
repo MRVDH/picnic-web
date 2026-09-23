@@ -1,99 +1,134 @@
 // Turns a parsed RSC page (picnic-api's getRscPage) into the model the web
-// renderer uses: the theme tokens and the page's section components in order.
-import type { RscPageModel, RscSection } from "@/lib/rsc/rsc-page-types";
+// renderer uses: the theme tokens and a tree of content components.
+import type { RscNode, RscPageModel } from "@/lib/rsc/rsc-page-types";
 
 /** Shape returned by picnic-api's `app.getRscPage`. */
 type RscPage = { rows: Record<string, unknown>; modules: Record<string, unknown> };
 
 type RecordNode = Record<string, unknown>;
 
-/** Section components live under this path in Picnic's page platform. */
-const SECTION_MODULE_PATTERN = /\/logical-components\/sections\/[^/]+\/([^/]+)\.tsx$/;
-const REFERENCE_PATTERN = /^\$L?([0-9a-f]+)$/;
 const ROOT_ROW_ID = "0";
+/** "$L8" / "$8": a reference to row (or, as element type, module) 8. */
+const REFERENCE_PATTERN = /^\$L?([0-9a-f]+)$/;
+/** "$4:props:items:0:payload": a reference to a value inside row 4, used to dedupe data. */
+const PATH_REFERENCE_PATTERN = /^\$([0-9a-f]+):(.+)$/;
+const MODULE_NAME_PATTERN = /([^/]+)\.[jt]sx?$/;
+/** Modules that only provide context (page data, cart, icons); their children are the content. */
+const WRAPPER_COMPONENTS = new Set([
+  "pages-provider-hydrator",
+  "page-hydrator",
+  "IconRegistry",
+  "icon-registry",
+]);
+const MAX_REFERENCE_DEPTH = 20;
 
 /**
- * Walk the RSC tree from the root row and collect every section element in
- * render order. React elements are tuples `["$", type, key, props]`; an
- * element type "$L8" refers to client module 8, other "$L7" / "$7" strings
- * refer to row 7.
+ * Walk the RSC tree from the root row and build the content component tree.
+ * React elements are tuples `["$", type, key, props]`; an element type "$L8"
+ * refers to client module 8, other "$L7" / "$7" strings refer to row 7.
  */
 export function parseRscPage(pageId: string, page: RscPage): RscPageModel {
-  const sections: RscSection[] = [];
-  const visitedRows = new Set<string>();
   let tokens: Record<string, string> = {};
+  let nextId = 0;
 
-  const walk = (node: unknown): void => {
-    if (typeof node === "string") {
-      const rowId = REFERENCE_PATTERN.exec(node)?.[1];
-      if (rowId && rowId in page.rows && !visitedRows.has(rowId)) {
-        visitedRows.add(rowId);
-        walk(page.rows[rowId]);
+  const resolveModuleName = (type: string): string | null => {
+    const moduleId = REFERENCE_PATTERN.exec(type)?.[1];
+    const moduleRef = moduleId ? page.modules[moduleId] : null;
+    const path = Array.isArray(moduleRef) ? moduleRef[0] : null;
+    return typeof path === "string" ? (MODULE_NAME_PATTERN.exec(path)?.[1] ?? null) : null;
+  };
+
+  /**
+   * Resolve references and split a value into plain data and the component
+   * nodes nested in it. Nested elements are removed from the data.
+   */
+  const convert = (value: unknown, nodes: RscNode[], depth: number): unknown => {
+    if (typeof value === "string") {
+      if (value === "$undefined") return undefined;
+      if (depth > MAX_REFERENCE_DEPTH) return undefined;
+
+      const rowId = REFERENCE_PATTERN.exec(value)?.[1];
+      if (rowId && rowId in page.rows) return convert(page.rows[rowId], nodes, depth + 1);
+
+      const pathRef = PATH_REFERENCE_PATTERN.exec(value);
+      if (pathRef && pathRef[1] in page.rows) {
+        return convert(resolvePath(page.rows, pathRef[1], pathRef[2]), nodes, depth + 1);
       }
-      return;
+      return value;
     }
-    if (typeof node !== "object" || node === null) return;
+    if (typeof value !== "object" || value === null) return value;
 
-    if (Array.isArray(node)) {
-      if (node[0] === "$" && typeof node[1] === "string") {
-        const props = (node[3] ?? {}) as RecordNode;
-        const component = resolveSectionComponent(node[1], page.modules);
-        if (component) {
-          sections.push({
-            id: `${component}-${sections.length}`,
-            component,
-            props: cleanProps(props),
-          });
-        }
-        walk(props);
-        return;
+    if (Array.isArray(value)) {
+      if (value[0] === "$" && typeof value[1] === "string") {
+        nodes.push(...convertElement(value, depth));
+        return undefined;
       }
-      for (const item of node) walk(item);
-      return;
+      const items = value
+        .map((item) => convert(item, nodes, depth))
+        .filter((item) => item !== undefined);
+      // An array that only held elements (e.g. `children`) has nothing left as data.
+      return items.length === 0 && value.length > 0 ? undefined : items;
     }
 
-    const record = node as RecordNode;
+    const record = value as RecordNode;
     // The page theme: `tokenRegistry` holds the semantic tokens ("Action/primary"),
     // `legacyColors` the palette names components use ("YELLOW2", "GOLD1").
     if (typeof record.tokenRegistry === "object" && record.tokenRegistry !== null) {
       tokens = {
-        ...readTokens(record.tokenRegistry as RecordNode),
-        ...readTokens((record.legacyColors ?? {}) as RecordNode),
+        ...readStrings(record.tokenRegistry as RecordNode),
+        ...readStrings((record.legacyColors ?? {}) as RecordNode),
       };
     }
-    for (const value of Object.values(record)) walk(value);
+
+    const result: RecordNode = {};
+    for (const [key, item] of Object.entries(record)) {
+      const converted = convert(item, nodes, depth);
+      if (converted !== undefined) result[key] = converted;
+    }
+    return result;
   };
 
-  walk(page.rows[ROOT_ROW_ID]);
-  return { pageId, tokens, sections };
-}
+  /** Wrappers pass their children through; other elements become a node. */
+  const convertElement = (element: unknown[], depth: number): RscNode[] => {
+    const component = resolveModuleName(element[1] as string);
+    const children: RscNode[] = [];
+    const props = (convert(element[3] ?? {}, children, depth) ?? {}) as RecordNode;
 
-/** Map an element type like "$L8" to a section name, if module 8 is a section. */
-function resolveSectionComponent(type: string, modules: Record<string, unknown>): string | null {
-  const moduleId = REFERENCE_PATTERN.exec(type)?.[1];
-  if (!moduleId) return null;
+    if (!component || WRAPPER_COMPONENTS.has(component)) return children;
+    return [{ id: `${component}-${nextId++}`, component, props, children }];
+  };
 
-  const moduleRef = modules[moduleId];
-  const path = Array.isArray(moduleRef) ? moduleRef[0] : null;
-  if (typeof path !== "string") return null;
-
-  return SECTION_MODULE_PATTERN.exec(path)?.[1] ?? null;
-}
-
-function readTokens(registry: RecordNode): Record<string, string> {
-  const tokens: Record<string, string> = {};
-  for (const [key, value] of Object.entries(registry)) {
-    if (typeof value === "string") tokens[key] = value;
-  }
-  return tokens;
+  const nodes: RscNode[] = [];
+  convert(page.rows[ROOT_ROW_ID], nodes, 0);
+  return { pageId, tokens, nodes };
 }
 
 /**
- * Drop RSC placeholders ("$undefined") and unresolved references so the props
- * are plain data. Nested elements stay as they are; renderers ignore them.
+ * Follow a path like "props:items:0:payload" into a row. "props" on a React
+ * element tuple means its props (index 3); row references on the way ("$L5")
+ * are followed.
  */
-function cleanProps(value: unknown): RecordNode {
-  return JSON.parse(
-    JSON.stringify(value, (_key, v) => (v === "$undefined" ? undefined : v))
-  ) as RecordNode;
+function resolvePath(rows: Record<string, unknown>, rowId: string, path: string): unknown {
+  let current: unknown = rows[rowId];
+  for (const segment of path.split(":")) {
+    const rowRef = typeof current === "string" ? REFERENCE_PATTERN.exec(current)?.[1] : null;
+    if (rowRef && rowRef in rows) current = rows[rowRef];
+
+    if (Array.isArray(current)) {
+      current = current[0] === "$" && segment === "props" ? current[3] : current[Number(segment)];
+    } else if (typeof current === "object" && current !== null) {
+      current = (current as RecordNode)[segment];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+}
+
+function readStrings(record: RecordNode): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (typeof value === "string") result[key] = value;
+  }
+  return result;
 }
