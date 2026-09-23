@@ -140,9 +140,6 @@ export const nl = {
   // Category grid
   allCategoriesTitle: "Alle categorieën",
 
-  // Shortcut list
-  shortcutSectionTitle: "Snel naar",
-
   // Section nav bar
   sectionNavGoTo: "Ga naar",
 

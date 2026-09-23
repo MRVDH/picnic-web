@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 
-import { useCountryCode, useTranslations } from "@/contexts/country-context";
-import type { ShortcutItem } from "@/lib/category/category-types";
+import { useCountryCode } from "@/contexts/country-context";
+import type { ShortcutItem, ShortcutTitlePart } from "@/lib/category/category-types";
 import { buildImageUrl } from "@/lib/core/image-url";
+import { PML_ICON_SOURCES } from "@/lib/pml/pml-icons";
 
 type ShortcutListProps = {
   shortcuts: ShortcutItem[];
@@ -12,12 +13,10 @@ type ShortcutListProps = {
 };
 
 export function ShortcutList({ shortcuts, onShortcutTap }: ShortcutListProps) {
-  const t = useTranslations();
   if (shortcuts.length === 0) return null;
 
   return (
     <div className="mb-6">
-      <h2 className="text-foreground mb-3 text-lg font-semibold">{t.shortcutSectionTitle}</h2>
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         {shortcuts.map((shortcut, index) => (
           <ShortcutRow
@@ -60,18 +59,49 @@ function ShortcutRow({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-        <span className="text-foreground text-[15px] leading-tight font-medium">
-          {shortcut.name}
+        <span className="text-foreground flex flex-wrap items-center gap-x-[3px] text-[15px] leading-tight font-medium">
+          {shortcut.titleParts.map((part, index) => (
+            <TitlePart key={index} part={part} />
+          ))}
         </span>
         {shortcut.badge && (
-          <span className="rounded bg-[#fbd92b] px-1.5 py-0.5 text-xs font-medium text-black">
-            {shortcut.badge}
+          <span
+            className="rounded bg-[#fbd92b] px-1.5 py-0.5 text-xs font-medium text-black"
+            style={{
+              backgroundColor: shortcut.badge.backgroundColor ?? undefined,
+              color: shortcut.badge.textColor ?? undefined,
+            }}
+          >
+            {shortcut.badge.text}
           </span>
         )}
       </div>
 
       <ChevronRightIcon />
     </button>
+  );
+}
+
+function TitlePart({ part }: { part: ShortcutTitlePart }) {
+  if (part.type === "text") {
+    return <span style={{ color: part.color ?? undefined }}>{part.text}</span>;
+  }
+
+  // The app tints its icon bitmaps with the PML color, so use the bitmap as
+  // a mask and fill it with that color.
+  const mask = `url(${PML_ICON_SOURCES[part.iconKey]}) center / contain no-repeat`;
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block flex-shrink-0"
+      style={{
+        width: part.width,
+        height: part.height,
+        backgroundColor: part.color ?? "currentColor",
+        mask,
+        WebkitMask: mask,
+      }}
+    />
   );
 }
 
