@@ -134,9 +134,6 @@ export const fr = {
   similarProductsTitle: "Produits similaires",
   descriptionTitle: "Description",
 
-  // Category grid
-  allCategoriesTitle: "Toutes les catégories",
-
   // Section nav bar
   sectionNavGoTo: "Aller à",
 
