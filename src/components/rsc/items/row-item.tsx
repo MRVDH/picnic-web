@@ -7,6 +7,8 @@ import type { RscItemProps } from "@/components/rsc/sections/vertical-list";
 import { useCountryCode } from "@/contexts/country-context";
 import { ICON_ASSETS } from "@/lib/core/icon-assets";
 import { buildImageUrl } from "@/lib/core/image-url";
+import { readSlotActions } from "@/lib/rsc/rsc-actions";
+import type { RscAction } from "@/lib/rsc/rsc-page-types";
 
 /**
  * The laurel-decorated word ("Versmarkt") has no color in the payload: the
@@ -25,7 +27,7 @@ type RowLabel = { title?: string; backgroundColor?: string; textColor?: string }
  * "1300+ producten") and an optional laurel-decorated word.
  */
 export function RowItem({ item, isLast }: RscItemProps) {
-  const { tokens, onOpenDeepLink } = useRscRenderContext();
+  const { tokens, dispatch } = useRscRenderContext();
   const countryCode = useCountryCode();
 
   const title = typeof item.title === "string" ? item.title : "";
@@ -36,13 +38,21 @@ export function RowItem({ item, isLast }: RscItemProps) {
   const showChevron = (item.displayConfig as { chevron?: boolean } | undefined)?.chevron !== false;
 
   const fullTitle = [title, laurelText].filter(Boolean).join(" ");
+  // Prefer the row's own press actions; older payloads only have the deep link.
+  const slotActions = readSlotActions(item.interaction, "rowPress");
+  const actions: RscAction[] =
+    slotActions.length > 0
+      ? slotActions
+      : deepLink
+        ? [{ type: "open-deeplink", payload: { deeplink: deepLink } }]
+        : [];
   const laurelColor = tokens[LAUREL_COLOR_TOKEN] ?? LAUREL_FALLBACK_COLOR;
 
   return (
     <button
       type="button"
-      disabled={!deepLink}
-      onClick={() => deepLink && onOpenDeepLink(deepLink, fullTitle)}
+      disabled={actions.length === 0}
+      onClick={() => dispatch(actions, fullTitle)}
       className={`flex w-full items-center gap-3 px-3 py-2 transition-colors hover:bg-gray-50 active:bg-gray-100 ${isLast ? "" : "border-b border-gray-100"}`}
     >
       {imageId && (

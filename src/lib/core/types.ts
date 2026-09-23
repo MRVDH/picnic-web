@@ -1,6 +1,7 @@
 // Application-level type definitions for the Picnic web client.
 // These are our own domain types, decoupled from the upstream picnic-api types.
 import type { SelectedSlotData } from "@/lib/core/delivery-slot-types";
+import type { RscPageModel } from "@/lib/rsc/rsc-page-types";
 
 export type { SelectedSlotData } from "@/lib/core/delivery-slot-types";
 
@@ -172,6 +173,11 @@ export type CategoryProductsApiResponse = {
   title: string | null;
   products: Product[];
   sections: SearchSection[];
+  /**
+   * Set when Picnic serves the page as React Server Components instead of a
+   * Fusion page; render it with RscPageView. `products` and `sections` are empty then.
+   */
+  rscPage?: RscPageModel;
 };
 
 export type ApiErrorResponse = {
