@@ -1,17 +1,25 @@
-// Parser that extracts ShortcutItem[] from the home_page_root
-// FusionPage PML tree. Targets the "Snel naar" (quick-access) section.
-import type { ShortcutItem } from "@/lib/category/category-types";
-import { cleanMarkdown, collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml/pml-helpers";
+// Parser that extracts ShortcutItem[] from the category-tree-root
+// FusionPage PML tree: the shortcut rows the app shows at the top of the
+// search tab ("Alle acties", "Nieuw", ...).
+import type { ShortcutBadge, ShortcutItem, ShortcutTitlePart } from "@/lib/category/category-types";
+import {
+  cleanMarkdown,
+  collectPropertyValues,
+  extractInnerColor,
+  findNodeByIdSubstring,
+} from "@/lib/pml/pml-helpers";
+import { PML_ICON_SOURCES } from "@/lib/pml/pml-icons";
 
-const SHORTCUT_SECTION_ID = "campaign-category-shortcuts-section";
+const SHORTCUT_SECTION_ID = "search-recommendations-list-section";
 const BADGE_TEXT_SIZE = 12;
 const TITLE_TEXT_SIZE = 16;
+const DEFAULT_TITLE_COLOR = "#333333";
 
 /**
- * Parse the raw home_page_root FusionPage into ShortcutItem[].
+ * Parse the raw category-tree-root FusionPage into ShortcutItem[].
  *
- * Locates the "Snel naar" section within the campaign layout, then
- * extracts each list item's name, image ID, badge, and deep-link.
+ * Locates the shortcuts section above the category list, then extracts
+ * each list item's name, image ID, badge, and deep-link.
  */
 export function parseShortcutsPage(rawPage: unknown): ShortcutItem[] {
   const section = findNodeByIdSubstring(rawPage, SHORTCUT_SECTION_ID);
@@ -64,12 +72,17 @@ function extractShortcutFromTouchable(touchable: RecordNode): ShortcutItem | nul
   const imageId = findFirstImageId(touchable);
   if (!imageId) return null;
 
-  const name = extractTitleText(touchable);
+  const titleParts: ShortcutTitlePart[] = [];
+  collectTitleParts(touchable, titleParts);
+  const name = titleParts
+    .flatMap((part) => (part.type === "text" ? [part.text] : []))
+    .join(" ")
+    .trim();
   if (!name) return null;
 
-  const badge = extractBadgeText(touchable);
+  const badge = extractBadge(touchable);
 
-  return { id: imageId, name, imageId, deepLinkTarget, badge };
+  return { id: imageId, name, titleParts, imageId, deepLinkTarget, badge };
 }
 
 /** Extract the onPress.target deep-link string. */
@@ -92,18 +105,11 @@ function findFirstImageId(node: RecordNode): string | null {
 }
 
 /**
- * Extract the display title by collecting all RICH_TEXT nodes with
- * size=16 weight=MEDIUM and concatenating them (handles "Onze Versmarkt"
- * which is split across two RICH_TEXT nodes with icons between them).
+ * Collect the title pieces in display order: RICH_TEXT nodes with size=16
+ * weight=MEDIUM, plus ICON nodes we have an asset for (the laurel leaves
+ * around "Versmarkt"). Other icons, like the row chevron, are skipped.
  */
-function extractTitleText(node: RecordNode): string | null {
-  const parts: string[] = [];
-  collectTitleParts(node, parts);
-  const joined = parts.join(" ").trim();
-  return joined || null;
-}
-
-function collectTitleParts(node: unknown, parts: string[]): void {
+function collectTitleParts(node: unknown, parts: ShortcutTitlePart[]): void {
   if (typeof node !== "object" || node === null) return;
 
   if (Array.isArray(node)) {
@@ -116,13 +122,29 @@ function collectTitleParts(node: unknown, parts: string[]): void {
   const record = node as RecordNode;
   if (record.type === "RICH_TEXT") {
     const attrs = record.textAttributes as RecordNode | undefined;
-    if (attrs?.size === TITLE_TEXT_SIZE && attrs?.weight === "MEDIUM") {
-      const md = record.markdown;
-      if (typeof md === "string") {
-        parts.push(cleanMarkdown(md));
-      }
+    const md = record.markdown;
+    if (attrs?.size === TITLE_TEXT_SIZE && attrs?.weight === "MEDIUM" && typeof md === "string") {
+      const color = typeof attrs.color === "string" ? attrs.color : null;
+      parts.push({
+        type: "text",
+        text: cleanMarkdown(md),
+        color: color && color.toLowerCase() !== DEFAULT_TITLE_COLOR ? color : null,
+      });
       return;
     }
+  }
+
+  if (record.type === "ICON" && typeof record.iconKey === "string") {
+    if (record.iconKey in PML_ICON_SOURCES) {
+      parts.push({
+        type: "icon",
+        iconKey: record.iconKey,
+        color: typeof record.color === "string" ? record.color : null,
+        width: typeof record.width === "number" ? record.width : TITLE_TEXT_SIZE,
+        height: typeof record.height === "number" ? record.height : TITLE_TEXT_SIZE,
+      });
+    }
+    return;
   }
 
   for (const value of Object.values(record)) {
@@ -131,22 +153,27 @@ function collectTitleParts(node: unknown, parts: string[]): void {
 }
 
 /**
- * Extract the optional badge text (e.g. "900+ producten") from a
- * RICH_TEXT node with size=12 nested inside a yellow background container.
+ * Extract the optional badge (e.g. "1300+ producten"): a RICH_TEXT node
+ * with size=12 inside a colored CONTAINER. The text color comes from the
+ * markdown color tag, falling back to the text attributes.
  */
-function extractBadgeText(node: RecordNode): string | null {
-  const result = { text: null as string | null };
-  findBadgeText(node, result);
-  return result.text;
+function extractBadge(node: RecordNode): ShortcutBadge | null {
+  const result = { badge: null as ShortcutBadge | null };
+  findBadge(node, null, result);
+  return result.badge;
 }
 
-function findBadgeText(node: unknown, result: { text: string | null }): void {
-  if (result.text !== null) return;
+function findBadge(
+  node: unknown,
+  parentBackground: string | null,
+  result: { badge: ShortcutBadge | null }
+): void {
+  if (result.badge !== null) return;
   if (typeof node !== "object" || node === null) return;
 
   if (Array.isArray(node)) {
     for (const item of node) {
-      findBadgeText(item, result);
+      findBadge(item, parentBackground, result);
     }
     return;
   }
@@ -154,16 +181,24 @@ function findBadgeText(node: unknown, result: { text: string | null }): void {
   const record = node as RecordNode;
   if (record.type === "RICH_TEXT") {
     const attrs = record.textAttributes as RecordNode | undefined;
-    if (attrs?.size === BADGE_TEXT_SIZE) {
-      const md = record.markdown;
-      if (typeof md === "string") {
-        result.text = cleanMarkdown(md);
-        return;
-      }
+    const md = record.markdown;
+    if (attrs?.size === BADGE_TEXT_SIZE && typeof md === "string") {
+      const attrColor = typeof attrs.color === "string" ? attrs.color : null;
+      result.badge = {
+        text: cleanMarkdown(md),
+        backgroundColor: parentBackground,
+        textColor: extractInnerColor(md) ?? attrColor,
+      };
+      return;
     }
   }
 
+  const background =
+    record.type === "CONTAINER" && typeof record.backgroundColor === "string"
+      ? record.backgroundColor
+      : parentBackground;
+
   for (const value of Object.values(record)) {
-    findBadgeText(value, result);
+    findBadge(value, background, result);
   }
 }

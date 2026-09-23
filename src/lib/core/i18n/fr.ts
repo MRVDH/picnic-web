@@ -137,9 +137,6 @@ export const fr = {
   // Category grid
   allCategoriesTitle: "Toutes les catégories",
 
-  // Shortcut list
-  shortcutSectionTitle: "Accès rapide",
-
   // Section nav bar
   sectionNavGoTo: "Aller à",
 

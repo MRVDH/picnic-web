@@ -8,14 +8,18 @@ import { buildImageUrl } from "@/lib/core/image-url";
 
 type CategoryGridProps = {
   categories: CategoryItem[];
+  /** Heading from the Picnic page; falls back to the translated default. */
+  title?: string | null;
   onCategoryTap?: (category: CategoryItem) => void;
 };
 
-export function CategoryGrid({ categories, onCategoryTap }: CategoryGridProps) {
+export function CategoryGrid({ categories, title, onCategoryTap }: CategoryGridProps) {
   const t = useTranslations();
   return (
     <div>
-      <h2 className="text-foreground mb-3 text-lg font-semibold">{t.allCategoriesTitle}</h2>
+      <h2 className="text-foreground mb-3 text-lg font-semibold">
+        {title || t.allCategoriesTitle}
+      </h2>
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         {categories.map((category, index) => (
           <CategoryRow
