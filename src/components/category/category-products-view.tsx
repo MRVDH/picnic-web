@@ -1,11 +1,13 @@
 "use client";
 
+import { ProductGrid } from "@/components/product/product-grid";
+import { RscPageView } from "@/components/rsc/rsc-page-view";
 import { BackArrowIcon } from "@/components/ui/back-arrow-icon";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ProductGrid } from "@/components/product/product-grid";
 import { useTranslations } from "@/contexts/country-context";
 import type { Product, SearchSection } from "@/lib/core/types";
+import type { RscPageModel } from "@/lib/rsc/rsc-page-types";
 
 export type CategoryProductsState =
   | { status: "idle" }
@@ -15,6 +17,8 @@ export type CategoryProductsState =
       title: string;
       products: Product[];
       sections: SearchSection[];
+      /** Set for pages Picnic serves as React Server Components; rendered instead of the products. */
+      rscPage?: RscPageModel;
     }
   | { status: "error"; message: string };
 
@@ -58,7 +62,8 @@ export function CategoryProductsView({
           </button>
         </div>
       )}
-      {state.status === "success" && state.products.length === 0 && (
+      {state.status === "success" && state.rscPage && <RscPageView page={state.rscPage} />}
+      {state.status === "success" && !state.rscPage && state.products.length === 0 && (
         <p className="py-8 text-center text-sm text-gray-500">{t.noProductsInCategory}</p>
       )}
       {state.status === "success" && state.products.length > 0 && (
