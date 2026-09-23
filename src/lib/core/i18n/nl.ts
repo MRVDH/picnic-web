@@ -137,9 +137,6 @@ export const nl = {
   similarProductsTitle: "Vergelijkbare producten",
   descriptionTitle: "Beschrijving",
 
-  // Category grid
-  allCategoriesTitle: "Alle categorieën",
-
   // Section nav bar
   sectionNavGoTo: "Ga naar",
 
