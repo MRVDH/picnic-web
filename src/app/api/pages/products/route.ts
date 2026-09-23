@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { extractPageTitle } from "@/lib/category/parse-subcategories";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
-import { extractPageTitle } from "@/lib/category/parse-subcategories";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
+import { parseRscPage } from "@/lib/rsc/parse-rsc-page";
+import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
 
 /**
  * GET /api/pages/products?pageId=...
@@ -13,7 +14,8 @@ import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/t
  * Fetches an arbitrary Picnic page by its full page ID (as extracted
  * from a deep-link target) and returns any products found in the PML
  * tree. Works for promotional pages, campaign pages, and category
- * pages alike.
+ * pages alike. Pages Picnic serves as React Server Components come back as
+ * `rscPage` instead, for the RSC renderer.
  */
 export async function GET(
   request: NextRequest
@@ -37,7 +39,14 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawPage = await client.app.getPage(pageId);
+    let rawPage;
+    try {
+      rawPage = await client.app.getPage(pageId);
+    } catch (error) {
+      if (!isUnexpectedPageFormatError(error)) throw error;
+      const rscPage = parseRscPage(pageId, await client.app.getRscPage(pageId));
+      return NextResponse.json({ title: null, products: [], sections: [], rscPage });
+    }
     const title = extractPageTitle(rawPage);
     const { sections, products } = parseCategoryPageSections(rawPage);
 

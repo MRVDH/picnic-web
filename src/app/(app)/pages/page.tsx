@@ -57,6 +57,7 @@ export default function ShortcutProductsPage() {
           title: data.title ?? title,
           products: Array.isArray(data.products) ? data.products : [],
           sections: Array.isArray(data.sections) ? data.sections : [],
+          rscPage: data.rscPage,
         });
       })
       .catch((err: unknown) => {

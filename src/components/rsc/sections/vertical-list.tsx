@@ -4,7 +4,7 @@ import type { ComponentType, ReactNode } from "react";
 
 import { RowItem } from "@/components/rsc/items/row-item";
 import { SectionTitle } from "@/components/rsc/items/section-title";
-import type { RscSectionProps } from "@/components/rsc/rsc-page-view";
+import type { RscComponentProps } from "@/components/rsc/rsc-page-view";
 
 export type RscItemProps = { item: Record<string, unknown>; isLast: boolean };
 
@@ -18,7 +18,8 @@ const ITEM_COMPONENTS: Record<string, ComponentType<RscItemProps>> = {
  * `section-title` item starts a new group under its heading, e.g. the
  * shortcuts, then "Alle categorieën" and the categories.
  */
-export function VerticalList({ props }: RscSectionProps) {
+export function VerticalList({ node }: RscComponentProps) {
+  const { props } = node;
   const items = Array.isArray(props.items) ? (props.items as Record<string, unknown>[]) : [];
 
   const blocks: ReactNode[] = [];
