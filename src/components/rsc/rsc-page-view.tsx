@@ -5,6 +5,7 @@ import { type ComponentType, type ReactNode, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation";
 
 import { RscRenderContext } from "@/components/rsc/rsc-render-context";
+import { PromoDeepDiveContent } from "@/components/rsc/sections/promo-deep-dive-content";
 import { VerticalList } from "@/components/rsc/sections/vertical-list";
 import { useCartOptional } from "@/contexts/cart-context";
 import { resolveIntents } from "@/lib/rsc/rsc-actions";
@@ -23,6 +24,7 @@ export type RscComponentProps = {
  */
 const COMPONENTS: Record<string, ComponentType<RscComponentProps>> = {
   "vertical-list": VerticalList,
+  "promo-deep-dive-content": PromoDeepDiveContent,
 };
 
 /** Cart changes from actions don't carry a max count; the cart API enforces the real limit. */
