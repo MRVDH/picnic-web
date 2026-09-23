@@ -54,7 +54,8 @@ export default function ShortcutProductsPage() {
         }
         setState({
           status: "success",
-          title: data.title ?? title,
+          // The API sends "" for pages without a title; keep the one from the link then.
+          title: data.title || title,
           products: Array.isArray(data.products) ? data.products : [],
           sections: Array.isArray(data.sections) ? data.sections : [],
           rscPage: data.rscPage,
