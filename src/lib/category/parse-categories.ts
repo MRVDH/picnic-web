@@ -1,13 +1,14 @@
-// Parser that extracts CategoryItem[] from the empty-search-page-root
+// Parser that extracts CategoryItem[] from the category-tree-root
 // FusionPage PML tree. Uses existing pml-helpers for tree traversal.
 import type { CategoryItem } from "@/lib/category/category-types";
-import { collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml/pml-helpers";
+import { cleanMarkdown, collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml/pml-helpers";
 
-const CATEGORY_LIST_BLOCK_ID = "category-tree-wrapper-list";
+const CATEGORY_LIST_BLOCK_ID = "core-category-tree-list";
+const CATEGORY_TITLE_HEADER_ID = "category-title-header";
 export const CATEGORY_ITEM_PREFIX = "core-list-item-category-";
 
 /**
- * Parse the raw empty-search-page-root FusionPage into CategoryItem[].
+ * Parse the raw category-tree-root FusionPage into CategoryItem[].
  *
  * Navigates the PML tree to the known category list block, then extracts
  * each PML item's name, image ID, and deep link target.
@@ -35,6 +36,20 @@ export function parseCategoryPage(rawPage: unknown): CategoryItem[] {
   }
 
   return categories;
+}
+
+/**
+ * Extract the heading shown above the category list (e.g. "Alle categorieën")
+ * from the category-tree-root FusionPage, or null if it's missing.
+ */
+export function parseCategoriesTitle(rawPage: unknown): string | null {
+  const header = findNodeByIdSubstring(rawPage, CATEGORY_TITLE_HEADER_ID);
+  if (!header) return null;
+
+  const markdown = collectPropertyValues(header, "markdown").find(
+    (value): value is string => typeof value === "string" && value !== ""
+  );
+  return markdown ? cleanMarkdown(markdown) : null;
 }
 
 /**
