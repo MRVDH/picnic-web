@@ -39,6 +39,13 @@ Path alias: `@/*` maps to `src/*`.
 - **`lib/` helpers.** `parse-*` transform raw Picnic/Fusion responses into app
   types, `format-*` format values for display, `extract-*` pull fields;
   `types.ts` is the shared type home. Reuse these instead of inlining transforms.
+- **RSC pages.** Picnic serves some pages as React Server Components instead of
+  Fusion JSON (e.g. `category-tree-root`, the search tab). Fetch those through
+  `/api/rsc-pages?pageId=<id>` (`client.app.getRscPage` + [parse-rsc-page.ts](src/lib/rsc/parse-rsc-page.ts))
+  and render them with `RscPageView` ([src/components/rsc/](src/components/rsc/)). It renders
+  each section and item type it has a component for; support a new one by adding it to
+  `SECTION_COMPONENTS` or `ITEM_COMPONENTS` rather than writing a page-specific parser.
+  Colors come as theme tokens (`YELLOW2`), resolve them with `resolveColor`.
 - **Internationalization.** Supported countries and locale logic live in
   [src/lib/core/i18n/](src/lib/core/i18n/) (`CountryCode`), one file per language.
   [nl.ts](src/lib/core/i18n/nl.ts) is the reference language: its keys define the

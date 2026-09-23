@@ -5,8 +5,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
-import { CategoryGrid } from "@/components/category/category-grid";
-import { ShortcutList } from "@/components/category/shortcut-list";
+import { RscPageView } from "@/components/rsc/rsc-page-view";
 import { ResultsView } from "@/components/search/results-view";
 import { SearchBar } from "@/components/search/search-bar";
 import { ErrorView } from "@/components/ui/error-view";
@@ -15,10 +14,13 @@ import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePublishHeaderSections } from "@/contexts/header-sections-context";
 import { usePageTitle } from "@/hooks/use-page-title";
-import type { CategoryItem, ShortcutItem } from "@/lib/category/category-types";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
-import { parsePageIdFromDeepLink } from "@/lib/core/parse-deep-link";
+import { resolveDeepLinkRoute } from "@/lib/core/deep-link-route";
 import type { ApiErrorResponse, Product, SearchApiResponse, SearchSection } from "@/lib/core/types";
+import type { RscPageModel } from "@/lib/rsc/rsc-page-types";
+
+/** The page the Picnic app shows on its search tab before anything is typed. */
+const CATEGORY_TREE_PAGE_ID = "category-tree-root";
 
 type SearchState =
   | { status: "idle" }
@@ -34,12 +36,7 @@ type SearchState =
 type CategoriesState =
   | { status: "idle" }
   | { status: "loading" }
-  | {
-      status: "success";
-      categories: CategoryItem[];
-      categoriesTitle: string | null;
-      shortcuts: ShortcutItem[];
-    }
+  | { status: "success"; page: RscPageModel }
   | { status: "error"; message: string };
 
 export default function SearchRoute() {
@@ -138,30 +135,19 @@ function SearchPage() {
 
     setCategoriesState({ status: "loading" });
 
-    fetch("/api/categories")
+    fetch(`/api/rsc-pages?pageId=${CATEGORY_TREE_PAGE_ID}`)
       .then((res) => res.json())
-      .then(
-        (
-          data: {
-            categories?: CategoryItem[];
-            categoriesTitle?: string | null;
-            shortcuts?: ShortcutItem[];
-          } & Partial<ApiErrorResponse>
-        ) => {
-          if ("error" in data && data.error) {
-            if (data.code === "TOKEN_EXPIRED") {
-              window.location.href = TOKEN_EXPIRED_REDIRECT;
-              return;
-            }
-            setCategoriesState({ status: "error", message: data.error });
+      .then((data: RscPageModel & Partial<ApiErrorResponse>) => {
+        if ("error" in data && data.error) {
+          if (data.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
             return;
           }
-          const categories = Array.isArray(data.categories) ? data.categories : [];
-          const shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
-          const categoriesTitle = data.categoriesTitle ?? null;
-          setCategoriesState({ status: "success", categories, categoriesTitle, shortcuts });
+          setCategoriesState({ status: "error", message: data.error });
+          return;
         }
-      )
+        setCategoriesState({ status: "success", page: data });
+      })
       .catch(() => {
         setCategoriesState({
           status: "error",
@@ -170,25 +156,10 @@ function SearchPage() {
       });
   }, [searchState.status, categoriesState.status, t.categoriesLoadError]);
 
-  const handleCategoryTap = useCallback(
-    (category: CategoryItem) => {
-      router.push(`/categories/${encodeURIComponent(category.id)}`);
-    },
-    [router]
-  );
-
-  const handleShortcutTap = useCallback(
-    (shortcut: ShortcutItem) => {
-      const pageId = parsePageIdFromDeepLink(shortcut.deepLinkTarget);
-      if (!pageId) {
-        return;
-      }
-      if (pageId.startsWith("meals-page-root")) {
-        router.push("/cookbook");
-        return;
-      }
-      const params = new URLSearchParams({ pageId, title: shortcut.name });
-      router.push(`/pages?${params.toString()}`);
+  const handleOpenDeepLink = useCallback(
+    (deepLink: string, title: string) => {
+      const route = resolveDeepLinkRoute(deepLink, title);
+      if (route) router.push(route);
     },
     [router]
   );
@@ -209,8 +180,7 @@ function SearchPage() {
           {searchState.status === "idle" && (
             <CategoryBrowser
               categoriesState={categoriesState}
-              onCategoryTap={handleCategoryTap}
-              onShortcutTap={handleShortcutTap}
+              onOpenDeepLink={handleOpenDeepLink}
             />
           )}
           {searchState.status === "loading" && <LoadingSpinner />}
@@ -234,25 +204,15 @@ function SearchPage() {
 
 type CategoryBrowserProps = {
   categoriesState: CategoriesState;
-  onCategoryTap: (category: CategoryItem) => void;
-  onShortcutTap: (shortcut: ShortcutItem) => void;
+  onOpenDeepLink: (deepLink: string, title: string) => void;
 };
 
-function CategoryBrowser({ categoriesState, onCategoryTap, onShortcutTap }: CategoryBrowserProps) {
+function CategoryBrowser({ categoriesState, onOpenDeepLink }: CategoryBrowserProps) {
   if (categoriesState.status === "loading") return <LoadingSpinner />;
   if (categoriesState.status === "error") {
     return <ErrorView message={categoriesState.message} />;
   }
   if (categoriesState.status !== "success") return null;
 
-  return (
-    <>
-      <ShortcutList shortcuts={categoriesState.shortcuts} onShortcutTap={onShortcutTap} />
-      <CategoryGrid
-        categories={categoriesState.categories}
-        title={categoriesState.categoriesTitle}
-        onCategoryTap={onCategoryTap}
-      />
-    </>
-  );
+  return <RscPageView page={categoriesState.page} onOpenDeepLink={onOpenDeepLink} />;
 }
