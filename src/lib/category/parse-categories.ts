@@ -1,60 +1,12 @@
-// Parser that extracts CategoryItem[] from the category-tree-root
-// FusionPage PML tree. Uses existing pml-helpers for tree traversal.
+// Helpers that extract CategoryItem data from Fusion PML list items,
+// used by the sub-category parser.
 import type { CategoryItem } from "@/lib/category/category-types";
-import { cleanMarkdown, collectPropertyValues, findNodeByIdSubstring } from "@/lib/pml/pml-helpers";
+import { collectPropertyValues } from "@/lib/pml/pml-helpers";
 
-const CATEGORY_LIST_BLOCK_ID = "core-category-tree-list";
-const CATEGORY_TITLE_HEADER_ID = "category-title-header";
 export const CATEGORY_ITEM_PREFIX = "core-list-item-category-";
 
 /**
- * Parse the raw category-tree-root FusionPage into CategoryItem[].
- *
- * Navigates the PML tree to the known category list block, then extracts
- * each PML item's name, image ID, and deep link target.
- */
-export function parseCategoryPage(rawPage: unknown): CategoryItem[] {
-  const listBlock = findNodeByIdSubstring(rawPage, CATEGORY_LIST_BLOCK_ID);
-  if (!listBlock) return [];
-
-  const children = listBlock.children;
-  if (!Array.isArray(children)) return [];
-
-  const categories: CategoryItem[] = [];
-  for (const child of children) {
-    if (typeof child !== "object" || child === null) continue;
-
-    const record = child as Record<string, unknown>;
-    if (record.type !== "PML") continue;
-
-    const itemId = record.id;
-    if (typeof itemId !== "string") continue;
-    if (!itemId.startsWith(CATEGORY_ITEM_PREFIX)) continue;
-
-    const category = extractCategoryFromPmlItem(record, itemId);
-    if (category) categories.push(category);
-  }
-
-  return categories;
-}
-
-/**
- * Extract the heading shown above the category list (e.g. "Alle categorieën")
- * from the category-tree-root FusionPage, or null if it's missing.
- */
-export function parseCategoriesTitle(rawPage: unknown): string | null {
-  const header = findNodeByIdSubstring(rawPage, CATEGORY_TITLE_HEADER_ID);
-  if (!header) return null;
-
-  const markdown = collectPropertyValues(header, "markdown").find(
-    (value): value is string => typeof value === "string" && value !== ""
-  );
-  return markdown ? cleanMarkdown(markdown) : null;
-}
-
-/**
  * Extract a CategoryItem from a single PML item node.
- * Shared between top-level and sub-category parsers.
  */
 export function extractCategoryFromPmlItem(
   item: Record<string, unknown>,

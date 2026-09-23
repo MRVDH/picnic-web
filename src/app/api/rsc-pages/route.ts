@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type { CategoriesApiResponse } from "@/lib/category/category-types";
-import { parseCategoriesTitle, parseCategoryPage } from "@/lib/category/parse-categories";
-import { parseShortcutsPage } from "@/lib/category/parse-shortcuts";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
-
-/** The page the Picnic app shows on its search tab before anything is typed. */
-const CATEGORY_TREE_PAGE_ID = "category-tree-root";
+import { parseRscPage } from "@/lib/rsc/parse-rsc-page";
+import type { RscPageApiResponse } from "@/lib/rsc/rsc-page-types";
 
 /**
- * GET /api/categories
+ * GET /api/rsc-pages?pageId=<id>
  *
- * Fetches category-tree-root, the same page the app's search tab renders,
- * and returns its shortcut rows, categories heading and categories.
+ * Fetches a page Picnic serves as a React Server Components payload (e.g.
+ * category-tree-root, the app's search tab) and returns its theme tokens and
+ * section components for the web renderer registry.
  */
 export async function GET(
   request: NextRequest
-): Promise<NextResponse<CategoriesApiResponse | ApiErrorResponse>> {
+): Promise<NextResponse<RscPageApiResponse | ApiErrorResponse>> {
   const token = readAuthToken(request);
 
   if (!token) {
@@ -29,17 +26,18 @@ export async function GET(
     );
   }
 
+  const pageId = request.nextUrl.searchParams.get("pageId");
+  if (!pageId) {
+    return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
+  }
+
   const countryCode = readCountryCode(request);
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const page = await client.app.getPage(CATEGORY_TREE_PAGE_ID);
+    const page = await client.app.getRscPage(pageId);
 
-    return NextResponse.json({
-      categories: parseCategoryPage(page),
-      categoriesTitle: parseCategoriesTitle(page),
-      shortcuts: parseShortcutsPage(page),
-    });
+    return NextResponse.json(parseRscPage(pageId, page));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
@@ -49,10 +47,10 @@ export async function GET(
     }
 
     const message = error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("[/api/categories] Failed to fetch categories:", message);
+    console.error("[/api/rsc-pages] Failed to fetch page:", message);
 
     return NextResponse.json(
-      { error: "Failed to load categories. Please try again later." },
+      { error: "Failed to load the page. Please try again later." },
       { status: 502 }
     );
   }
