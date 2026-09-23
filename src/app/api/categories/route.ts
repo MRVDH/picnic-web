@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import type { CategoriesApiResponse } from "@/lib/category/category-types";
+import { parseCategoriesTitle, parseCategoryPage } from "@/lib/category/parse-categories";
+import { parseShortcutsPage } from "@/lib/category/parse-shortcuts";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type { CategoriesApiResponse } from "@/lib/category/category-types";
-import { parseCategoryPage } from "@/lib/category/parse-categories";
-import { parseShortcutsPage } from "@/lib/category/parse-shortcuts";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 
-const SEARCH_EMPTY_PAGE_ID = "empty-search-page-root";
-const HOME_PAGE_ID = "home_page_root";
+/** The page the Picnic app shows on its search tab before anything is typed. */
+const CATEGORY_TREE_PAGE_ID = "category-tree-root";
 
 /**
  * GET /api/categories
  *
- * Fetches both the empty-search-page-root (category list) and
- * home_page_root (shortcut tiles) in parallel, then returns
- * the combined parsed result.
+ * Fetches category-tree-root, the same page the app's search tab renders,
+ * and returns its shortcut rows, categories heading and categories.
  */
 export async function GET(
   request: NextRequest
@@ -34,16 +33,13 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
+    const page = await client.app.getPage(CATEGORY_TREE_PAGE_ID);
 
-    const [searchPage, homePage] = await Promise.all([
-      client.app.getPage(SEARCH_EMPTY_PAGE_ID),
-      client.app.getPage(HOME_PAGE_ID),
-    ]);
-
-    const categories = parseCategoryPage(searchPage);
-    const shortcuts = parseShortcutsPage(homePage);
-
-    return NextResponse.json({ categories, shortcuts });
+    return NextResponse.json({
+      categories: parseCategoryPage(page),
+      categoriesTitle: parseCategoriesTitle(page),
+      shortcuts: parseShortcutsPage(page),
+    });
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

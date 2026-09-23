@@ -7,8 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CartToast } from "@/components/cart/cart-toast";
 import { CategoryGrid } from "@/components/category/category-grid";
 import { ShortcutList } from "@/components/category/shortcut-list";
-import { SearchBar } from "@/components/search/search-bar";
 import { ResultsView } from "@/components/search/results-view";
+import { SearchBar } from "@/components/search/search-bar";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CartProvider } from "@/contexts/cart-context";
@@ -34,7 +34,12 @@ type SearchState =
 type CategoriesState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "success"; categories: CategoryItem[]; shortcuts: ShortcutItem[] }
+  | {
+      status: "success";
+      categories: CategoryItem[];
+      categoriesTitle: string | null;
+      shortcuts: ShortcutItem[];
+    }
   | { status: "error"; message: string };
 
 export default function SearchRoute() {
@@ -139,6 +144,7 @@ function SearchPage() {
         (
           data: {
             categories?: CategoryItem[];
+            categoriesTitle?: string | null;
             shortcuts?: ShortcutItem[];
           } & Partial<ApiErrorResponse>
         ) => {
@@ -152,7 +158,8 @@ function SearchPage() {
           }
           const categories = Array.isArray(data.categories) ? data.categories : [];
           const shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
-          setCategoriesState({ status: "success", categories, shortcuts });
+          const categoriesTitle = data.categoriesTitle ?? null;
+          setCategoriesState({ status: "success", categories, categoriesTitle, shortcuts });
         }
       )
       .catch(() => {
@@ -241,7 +248,11 @@ function CategoryBrowser({ categoriesState, onCategoryTap, onShortcutTap }: Cate
   return (
     <>
       <ShortcutList shortcuts={categoriesState.shortcuts} onShortcutTap={onShortcutTap} />
-      <CategoryGrid categories={categoriesState.categories} onCategoryTap={onCategoryTap} />
+      <CategoryGrid
+        categories={categoriesState.categories}
+        title={categoriesState.categoriesTitle}
+        onCategoryTap={onCategoryTap}
+      />
     </>
   );
 }
