@@ -305,6 +305,11 @@ export const fr = {
   referralCopied: "Lien copié !",
   referralTerms: "Conditions de l'offre",
 
+  // Boodschappenwekker
+  reminderSubtitle: "N'oubliez plus jamais de commander à temps. Choisissez votre moment Picnic.",
+  reminderPerDevice:
+    "Le rappel de courses se règle dans l'application Picnic. Il est lié à l'appareil sur lequel vous le réglez, et vous ne recevez la notification que sur cet appareil. C'est pourquoi vous ne pouvez pas le voir ni le régler ici.",
+
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",

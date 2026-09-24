@@ -308,6 +308,11 @@ export const nl = {
   referralCopied: "Link gekopieerd!",
   referralTerms: "Actievoorwaarden",
 
+  // Boodschappenwekker
+  reminderSubtitle: "Vergeet nooit meer op tijd te bestellen. Stel je eigen Picnic-moment in.",
+  reminderPerDevice:
+    "De Boodschappenwekker stel je in de Picnic-app in. Hij hoort bij het apparaat waarop je hem instelt, dus je krijgt de melding alleen daar. Daarom kun je hem hier niet bekijken of instellen.",
+
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",

@@ -305,6 +305,12 @@ export const de = {
   referralCopied: "Link kopiert!",
   referralTerms: "Teilnahmebedingungen",
 
+  // Boodschappenwekker
+  reminderSubtitle:
+    "Vergiss nie wieder, rechtzeitig zu bestellen. Stell deinen eigenen Picnic-Moment ein.",
+  reminderPerDevice:
+    "Den Einkaufswecker stellst du in der Picnic-App ein. Er gehört zu dem Gerät, auf dem du ihn einstellst, und du bekommst die Erinnerung nur dort. Deshalb kannst du ihn hier nicht ansehen oder einstellen.",
+
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",
   deliveriesTrackingNoMap: "Live-Karte noch nicht verfügbar.",
