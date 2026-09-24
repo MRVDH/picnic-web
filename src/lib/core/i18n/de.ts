@@ -281,6 +281,7 @@ export const de = {
   deliveriesInvoiceError: "Rechnung konnte nicht gesendet werden.",
   parcelsLoadError: "Pakete konnten nicht geladen werden.",
   parcelsEmpty: "Du hast noch keine Pakete angemeldet.",
+  parcelCopyShipmentNumber: "Sendungsnummer kopieren",
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",
   deliveriesTrackingNoMap: "Live-Karte noch nicht verfügbar.",
