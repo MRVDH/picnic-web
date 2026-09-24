@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type { ApiErrorResponse } from "@/lib/core/types";
 import type { ParcelsApiResponse } from "@/lib/core/delivery-types";
-import { parseParcels } from "@/lib/delivery/parse-parcels";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse } from "@/lib/core/types";
+import { parseParcelsPage } from "@/lib/delivery/parse-parcels-page";
 
+/** The app's Pakketservice page. */
+const PARCELS_PAGE_ID = "parcels-overview-page-root";
+
+/**
+ * GET /api/parcels
+ *
+ * Returns the Pakketservice page (parcels-overview-page-root): its title,
+ * subtitle, parcel sections and bottom action, with Picnic's localized texts.
+ */
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<ParcelsApiResponse | ApiErrorResponse>> {
@@ -21,10 +30,9 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const rawParcels = await client.customerService.getParcels();
-    const parcels = parseParcels(rawParcels);
+    const rawPage = await client.app.getPage(PARCELS_PAGE_ID);
 
-    return NextResponse.json({ parcels });
+    return NextResponse.json(parseParcelsPage(rawPage));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
