@@ -139,6 +139,7 @@ export const fr = {
 
   // Category products view
   backButton: "Retour",
+  breadcrumbLabel: "Fil d'Ariane",
   noProductsInCategory: "Aucun produit trouvé dans cette catégorie.",
   productSingular: "produit",
   productPlural: "produits",
@@ -163,8 +164,29 @@ export const fr = {
   mealPlanSelectAll: "Tout sélectionner",
   mealPlanDays: "jours",
   mealPlanGenerate: "Générer le plan",
-  mealPlanRegenerate: "Régénérer",
-  mealPlanSummary: "{n} recettes sélectionnées",
+  mealPlanContinue: "continuer la planification",
+  mealPlanNotEnoughRecipes:
+    "Seulement {available} recette(s) sur {requested} disponibles dans les catégories sélectionnées — plan limité à {available} jour(s).",
+  mealPlanPeople: "personnes",
+  mealPlanConfirmLabel: "Garder cette recette dans le plan",
+  mealPlanAddLabel: "Ajouter cette recette au plan",
+  mealPlanSelectAllRecipes: "Sélectionner toutes les recettes",
+  mealPlanPageTitle: "Planification des recettes",
+  mealPlanContinueDisabledHint:
+    "Augmentez le nombre de jours ou décochez une recette pour continuer",
+  mealPlanRecent: "Plan de repas récent",
+  mealPlanClear: "Effacer le plan",
+  mealPlanViewShoppingList: "Voir la liste de courses",
+  mealPlanPackagesSaved: "{n} emballages économisés",
+  mealPlanSharedWith: "Aussi utilisé dans {recipe}",
+  mealPlanAddAllToCart: "Tout ajouter au panier",
+  mealPlanAddingToCart: "Ajout en cours…",
+  mealPlanAddedToCart: "Ajouté !",
+  mealPlanGenerateError: "Le plan n'a pas pu être généré.",
+  mealPlanRateLimited: "Trop de requêtes. Patiente un instant et réessaie.",
+  mealPlanShoppingListTitle: "Liste de courses",
+  mealPlanShoppingListError: "La liste de courses n'a pas pu être chargée.",
+  mealPlanTotal: "Total",
 
   // Auth
   signOut: "Se déconnecter",

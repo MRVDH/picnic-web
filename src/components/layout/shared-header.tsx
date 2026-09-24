@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +28,7 @@ import type { ApiErrorResponse, CartData } from "@/lib/core/types";
  * The badge is hidden until a total is known or when the cart is empty.
  */
 export function SharedHeader() {
+  const headerRef = useRef<HTMLElement>(null);
   const t = useTranslations();
   const pathname = usePathname();
   const sections = useHeaderSections();
@@ -54,9 +55,25 @@ export function SharedHeader() {
     ? { status: "ready", ...cachedBadge }
     : { status: "loading" };
 
+  // Publish the header's own height so sticky page content can offset by it
+  // instead of hardcoding a value that the padding and font metrics decide.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const publish = () =>
+      document.documentElement.style.setProperty("--header-height", `${header.offsetHeight}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
-      <header className="border-card-border sticky top-0 z-20 border-b bg-white/95 backdrop-blur-sm">
+      <header
+        ref={headerRef}
+        className="border-card-border sticky top-0 z-20 border-b bg-white/95 backdrop-blur-sm"
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2">
           <Link
             href="/"

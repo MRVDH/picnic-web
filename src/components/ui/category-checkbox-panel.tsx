@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { IndeterminateCheckbox } from "@/components/ui/indeterminate-checkbox";
 import { useTranslations } from "@/contexts/country-context";
 
 type Option = { id: string | null; name: string; count?: number };
@@ -24,16 +25,9 @@ export function CategoryCheckboxPanel({
   const t = useTranslations();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const masterRef = useRef<HTMLInputElement>(null);
 
   const allSelected = value.length === options.length;
   const someSelected = value.length > 0 && !allSelected;
-
-  useEffect(() => {
-    if (masterRef.current) {
-      masterRef.current.indeterminate = someSelected;
-    }
-  }, [someSelected]);
 
   // Close on outside click
   useEffect(() => {
@@ -71,7 +65,7 @@ export function CategoryCheckboxPanel({
         type="button"
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
-        className={`focus:ring-picnic-red border-card-border bg-card-bg flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
+        className={`focus:ring-picnic-red border-card-border bg-card-bg flex h-8 w-full items-center justify-between gap-3 rounded-full border px-3.5 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "hover:border-gray-400"}`}
       >
         <span className="text-foreground truncate">{t.cookbookCategoryLabel}</span>
         <svg
@@ -91,12 +85,10 @@ export function CategoryCheckboxPanel({
       {isOpen && (
         <div className="border-card-border bg-card-bg absolute left-0 z-50 mt-1.5 max-h-[70vh] w-full overflow-y-auto rounded-xl border py-1 shadow-lg">
           <label className={rowClass}>
-            <input
-              ref={masterRef}
-              type="checkbox"
+            <IndeterminateCheckbox
               checked={allSelected}
+              indeterminate={someSelected}
               onChange={handleMaster}
-              className="accent-picnic-red h-4 w-4 shrink-0"
             />
             <span className="text-foreground font-medium">{selectAllLabel}</span>
           </label>

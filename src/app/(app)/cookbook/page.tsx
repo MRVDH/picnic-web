@@ -1,23 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CartToast } from "@/components/cart/cart-toast";
-import { RecipeCard } from "@/components/recipe/recipe-card";
+import { PlanRecipeCard } from "@/components/meal-plan/plan-recipe-card";
+import { ShoppingListModal } from "@/components/meal-plan/shopping-list-modal";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
+import { BackLink } from "@/components/ui/back-link";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
+import { Chip } from "@/components/ui/chip";
 import { ErrorView } from "@/components/ui/error-view";
+import { IndeterminateCheckbox } from "@/components/ui/indeterminate-checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
-import { useBackNavigation } from "@/hooks/use-back-navigation";
+import {
+  clearMealPlanCache,
+  readMealPlanCache,
+  useMealPlanCache,
+  writeMealPlanCache,
+} from "@/hooks/use-meal-plan-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import { MEAL_PLAN_MAX_CANDIDATES, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
-import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
+import type {
+  ApiErrorResponse,
+  CookbookApiResponse,
+  MealPlanSearchRequest,
+  MealPlanSearchResponse,
+  RecipeItem,
+} from "@/lib/core/types";
 
 const PAGE_SIZE = 24;
 const DEFAULT_DAYS = 7;
+const DEFAULT_PEOPLE = 2;
 
 // Stable identity so effects keyed on the recipe list don't re-run while loading.
 const EMPTY_RECIPES: RecipeItem[] = [];
@@ -29,28 +48,50 @@ type RecipesState =
 
 export default function CookbookPage() {
   const t = useTranslations();
-  usePageTitle(t.cookbookTitle);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [selectedCategories, setSelectedCategories] = useState<(string | null)[]>([null]);
   const [daysCount, setDaysCount] = useState(DEFAULT_DAYS);
+  const [peopleCount, setPeopleCount] = useState(DEFAULT_PEOPLE);
   const [mealPlan, setMealPlan] = useState<RecipeItem[] | null>(null);
+  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
+  const [planLoading, setPlanLoading] = useState(false);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [recipesState, setRecipesState] = useState<RecipesState>({ status: "loading" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // One outlet for every transient message on this page, so a rate limit, a
+  // failed plan and a cart confirmation all appear the same way and clear
+  // themselves. Errors ask to be read, so they are given longer.
+  const [toast, setToast] = useState<{ text: string; variant: "info" | "error" } | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const cachedPlan = useMealPlanCache();
 
-  const dismissToast = useCallback(() => setToastMessage(null), []);
+  // The grid shows the planning view whenever a plan is on screen.
+  const planningView = mealPlan !== null;
+  usePageTitle(planningView ? t.mealPlanPageTitle : t.cookbookTitle);
+
+  const dismissToast = useCallback(() => setToast(null), []);
+  const showInfo = useCallback((text: string) => setToast({ text, variant: "info" }), []);
+  const showError = useCallback((text: string) => setToast({ text, variant: "error" }), []);
 
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(searchInput.trim()), DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Adopt the saved plan's day and people counts on first load, so a reload
+  // shows the same numbers that selecting the chip would restore.
+  useEffect(() => {
+    const entry = readMealPlanCache();
+    if (!entry) return;
+    setDaysCount(entry.days);
+    setPeopleCount(entry.people);
+  }, []);
 
   // Fetch category counts once on mount (non-blocking)
   useEffect(() => {
@@ -131,8 +172,6 @@ export default function CookbookPage() {
     return () => observer.disconnect();
   }, [displayedRecipes]);
 
-  const handleBack = useBackNavigation("/search");
-
   const handleRetry = useCallback(() => {
     setMealPlan(null);
     setRecipesState({ status: "loading" });
@@ -143,24 +182,217 @@ export default function CookbookPage() {
   const handleSelectCategories = useCallback((ids: (string | null)[]) => {
     setSelectedCategories(ids);
     setMealPlan(null);
+    setConfirmedIds(new Set());
     setRecipesState({ status: "loading" });
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  const generatePlan = useCallback(() => {
-    if (allRecipes.length === 0) return;
-    const pool = [...allRecipes];
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+  const runSearch = useCallback(
+    async (fixedRecipes: RecipeItem[]) => {
+      if (allRecipes.length === 0) return;
+      const slots = daysCount - fixedRecipes.length;
+      if (slots < 1) return;
+
+      // Fresh random subset each call, capped at MEAL_PLAN_MAX_CANDIDATES — fetching more
+      // would mean 40+ Picnic page requests per click. Excludes recipes already fixed
+      // (confirmed) since those are never candidates for replacement.
+      function sampleCandidates(excludeIds: Set<string>): RecipeItem[] {
+        const shuffled = allRecipes.filter((r) => !excludeIds.has(r.id));
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, MEAL_PLAN_MAX_CANDIDATES);
+      }
+
+      setPlanLoading(true);
+      setToast(null);
+
+      const fixedIdSet = new Set(fixedRecipes.map((r) => r.id));
+      const candidatePool = sampleCandidates(fixedIdSet);
+
+      try {
+        const requestBody: MealPlanSearchRequest = {
+          candidateIds: candidatePool.map((r) => r.id),
+          fixedIds: fixedRecipes.map((r) => r.id),
+          slots,
+          people: peopleCount,
+        };
+        const res = await fetch("/api/meal-plan/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        const data: MealPlanSearchResponse & Partial<ApiErrorResponse> = await res.json();
+        if (!res.ok || "error" in data) {
+          if ("code" in data && data.code === "TOKEN_EXPIRED") {
+            window.location.href = TOKEN_EXPIRED_REDIRECT;
+            return;
+          }
+          // The edge throttled us. The session is untouched and the block lifts
+          // on its own, so say so and stay put rather than bounce to login.
+          if ("code" in data && data.code === "RATE_LIMITED") {
+            showError(t.mealPlanRateLimited);
+            return;
+          }
+          showError(t.mealPlanGenerateError);
+          return;
+        }
+
+        const best = data.combinations[0];
+        const pickedIds = best ? best.recipeIds : [];
+        const byId = new Map(allRecipes.map((r) => [r.id, r]));
+        const picked = pickedIds
+          .map((id) => byId.get(id))
+          .filter((r): r is RecipeItem => r !== undefined);
+        const nextPlan = [...fixedRecipes, ...picked];
+
+        setMealPlan(nextPlan);
+        setConfirmedIds(fixedIdSet);
+        setVisibleCount(PAGE_SIZE);
+        if (nextPlan.length < daysCount) {
+          showInfo(
+            t.mealPlanNotEnoughRecipes
+              .replace("{available}", String(nextPlan.length))
+              .replace("{requested}", String(daysCount))
+          );
+        }
+      } catch {
+        showError(t.mealPlanGenerateError);
+      } finally {
+        setPlanLoading(false);
+      }
+    },
+    [
+      allRecipes,
+      daysCount,
+      peopleCount,
+      showError,
+      showInfo,
+      t.mealPlanGenerateError,
+      t.mealPlanRateLimited,
+      t.mealPlanNotEnoughRecipes,
+    ]
+  );
+
+  // What a "continue planning" run keeps: the confirmed recipes while a plan is
+  // on screen, otherwise the saved plan itself. Continuing never starts from
+  // scratch — unchecking every recipe is what does that.
+  const keptRecipes = useMemo(
+    () => (mealPlan ? mealPlan.filter((r) => confirmedIds.has(r.id)) : (cachedPlan?.recipes ?? [])),
+    [mealPlan, confirmedIds, cachedPlan]
+  );
+
+  const allConfirmed = !!mealPlan && mealPlan.length > 0 && keptRecipes.length === mealPlan.length;
+  const someConfirmed = !!mealPlan && keptRecipes.length > 0 && !allConfirmed;
+
+  const handleContinuePlanning = useCallback(() => {
+    void runSearch(keptRecipes);
+  }, [keptRecipes, runSearch]);
+
+  /** Master checkbox above the grid: all confirmed → none, otherwise → all. */
+  const toggleAllConfirmed = useCallback(() => {
+    setConfirmedIds(allConfirmed ? new Set() : new Set((mealPlan ?? []).map((r) => r.id)));
+  }, [allConfirmed, mealPlan]);
+
+  const toggleConfirmed = useCallback((recipeId: string) => {
+    setConfirmedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(recipeId)) next.delete(recipeId);
+      else next.add(recipeId);
+      return next;
+    });
+  }, []);
+
+  // The saved plan mirrors the confirmed recipes of the plan on screen. Clearing
+  // every checkbox therefore drops it and the chip with it, leaving the plan
+  // itself displayed — the state a freshly generated plan starts in. With no
+  // plan on screen there is nothing to mirror, so the saved plan survives
+  // leaving the view.
+  useEffect(() => {
+    if (!mealPlan) return;
+    const confirmedRecipes = mealPlan.filter((r) => confirmedIds.has(r.id));
+    if (confirmedRecipes.length === 0) {
+      clearMealPlanCache();
+      return;
     }
-    const plan: RecipeItem[] = [];
-    for (let i = 0; i < daysCount; i++) {
-      plan.push(pool[i % pool.length]);
-    }
-    setMealPlan(plan);
+    writeMealPlanCache({ recipes: confirmedRecipes, days: daysCount, people: peopleCount });
+  }, [mealPlan, confirmedIds, daysCount, peopleCount]);
+
+  /**
+   * Checking a card in the full recipe list puts that recipe straight into the
+   * saved plan. The saved plan is the only state involved: the checked set is
+   * read back out of it, and `useMealPlanCache` re-renders on every write, so
+   * no second copy has to be kept in sync. The effect above only mirrors a plan
+   * that is on screen, so it never runs here and the two writers stay apart.
+   */
+  const toggleManual = useCallback(
+    (recipeId: string) => {
+      const current = cachedPlan?.recipes ?? [];
+      const without = current.filter((r) => r.id !== recipeId);
+      if (without.length !== current.length) {
+        if (without.length === 0) {
+          clearMealPlanCache();
+          return;
+        }
+        writeMealPlanCache({ recipes: without, days: daysCount, people: peopleCount });
+        return;
+      }
+      const recipe = allRecipes.find((r) => r.id === recipeId);
+      if (!recipe) return;
+      writeMealPlanCache({
+        recipes: [...current, recipe],
+        days: daysCount,
+        people: peopleCount,
+      });
+    },
+    [cachedPlan, allRecipes, daysCount, peopleCount]
+  );
+
+  // Ids the full recipe list shows as checked, and whether the plan is full.
+  // At capacity only the unchecked boxes lock, so a recipe can still be swapped
+  // out for another without leaving the list.
+  const manualIds = useMemo(
+    () => new Set((cachedPlan?.recipes ?? []).map((r) => r.id)),
+    [cachedPlan]
+  );
+  const planAtCapacity = manualIds.size >= daysCount;
+
+  /** Chip delete icon: drops the saved plan and closes the view of it. */
+  const handleClearPlan = useCallback(() => {
+    clearMealPlanCache();
+    setConfirmedIds(new Set());
+    setMealPlan(null);
     setVisibleCount(PAGE_SIZE);
-  }, [allRecipes, daysCount]);
+  }, []);
+
+  /** Leaves the planning view and shows the full recipe list again. */
+  const closePlan = useCallback(() => {
+    setMealPlan(null);
+    setConfirmedIds(new Set());
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+
+  /** Chip body: opens the saved plan, or leaves it again when already open. */
+  const handleToggleRecent = useCallback(() => {
+    if (mealPlan) {
+      closePlan();
+      return;
+    }
+    if (!cachedPlan) return;
+    setDaysCount(cachedPlan.days);
+    setPeopleCount(cachedPlan.people);
+    setMealPlan(cachedPlan.recipes);
+    setConfirmedIds(new Set(cachedPlan.recipes.map((r) => r.id)));
+    setVisibleCount(PAGE_SIZE);
+  }, [cachedPlan, mealPlan, closePlan]);
+
+  // Continuing needs a free slot: a day count above what it would keep.
+  const continueDisabled =
+    !!debouncedQuery ||
+    recipesState.status !== "success" ||
+    planLoading ||
+    keptRecipes.length >= daysCount;
 
   const checkboxOptions = [
     { id: null, name: t.cookbookFeatured, count: categoryCounts["__featured__"] },
@@ -173,26 +405,34 @@ export default function CookbookPage() {
   ];
 
   const visibleRecipes = displayedRecipes.slice(0, visibleCount);
+  const planRecipeIds = useMemo(() => (mealPlan ? mealPlan.map((r) => r.id) : []), [mealPlan]);
 
   return (
-    <SavedRecipesProvider showToast={setToastMessage}>
+    <SavedRecipesProvider showToast={showInfo}>
       <div className="flex min-h-full flex-1 flex-col">
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
           {/* Header row */}
-          <div className="mb-4 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="text-text-muted hover:text-foreground shrink-0 text-sm transition-colors"
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <BackLink
+              fallbackHref="/search"
+              className="text-picnic-red hover:text-picnic-red-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
             >
-              ← {t.backButton}
-            </button>
-            <h1 className="text-foreground text-xl font-bold">{t.cookbookTitle}</h1>
+              {t.backButton}
+            </BackLink>
+            <Breadcrumb
+              label={t.breadcrumbLabel}
+              items={
+                planningView
+                  ? [{ label: t.cookbookTitle, onClick: closePlan }, { label: t.mealPlanPageTitle }]
+                  : [{ label: t.cookbookTitle }]
+              }
+            />
           </div>
 
-          {/* Controls row */}
-          <div className="mb-6 flex flex-wrap gap-4">
-            <div className="flex flex-col gap-2">
+          {/* Controls. The first row holds the filters, or the plan actions while
+              planning; the day and people row below it stays put either way. */}
+          <div className="mb-6 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-2">
+            {!planningView && (
               <CategoryCheckboxPanel
                 options={checkboxOptions}
                 value={selectedCategories}
@@ -200,41 +440,77 @@ export default function CookbookPage() {
                 disabled={!!debouncedQuery}
                 selectAllLabel={t.mealPlanSelectAll}
               />
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={daysCount}
-                  onChange={(e) => {
-                    setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))));
-                    setMealPlan(null);
-                  }}
-                  disabled={!!debouncedQuery}
-                  className="focus:ring-picnic-red border-card-border bg-card-bg w-16 rounded-xl border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                />
-                <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
-                <button
-                  type="button"
-                  onClick={generatePlan}
-                  disabled={!!debouncedQuery || recipesState.status !== "success"}
-                  className="hover:bg-picnic-red/90 bg-picnic-red rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {t.mealPlanGenerate}
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-1 items-start">
+            )}
+            {!planningView && (
               <RecipeSearchInput
                 value={searchInput}
                 placeholder={t.cookbookSearchPlaceholder}
                 onChange={(val) => {
                   setSearchInput(val);
                   setMealPlan(null);
+                  setConfirmedIds(new Set());
                   setRecipesState({ status: "loading" });
                   setVisibleCount(PAGE_SIZE);
                 }}
               />
+            )}
+            {planningView && mealPlan && mealPlan.length > 0 && (
+              <div className="col-start-1 flex flex-wrap items-center gap-2">
+                <label className="text-text-muted flex cursor-pointer items-center gap-2 text-sm select-none">
+                  <IndeterminateCheckbox
+                    checked={allConfirmed}
+                    indeterminate={someConfirmed}
+                    onChange={toggleAllConfirmed}
+                    disabled={planLoading}
+                    className="disabled:cursor-not-allowed disabled:opacity-40"
+                  />
+                  {t.mealPlanSelectAllRecipes} ({keptRecipes.length}/{mealPlan.length})
+                </label>
+                <Button type="button" onClick={() => setShoppingListOpen(true)}>
+                  {t.mealPlanViewShoppingList}
+                </Button>
+              </div>
+            )}
+            <div className="col-start-1 flex flex-wrap items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={daysCount}
+                onChange={(e) => setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))))}
+                disabled={!!debouncedQuery}
+                className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <span className="text-text-muted text-sm">{t.mealPlanDays}</span>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={peopleCount}
+                onChange={(e) => setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))}
+                disabled={!!debouncedQuery}
+                className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <span className="text-text-muted text-sm">{t.mealPlanPeople}</span>
+              <Button
+                type="button"
+                onClick={handleContinuePlanning}
+                loading={planLoading}
+                disabled={continueDisabled}
+                title={continueDisabled ? t.mealPlanContinueDisabledHint : undefined}
+              >
+                {cachedPlan ? t.mealPlanContinue : t.mealPlanGenerate}
+              </Button>
+              {cachedPlan && (
+                <Chip
+                  label={t.mealPlanRecent}
+                  selected={planningView}
+                  onClick={handleToggleRecent}
+                  onDelete={handleClearPlan}
+                  deleteLabel={t.mealPlanClear}
+                  disabled={planLoading}
+                />
+              )}
             </div>
           </div>
 
@@ -251,24 +527,27 @@ export default function CookbookPage() {
 
           {recipesState.status === "success" && displayedRecipes.length > 0 && (
             <>
-              {mealPlan && (
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="text-text-muted text-sm">
-                    {t.mealPlanSummary.replace("{n}", String(mealPlan.length))}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={generatePlan}
-                    className="text-picnic-red text-sm font-medium hover:underline"
-                  >
-                    {t.mealPlanRegenerate}
-                  </button>
-                </div>
-              )}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {visibleRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
+                {visibleRecipes.map((recipe) =>
+                  mealPlan ? (
+                    <PlanRecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      confirmed={confirmedIds.has(recipe.id)}
+                      onToggleConfirmed={toggleConfirmed}
+                      disabled={planLoading}
+                    />
+                  ) : (
+                    <PlanRecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      confirmed={manualIds.has(recipe.id)}
+                      onToggleConfirmed={toggleManual}
+                      disabled={planLoading || (planAtCapacity && !manualIds.has(recipe.id))}
+                      label={t.mealPlanAddLabel}
+                    />
+                  )
+                )}
               </div>
 
               {visibleCount < displayedRecipes.length && (
@@ -280,7 +559,16 @@ export default function CookbookPage() {
           )}
         </main>
       </div>
-      <CartToast message={toastMessage} onDismiss={dismissToast} />
+      <CartToast message={toast?.text ?? null} variant={toast?.variant} onDismiss={dismissToast} />
+      {shoppingListOpen && mealPlan && (
+        <CartProvider showToast={showInfo}>
+          <ShoppingListModal
+            recipeIds={planRecipeIds}
+            people={peopleCount}
+            onClose={() => setShoppingListOpen(false)}
+          />
+        </CartProvider>
+      )}
     </SavedRecipesProvider>
   );
 }
