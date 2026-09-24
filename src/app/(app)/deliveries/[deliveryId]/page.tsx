@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { CartItemCard } from "@/components/cart/cart-item";
@@ -10,7 +9,7 @@ import { CartToast } from "@/components/cart/cart-toast";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { DeliveryRating } from "@/components/delivery/delivery-rating";
 import { DeliveryTrackingPanel } from "@/components/delivery/delivery-tracking-panel";
-import { BackArrowIcon } from "@/components/ui/back-arrow-icon";
+import { BackLink } from "@/components/ui/back-link";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -163,13 +162,12 @@ export default function DeliveryDetailPage() {
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         <div className="mb-6">
-          <Link
-            href="/deliveries"
+          <BackLink
+            fallbackHref="/deliveries"
             className="text-picnic-red mb-4 inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-red-700"
           >
-            <BackArrowIcon />
             {t.deliveriesTitle}
-          </Link>
+          </BackLink>
           <h1 className="text-foreground text-2xl font-bold">{t.deliveriesDetailTitle}</h1>
         </div>
 

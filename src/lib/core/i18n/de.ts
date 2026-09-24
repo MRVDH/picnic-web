@@ -282,6 +282,18 @@ export const de = {
   parcelsLoadError: "Pakete konnten nicht geladen werden.",
   parcelsEmpty: "Du hast noch keine Pakete angemeldet.",
   parcelCopyShipmentNumber: "Sendungsnummer kopieren",
+
+  // Wallet
+  walletLoadError: "Das Portemonnaie konnte nicht geladen werden.",
+  walletPaymentTitle: "Zahlung",
+  walletViewReceipt: "Vollständigen Kassenbon ansehen",
+  walletReturnedDeposits: "Pfand zurück",
+  walletPaidOn: "Bezahlt am {date}",
+  walletRefundedOn: "Erstattet am {date}",
+  walletSubstitution: "Ersatz",
+  walletYourPaymentMethod: "Deine Zahlungsmethode",
+  walletNoPaymentMethod: "Du hast noch keine Zahlungsmethode.",
+
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",
   deliveriesTrackingNoMap: "Live-Karte noch nicht verfügbar.",

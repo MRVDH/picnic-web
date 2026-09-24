@@ -1,3 +1,4 @@
+import { NavigationTracker } from "@/components/layout/navigation-tracker";
 import { SharedHeader } from "@/components/layout/shared-header";
 import { HeaderSectionsProvider } from "@/contexts/header-sections-context";
 
@@ -9,6 +10,7 @@ import { HeaderSectionsProvider } from "@/contexts/header-sections-context";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <HeaderSectionsProvider>
+      <NavigationTracker />
       <SharedHeader />
       {children}
     </HeaderSectionsProvider>
