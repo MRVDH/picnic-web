@@ -285,6 +285,18 @@ export const nl = {
   parcelsLoadError: "Pakketten konden niet worden geladen.",
   parcelsEmpty: "Je hebt nog geen pakketjes aangemeld.",
   parcelCopyShipmentNumber: "Zendingsnummer kopiëren",
+
+  // Wallet
+  walletLoadError: "Portemonnee kon niet worden geladen.",
+  walletPaymentTitle: "Betaling",
+  walletViewReceipt: "Bekijk volledige bonnetje",
+  walletReturnedDeposits: "Statiegeld retour",
+  walletPaidOn: "Betaald op {date}",
+  walletRefundedOn: "Terugbetaald op {date}",
+  walletSubstitution: "Vervanging",
+  walletYourPaymentMethod: "Jouw betaalmethode",
+  walletNoPaymentMethod: "Je hebt nog geen betaalmethode.",
+
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",
