@@ -91,17 +91,62 @@ export type DeliveryTrackingData = {
   } | null;
 };
 
-export type ParcelItem = {
+/** One parcel row on the Pakketservice page, with texts as Picnic sends them. */
+export type ParcelRow = {
   id: string;
-  /** Carrier handling the parcel, e.g. "DHL". */
-  carrier: string;
-  /** False once the parcel has left Picnic and tracking is done. */
-  active: boolean;
-  /** Raw Picnic status code, e.g. "HANDED_OVER". */
-  status: string;
-  statusTimestamp: string;
-  /** Carrier tracking link; only seen as null so far (all test parcels were already delivered). */
-  trackingUrl: string | null;
+  /** e.g. "DHL-pakket". */
+  name: string;
+  /** e.g. "Opgehaald door Picnic". */
+  statusText: string;
+  /** Color Picnic renders the status in (e.g. "#308807"), or null for the default. */
+  statusColor: string | null;
+  /** Localized date, e.g. "28 oktober 2024". */
+  dateText: string;
+  /** Picnic's parcel id (the shipment number), from the row's tracking deep link. */
+  parcelId: string | null;
+};
+
+/** A group of parcels under a heading, e.g. "Verwerkt". */
+export type ParcelSection = {
+  title: string;
+  parcels: ParcelRow[];
+};
+
+/** The Pakketservice page (parcels-overview-page-root). */
+export type ParcelsPageData = {
+  title: string;
+  subtitle: string;
+  sections: ParcelSection[];
+};
+
+/** One step of a parcel's tracking timeline, e.g. "Opgehaald door Picnic". */
+export type ParcelTrackingStep = {
+  title: string;
+  /** Localized date, e.g. "Maandag 28 oktober 2024". */
+  dateText: string;
+  /** Whether the step shows a checkmark (it has happened). */
+  done: boolean;
+  /** Marker background color from Picnic, e.g. "#295813". */
+  markerColor: string | null;
+  /** Marker diameter in px; the current step is drawn larger. */
+  markerSize: number;
+  /** Color of the line to the next step, or null when there is none. */
+  lineColor: string | null;
+};
+
+/** The parcel tracking page (parcel-tracking-page-root). */
+export type ParcelDetailData = {
+  /** e.g. "Jouw pakketje". */
+  title: string;
+  /** e.g. "Zendingsnummer:". */
+  shipmentLabel: string;
+  /** The shipment number, which the app lets you copy. */
+  shipmentNumber: string;
+  /** Message the app shows after copying, e.g. "Zendingsnummer gekopieerd!". */
+  copiedMessage: string | null;
+  steps: ParcelTrackingStep[];
+  /** e.g. "Dankjewel! Samen besparen we een onnodig ritje in de buurt." */
+  footerText: string;
 };
 
 export type DeliveriesApiResponse = {
@@ -112,6 +157,6 @@ export type DeliveryDetailApiResponse = DeliveryDetailData;
 
 export type DeliveryTrackingApiResponse = DeliveryTrackingData;
 
-export type ParcelsApiResponse = {
-  parcels: ParcelItem[];
-};
+export type ParcelsApiResponse = ParcelsPageData;
+
+export type ParcelDetailApiResponse = ParcelDetailData;
