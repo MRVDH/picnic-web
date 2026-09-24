@@ -297,6 +297,17 @@ export const nl = {
   walletYourPaymentMethod: "Jouw betaalmethode",
   walletNoPaymentMethod: "Je hebt nog geen betaalmethode.",
 
+  // Vriendenkorting
+  referralLoadError: "Je vriendenkortingscode kon niet worden geladen.",
+  referralBodyBefore: "Gebruiken je vrienden of buren jouw code bij hun",
+  referralBodyBold: "eerste bestelling",
+  referralBodyAfter: "? Dan verdienen jullie allebei {amount}!",
+  referralShare: "Deel je code",
+  referralShareText:
+    "Gebruik mijn code {code} bij je eerste bestelling bij Picnic en krijg {amount} korting.",
+  referralCopied: "Link gekopieerd!",
+  referralTerms: "Actievoorwaarden",
+
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",

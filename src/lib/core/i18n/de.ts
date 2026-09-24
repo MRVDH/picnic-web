@@ -294,6 +294,17 @@ export const de = {
   walletYourPaymentMethod: "Deine Zahlungsmethode",
   walletNoPaymentMethod: "Du hast noch keine Zahlungsmethode.",
 
+  // Vriendenkorting
+  referralLoadError: "Dein Empfehlungscode konnte nicht geladen werden.",
+  referralBodyBefore: "Nutzen deine Freunde oder Nachbarn deinen Code bei ihrer",
+  referralBodyBold: "ersten Bestellung",
+  referralBodyAfter: "? Dann bekommt ihr beide {amount}!",
+  referralShare: "Code teilen",
+  referralShareText:
+    "Nutze meinen Code {code} bei deiner ersten Bestellung bei Picnic und erhalte {amount} Rabatt.",
+  referralCopied: "Link kopiert!",
+  referralTerms: "Teilnahmebedingungen",
+
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",
   deliveriesTrackingNoMap: "Live-Karte noch nicht verfügbar.",

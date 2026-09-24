@@ -7,6 +7,7 @@ import type { ProfileMenuItem } from "@/lib/core/user-types";
 const WEB_ROUTES: Record<string, string> = {
   orders: "/deliveries",
   wallet: "/wallet",
+  mgm: "/invite-friends",
   parcels: "/parcels",
 };
 
