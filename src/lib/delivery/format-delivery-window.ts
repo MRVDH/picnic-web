@@ -172,6 +172,19 @@ export function formatLongDate(isoTimestamp: string, countryCode: CountryCode): 
   return `${day} ${month} ${year}`;
 }
 
+/**
+ * Day and month without the year, e.g. "23 september" / "23. September" /
+ * "23 septembre", as the app shows payment dates. Returns "" for an invalid date.
+ */
+export function formatDayMonth(timestampMs: number, countryCode: CountryCode): string {
+  const date = new Date(timestampMs);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = date.getDate();
+  const month = MONTH_NAMES[countryCode][date.getMonth()];
+  if (countryCode === "DE") return `${day}. ${month}`;
+  return `${day} ${month}`;
+}
+
 /** Live ETA label, e.g. "Ankunft ca. 15:23". */
 export function formatEtaText(etaMs: number | null, countryCode: CountryCode): string | null {
   if (etaMs === null || etaMs <= 0) return null;
