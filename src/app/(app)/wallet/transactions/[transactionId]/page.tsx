@@ -7,7 +7,7 @@ import Link from "next/link";
 
 import { CartItemCard } from "@/components/cart/cart-item";
 import { ChevronRightIcon } from "@/components/layout/nav-icons";
-import { BackArrowIcon } from "@/components/ui/back-arrow-icon";
+import { BackLink } from "@/components/ui/back-link";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
@@ -45,13 +45,7 @@ export default function TransactionDetailPage({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-        <Link
-          href="/wallet"
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
-        >
-          <BackArrowIcon />
-          {t.backButton}
-        </Link>
+        <BackLink fallbackHref="/wallet">{t.backButton}</BackLink>
 
         {state.status === "loading" && <LoadingSpinner />}
         {state.status === "error" && <ErrorView message={state.message} onRetry={retry} />}

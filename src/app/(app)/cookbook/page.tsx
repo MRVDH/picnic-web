@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useRouter } from "next/navigation";
-
 import { CartToast } from "@/components/cart/cart-toast";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { RecipeSearchInput } from "@/components/recipe/recipe-search-input";
@@ -12,6 +10,7 @@ import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
@@ -30,7 +29,6 @@ type RecipesState =
 
 export default function CookbookPage() {
   const t = useTranslations();
-  const router = useRouter();
   usePageTitle(t.cookbookTitle);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
@@ -133,7 +131,7 @@ export default function CookbookPage() {
     return () => observer.disconnect();
   }, [displayedRecipes]);
 
-  const handleBack = useCallback(() => router.push("/search"), [router]);
+  const handleBack = useBackNavigation("/search");
 
   const handleRetry = useCallback(() => {
     setMealPlan(null);

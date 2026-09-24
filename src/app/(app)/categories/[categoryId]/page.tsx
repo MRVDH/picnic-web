@@ -9,6 +9,7 @@ import { SubcategoryView } from "@/components/category/subcategory-view";
 import type { SubcategoriesState } from "@/components/category/subcategory-view";
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import type { CategoryItem, SubcategoriesApiResponse } from "@/lib/category/category-types";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
@@ -61,9 +62,7 @@ export default function CategorySubcategoriesPage() {
     return () => controller.abort();
   }, [categoryId, retryCount, categoryFallbackTitle, subcategoriesLoadError]);
 
-  const handleBack = useCallback(() => {
-    router.push("/search");
-  }, [router]);
+  const handleBack = useBackNavigation("/search");
 
   const handleSubcategoryTap = useCallback(
     (subcategory: CategoryItem) => {

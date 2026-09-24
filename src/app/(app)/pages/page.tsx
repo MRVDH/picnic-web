@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
 import { CategoryProductsView } from "@/components/category/category-products-view";
@@ -10,6 +10,7 @@ import type { CategoryProductsState } from "@/components/category/category-produ
 import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { usePublishHeaderSections } from "@/contexts/header-sections-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
@@ -17,7 +18,6 @@ import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/t
 export default function ShortcutProductsPage() {
   const t = useTranslations();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const pageId = searchParams.get("pageId") ?? "";
   const title = searchParams.get("title") ?? t.defaultPageTitle;
@@ -72,9 +72,7 @@ export default function ShortcutProductsPage() {
     return () => controller.abort();
   }, [pageId, title, retryCount, t.productsLoadError]);
 
-  const handleBack = useCallback(() => {
-    router.push("/search");
-  }, [router]);
+  const handleBack = useBackNavigation("/search");
 
   const handleRetry = useCallback(() => {
     setState({ status: "loading" });
