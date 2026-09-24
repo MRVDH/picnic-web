@@ -309,11 +309,9 @@ export const nl = {
   referralTerms: "Actievoorwaarden",
 
   // Boodschappenwekker
-  reminderLoadError: "Je boodschappenwekker kon niet worden geladen.",
   reminderSubtitle: "Vergeet nooit meer op tijd te bestellen. Stel je eigen Picnic-moment in.",
-  reminderDayInitials: "MDWDVZZ",
-  reminderTimeLabel: "Stel je tijd in",
-  reminderNotSet: "Je hebt nog geen boodschappenwekker ingesteld.",
+  reminderPerDevice:
+    "De Boodschappenwekker stel je in de Picnic-app in. Hij hoort bij het apparaat waarop je hem instelt, dus je krijgt de melding alleen daar. Daarom kun je hem hier niet bekijken of instellen.",
 
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",

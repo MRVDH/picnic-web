@@ -306,12 +306,10 @@ export const de = {
   referralTerms: "Teilnahmebedingungen",
 
   // Boodschappenwekker
-  reminderLoadError: "Dein Einkaufswecker konnte nicht geladen werden.",
   reminderSubtitle:
     "Vergiss nie wieder, rechtzeitig zu bestellen. Stell deinen eigenen Picnic-Moment ein.",
-  reminderDayInitials: "MDMDFSS",
-  reminderTimeLabel: "Stell deine Zeit ein",
-  reminderNotSet: "Du hast noch keinen Einkaufswecker eingestellt.",
+  reminderPerDevice:
+    "Den Einkaufswecker stellst du in der Picnic-App ein. Er gehört zu dem Gerät, auf dem du ihn einstellst, und du bekommst die Erinnerung nur dort. Deshalb kannst du ihn hier nicht ansehen oder einstellen.",
 
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",

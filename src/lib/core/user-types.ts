@@ -32,26 +32,3 @@ export type ReferralData = {
 };
 
 export type ReferralApiResponse = ReferralData;
-
-/** Weekdays as Picnic sends them, Monday first like the app shows them. */
-export const REMINDER_DAYS = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-] as const;
-
-export type ReminderDay = (typeof REMINDER_DAYS)[number];
-
-/** The Boodschappenwekker: the days it rings and the one time they share. */
-export type GroceryReminderData = {
-  /** Selected days in app order; empty when no reminder is set. */
-  days: ReminderDay[];
-  /** "HH:MM"; the app's default 20:00 when no reminder is set. */
-  time: string;
-};
-
-export type GroceryReminderApiResponse = GroceryReminderData;
