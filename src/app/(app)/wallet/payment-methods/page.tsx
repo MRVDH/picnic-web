@@ -1,9 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
-import { BackArrowIcon } from "@/components/ui/back-arrow-icon";
+import { BackLink } from "@/components/ui/back-link";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "@/contexts/country-context";
@@ -29,13 +28,7 @@ export default function WalletPaymentMethodsPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-        <Link
-          href="/wallet"
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
-        >
-          <BackArrowIcon />
-          {t.backButton}
-        </Link>
+        <BackLink fallbackHref="/wallet">{t.backButton}</BackLink>
 
         <h1 className="text-foreground text-2xl font-bold">{t.walletPaymentTitle}</h1>
 

@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { CartToast } from "@/components/cart/cart-toast";
 import { CategoryProductsView } from "@/components/category/category-products-view";
 import type { CategoryProductsState } from "@/components/category/category-products-view";
 import { CartProvider } from "@/contexts/cart-context";
 import { usePublishHeaderSections } from "@/contexts/header-sections-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
@@ -18,7 +19,6 @@ export default function CategoryProductsPage() {
     categoryId: string;
     subcategoryId: string;
   }>();
-  const router = useRouter();
 
   const [state, setState] = useState<CategoryProductsState>({
     status: "loading",
@@ -64,9 +64,7 @@ export default function CategoryProductsPage() {
     return () => controller.abort();
   }, [subcategoryId, retryCount]);
 
-  const handleBack = useCallback(() => {
-    router.push(`/categories/${encodeURIComponent(categoryId)}`);
-  }, [categoryId, router]);
+  const handleBack = useBackNavigation(`/categories/${encodeURIComponent(categoryId)}`);
 
   const handleRetry = useCallback(() => {
     setState({ status: "loading" });
