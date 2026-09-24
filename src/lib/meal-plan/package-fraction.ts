@@ -130,7 +130,8 @@ export function packageFraction(
   if (!neededBase) return null;
   // The recipe tile's package size first; the product's unit quantity covers
   // the ingredients whose tile shows no size at all.
-  const packBase = normalize(findMeasure(recipePackageSize)) ?? normalize(findMeasure(unitQuantity));
+  const packBase =
+    normalize(findMeasure(recipePackageSize)) ?? normalize(findMeasure(unitQuantity));
   if (!packBase || neededBase.base !== packBase.base || !(packBase.value > 0)) return null;
   return neededBase.value / packBase.value;
 }

@@ -1,5 +1,5 @@
-import { packageFraction } from "@/lib/meal-plan/package-fraction";
 import type { MealPlanShoppingItem, RecipeDetail } from "@/lib/core/types";
+import { packageFraction } from "@/lib/meal-plan/package-fraction";
 
 type IngredientGroup = {
   ingredientId: string;
