@@ -282,6 +282,18 @@ export const fr = {
   parcelsLoadError: "Impossible de charger les colis.",
   parcelsEmpty: "Vous n'avez encore déclaré aucun colis.",
   parcelCopyShipmentNumber: "Copier le numéro d'envoi",
+
+  // Wallet
+  walletLoadError: "Impossible de charger le porte-monnaie.",
+  walletPaymentTitle: "Paiement",
+  walletViewReceipt: "Voir le ticket complet",
+  walletReturnedDeposits: "Consigne rendue",
+  walletPaidOn: "Payé le {date}",
+  walletRefundedOn: "Remboursé le {date}",
+  walletSubstitution: "Remplacement",
+  walletYourPaymentMethod: "Votre moyen de paiement",
+  walletNoPaymentMethod: "Vous n'avez pas encore de moyen de paiement.",
+
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",

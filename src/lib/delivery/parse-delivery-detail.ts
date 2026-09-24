@@ -1,5 +1,4 @@
-import { mapOrderLineToCartItem, applyDecoratorOverrides } from "@/lib/cart/parse-cart";
-import type { CountryCode } from "@/lib/core/types";
+import { applyDecoratorOverrides, mapOrderLineToCartItem } from "@/lib/cart/parse-cart";
 import type {
   DeliveryDetailData,
   DeliveryOrderSummary,
@@ -7,7 +6,7 @@ import type {
   ReturnedContainerItem,
 } from "@/lib/core/delivery-types";
 import { asArray, asNumber, asString, isObject } from "@/lib/core/type-guards";
-
+import type { CountryCode } from "@/lib/core/types";
 import { formatDeliveryWindowText } from "@/lib/delivery/format-delivery-window";
 
 function mapDepositBreakdown(raw: unknown) {
@@ -82,7 +81,7 @@ function mapOrder(raw: unknown): DeliveryOrderSummary | null {
   };
 }
 
-function mapReturnedContainers(raw: unknown): ReturnedContainerItem[] {
+export function mapReturnedContainers(raw: unknown): ReturnedContainerItem[] {
   return asArray(raw)
     .filter(isObject)
     .map((entry) => ({
@@ -93,7 +92,10 @@ function mapReturnedContainers(raw: unknown): ReturnedContainerItem[] {
     }));
 }
 
-export function parseDeliveryDetail(rawData: unknown, countryCode: CountryCode): DeliveryDetailData {
+export function parseDeliveryDetail(
+  rawData: unknown,
+  countryCode: CountryCode
+): DeliveryDetailData {
   if (!isObject(rawData)) {
     return emptyDeliveryDetail(countryCode);
   }
@@ -101,8 +103,7 @@ export function parseDeliveryDetail(rawData: unknown, countryCode: CountryCode):
   const id = asString(rawData["delivery_id"]) || asString(rawData["id"]);
   const slot = isObject(rawData["slot"]) ? rawData["slot"] : null;
   const deliveryTime = isObject(rawData["delivery_time"]) ? rawData["delivery_time"] : null;
-  const windowStart =
-    asString(slot?.["window_start"]) || asString(deliveryTime?.["start"]) || null;
+  const windowStart = asString(slot?.["window_start"]) || asString(deliveryTime?.["start"]) || null;
   const windowEnd = asString(slot?.["window_end"]) || asString(deliveryTime?.["end"]) || null;
 
   const orders = asArray(rawData["orders"])
