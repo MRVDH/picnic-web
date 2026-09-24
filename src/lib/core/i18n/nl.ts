@@ -284,6 +284,7 @@ export const nl = {
   deliveriesInvoiceError: "Factuur kon niet worden verstuurd.",
   parcelsLoadError: "Pakketten konden niet worden geladen.",
   parcelsEmpty: "Je hebt nog geen pakketjes aangemeld.",
+  parcelCopyShipmentNumber: "Zendingsnummer kopiëren",
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",

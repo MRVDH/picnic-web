@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import Link from "next/link";
+
+import { ChevronRightIcon } from "@/components/layout/nav-icons";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PackageIcon } from "@/components/ui/package-icon";
@@ -18,8 +21,8 @@ type PageState =
 
 /**
  * The Pakketservice page, mirroring the app's parcels-overview-page-root.
- * Every text comes from Picnic; the parcel detail page and registering a
- * parcel aren't on the web yet, so rows aren't links and the button is disabled.
+ * Every text comes from Picnic. Rows open the parcel's tracking page; the
+ * app's "Pakketje aanmelden" button (registering a parcel) is left out for now.
  */
 export default function ParcelsPage() {
   const t = useTranslations();
@@ -93,24 +96,14 @@ function ParcelsContent({ page }: { page: ParcelsPageData }) {
           </section>
         )
       )}
-
-      {page.action && (
-        <button
-          type="button"
-          disabled
-          title={t.comingSoon}
-          className="mt-10 w-full cursor-not-allowed rounded-xl bg-[#295813] px-4 py-3 text-white opacity-60"
-        >
-          {page.action.label}
-        </button>
-      )}
     </>
   );
 }
 
+/** A parcel row; it opens the parcel's tracking page when Picnic sends its id. */
 function ParcelListRow({ parcel }: { parcel: ParcelRow }) {
-  return (
-    <li className="flex items-start gap-3 py-4">
+  const content = (
+    <>
       <span className="text-foreground mt-0.5 shrink-0" aria-hidden="true">
         <PackageIcon />
       </span>
@@ -121,6 +114,22 @@ function ParcelListRow({ parcel }: { parcel: ParcelRow }) {
           {parcel.dateText && <> · {parcel.dateText}</>}
         </p>
       </div>
+    </>
+  );
+
+  return (
+    <li>
+      {parcel.parcelId ? (
+        <Link
+          href={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
+          className="flex items-center gap-3 py-4 transition-colors hover:bg-gray-50"
+        >
+          {content}
+          <ChevronRightIcon className="h-4 w-4 shrink-0 text-gray-400" />
+        </Link>
+      ) : (
+        <div className="flex items-start gap-3 py-4">{content}</div>
+      )}
     </li>
   );
 }

@@ -281,6 +281,7 @@ export const fr = {
   deliveriesInvoiceError: "Impossible d'envoyer la facture.",
   parcelsLoadError: "Impossible de charger les colis.",
   parcelsEmpty: "Vous n'avez encore déclaré aucun colis.",
+  parcelCopyShipmentNumber: "Copier le numéro d'envoi",
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",
