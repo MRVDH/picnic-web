@@ -294,6 +294,17 @@ export const fr = {
   walletYourPaymentMethod: "Votre moyen de paiement",
   walletNoPaymentMethod: "Vous n'avez pas encore de moyen de paiement.",
 
+  // Vriendenkorting
+  referralLoadError: "Impossible de charger votre code de parrainage.",
+  referralBodyBefore: "Vos amis ou voisins utilisent votre code lors de leur",
+  referralBodyBold: "première commande",
+  referralBodyAfter: " ? Vous gagnez alors tous les deux {amount} !",
+  referralShare: "Partager votre code",
+  referralShareText:
+    "Utilisez mon code {code} lors de votre première commande Picnic et recevez {amount} de réduction.",
+  referralCopied: "Lien copié !",
+  referralTerms: "Conditions de l'offre",
+
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",

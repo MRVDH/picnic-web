@@ -18,3 +18,17 @@ export type ProfileData = {
 };
 
 export type ProfileApiResponse = ProfileData;
+
+/** The user's Vriendenkorting (member-get-member) code, from /profile-menu. */
+export type ReferralData = {
+  /** e.g. "MAAR3267". */
+  code: string;
+  /** What the friend gets on their first order, in cents. */
+  inviteeValue: number;
+  /** What the user gets per friend, in cents. */
+  inviterValue: number;
+  /** Link the app shares, e.g. "https://picnic.app/nl/vriendenkorting/MAAR3267". */
+  shareUrl: string | null;
+};
+
+export type ReferralApiResponse = ReferralData;
