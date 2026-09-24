@@ -8,6 +8,7 @@ const WEB_ROUTES: Record<string, string> = {
   orders: "/deliveries",
   wallet: "/wallet",
   mgm: "/invite-friends",
+  reminder: "/reminder",
   parcels: "/parcels",
 };
 

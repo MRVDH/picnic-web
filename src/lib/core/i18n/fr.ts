@@ -305,6 +305,13 @@ export const fr = {
   referralCopied: "Lien copié !",
   referralTerms: "Conditions de l'offre",
 
+  // Boodschappenwekker
+  reminderLoadError: "Impossible de charger votre rappel de courses.",
+  reminderSubtitle: "N'oubliez plus jamais de commander à temps. Choisissez votre moment Picnic.",
+  reminderDayInitials: "LMMJVSD",
+  reminderTimeLabel: "Choisissez votre heure",
+  reminderNotSet: "Vous n'avez pas encore de rappel de courses.",
+
   deliveriesTrackingDriver: "Livreur",
   deliveriesTrackingEta: "Arrivée prévue",
   deliveriesTrackingNoMap: "Carte en direct pas encore disponible.",

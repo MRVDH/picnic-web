@@ -305,6 +305,14 @@ export const de = {
   referralCopied: "Link kopiert!",
   referralTerms: "Teilnahmebedingungen",
 
+  // Boodschappenwekker
+  reminderLoadError: "Dein Einkaufswecker konnte nicht geladen werden.",
+  reminderSubtitle:
+    "Vergiss nie wieder, rechtzeitig zu bestellen. Stell deinen eigenen Picnic-Moment ein.",
+  reminderDayInitials: "MDMDFSS",
+  reminderTimeLabel: "Stell deine Zeit ein",
+  reminderNotSet: "Du hast noch keinen Einkaufswecker eingestellt.",
+
   deliveriesTrackingDriver: "Fahrer",
   deliveriesTrackingEta: "Voraussichtliche Ankunft",
   deliveriesTrackingNoMap: "Live-Karte noch nicht verfügbar.",
