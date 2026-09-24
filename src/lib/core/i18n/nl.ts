@@ -308,6 +308,13 @@ export const nl = {
   referralCopied: "Link gekopieerd!",
   referralTerms: "Actievoorwaarden",
 
+  // Boodschappenwekker
+  reminderLoadError: "Je boodschappenwekker kon niet worden geladen.",
+  reminderSubtitle: "Vergeet nooit meer op tijd te bestellen. Stel je eigen Picnic-moment in.",
+  reminderDayInitials: "MDWDVZZ",
+  reminderTimeLabel: "Stel je tijd in",
+  reminderNotSet: "Je hebt nog geen boodschappenwekker ingesteld.",
+
   deliveriesTrackingDriver: "Bezorger",
   deliveriesTrackingEta: "Verwachte aankomst",
   deliveriesTrackingNoMap: "Live routekaart is nog niet beschikbaar.",
