@@ -3,18 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { DeliveryList } from "@/components/delivery/delivery-list";
-import { ParcelList } from "@/components/delivery/parcel-list";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "@/contexts/country-context";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
-import type {
-  DeliveriesApiResponse,
-  DeliveryListItem,
-  ParcelItem,
-  ParcelsApiResponse,
-} from "@/lib/core/delivery-types";
+import type { DeliveriesApiResponse, DeliveryListItem } from "@/lib/core/delivery-types";
 import type { ApiErrorResponse } from "@/lib/core/types";
 
 /** "ALL" fetches without a status filter; the others map to Picnic's status filter. */
@@ -38,7 +32,6 @@ export default function DeliveriesPage() {
 
   const [activeTab, setActiveTab] = useState<DeliveryTab>("ALL");
   const [listState, setListState] = useState<ListState>({ status: "loading" });
-  const [parcels, setParcels] = useState<ParcelItem[]>([]);
   const [retryCount, setRetryCount] = useState(0);
   const [liveTrackingIds, setLiveTrackingIds] = useState<ReadonlySet<string>>(new Set());
 
@@ -66,19 +59,6 @@ export default function DeliveriesPage() {
 
     return () => controller.abort();
   }, [activeTab, retryCount, t.deliveriesLoadError]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/parcels", { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data: ParcelsApiResponse & Partial<ApiErrorResponse>) => {
-        if ("parcels" in data && Array.isArray(data.parcels)) {
-          setParcels(data.parcels);
-        }
-      })
-      .catch(() => {});
-    return () => controller.abort();
-  }, [retryCount]);
 
   useEffect(() => {
     if (listState.status !== "success" || !TABS_WITH_CURRENT.has(activeTab)) return;
@@ -170,8 +150,6 @@ export default function DeliveriesPage() {
         {listState.status === "success" && deliveries.length > 0 && (
           <DeliveryList deliveries={deliveries} liveTrackingIds={visibleLiveTrackingIds} />
         )}
-
-        <ParcelList parcels={parcels} />
       </main>
     </div>
   );

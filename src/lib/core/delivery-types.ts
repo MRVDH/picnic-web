@@ -91,17 +91,34 @@ export type DeliveryTrackingData = {
   } | null;
 };
 
-export type ParcelItem = {
+/** One parcel row on the Pakketservice page, with texts as Picnic sends them. */
+export type ParcelRow = {
   id: string;
-  /** Carrier handling the parcel, e.g. "DHL". */
-  carrier: string;
-  /** False once the parcel has left Picnic and tracking is done. */
-  active: boolean;
-  /** Raw Picnic status code, e.g. "HANDED_OVER". */
-  status: string;
-  statusTimestamp: string;
-  /** Carrier tracking link; only seen as null so far (all test parcels were already delivered). */
-  trackingUrl: string | null;
+  /** e.g. "DHL-pakket". */
+  name: string;
+  /** e.g. "Opgehaald door Picnic". */
+  statusText: string;
+  /** Color Picnic renders the status in (e.g. "#308807"), or null for the default. */
+  statusColor: string | null;
+  /** Localized date, e.g. "28 oktober 2024". */
+  dateText: string;
+  /** Deep link to the parcel's tracking page in the app. */
+  deepLink: string | null;
+};
+
+/** A group of parcels under a heading, e.g. "Verwerkt". */
+export type ParcelSection = {
+  title: string;
+  parcels: ParcelRow[];
+};
+
+/** The Pakketservice page (parcels-overview-page-root). */
+export type ParcelsPageData = {
+  title: string;
+  subtitle: string;
+  sections: ParcelSection[];
+  /** The bottom button, e.g. "Pakketje aanmelden", with the app deep link it opens. */
+  action: { label: string; deepLink: string | null } | null;
 };
 
 export type DeliveriesApiResponse = {
@@ -112,6 +129,4 @@ export type DeliveryDetailApiResponse = DeliveryDetailData;
 
 export type DeliveryTrackingApiResponse = DeliveryTrackingData;
 
-export type ParcelsApiResponse = {
-  parcels: ParcelItem[];
-};
+export type ParcelsApiResponse = ParcelsPageData;
