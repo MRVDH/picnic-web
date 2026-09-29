@@ -586,10 +586,82 @@ export type SavedRecipesApiResponse = {
   recipeIds: string[];
 };
 
+// ─── Meal Plan ───────────────────────────────────────────────────────────────
+
+/**
+ * One recipe combination returned by the waste-minimizing search, scored by
+ * how many packages buying the combination together saves versus buying for
+ * each recipe separately.
+ */
+export type MealPlanCombination = {
+  recipeIds: string[];
+  /** Packages saved by consolidating shared ingredients across this combination. */
+  packagesSaved: number;
+  /** Best-effort total price in cents (owner-assigned unit prices; not a checkout total). */
+  totalPriceCents: number;
+};
+
+/** One consolidated shopping-list line, after merging an ingredient across all plan recipes. */
+export type MealPlanShoppingItem = {
+  /**
+   * The owner recipe's selling_group_component_id, sent as the
+   * selling_group_component_id when adding to cart. Falls back to the
+   * selling_unit_id when the recipe page exposes no slot id.
+   */
+  ingredientId: string;
+  /** Grouping key and cart product id: the selling_unit_id the owner recipe uses. */
+  ownerSellingUnitId: string;
+  name: string;
+  imageId: string | null;
+  /**
+   * Packages to actually buy: each recipe's fractional need (derived from the
+   * ingredient tile's "(125 g benötigt)" against its "500g" package) summed
+   * first, then rounded up once.
+   */
+  packagesNeeded: number;
+  /** Price per package in cents, from the owner recipe's ingredient entry. */
+  unitPriceCents: number;
+  /** Recipe id whose cart line carries this item; other recipes sharing it omit it. */
+  ownerRecipeId: string;
+  /** Every recipe id in the plan that uses this ingredient; length 1 = not shared. */
+  usedInRecipeIds: string[];
+};
+
+export type MealPlanSearchRequest = {
+  /** Recipe ids to search within, already capped client-side (see MEAL_PLAN_MAX_CANDIDATES). */
+  candidateIds: string[];
+  /** Already-confirmed recipe ids to keep; scored against, never replaced. */
+  fixedIds: string[];
+  /** How many new recipes to pick (days − fixedIds.length). */
+  slots: number;
+  people: number;
+};
+
+export type MealPlanSearchResponse = {
+  combinations: MealPlanCombination[];
+};
+
+export type MealPlanShoppingListRequest = {
+  recipeIds: string[];
+  people: number;
+};
+
+export type MealPlanShoppingListResponse = {
+  recipes: { id: string; name: string; imageId: string | null }[];
+  items: MealPlanShoppingItem[];
+  totalPriceCents: number;
+  packagesSaved: number;
+};
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 /** Error codes returned by API routes for auth-related failures. */
-export type AuthErrorCode = "TOKEN_EXPIRED" | "TOKEN_INVALID" | "API_UNREACHABLE";
+export type AuthErrorCode =
+  | "TOKEN_EXPIRED"
+  | "TOKEN_INVALID"
+  | "API_UNREACHABLE"
+  /** Blocked by the edge in front of the API after too many requests; clears on its own. */
+  | "RATE_LIMITED";
 
 /** Response shape from the /api/auth/login route. */
 export type AuthApiResponse =

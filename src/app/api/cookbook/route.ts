@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { fetchCachedPage } from "@/lib/core/page-cache";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/core/types";
 import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
@@ -39,7 +40,7 @@ export async function GET(
       if (!CATEGORY_ID_RE.test(categoryId)) {
         return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
       }
-      const rawPage = await client.app.getPage(categoryId);
+      const rawPage = await fetchCachedPage(client, `/pages/${categoryId}`);
       const recipes = parseCookbookPage(rawPage);
       return NextResponse.json({ categories: [], recipes });
     }

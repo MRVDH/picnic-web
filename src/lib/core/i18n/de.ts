@@ -139,6 +139,7 @@ export const de = {
 
   // Category products view
   backButton: "Zurück",
+  breadcrumbLabel: "Navigationspfad",
   noProductsInCategory: "Keine Produkte in dieser Kategorie gefunden.",
   productSingular: "Produkt",
   productPlural: "Produkte",
@@ -163,8 +164,28 @@ export const de = {
   mealPlanSelectAll: "Alle auswählen",
   mealPlanDays: "Tage",
   mealPlanGenerate: "Plan generieren",
-  mealPlanRegenerate: "Neu generieren",
-  mealPlanSummary: "{n} Rezepte ausgewählt",
+  mealPlanContinue: "weiter planen",
+  mealPlanNotEnoughRecipes:
+    "Nur {available} von {requested} Rezepten in den gewählten Kategorien verfügbar — Plan auf {available} Tage begrenzt.",
+  mealPlanPeople: "Personen",
+  mealPlanConfirmLabel: "Rezept im Plan behalten",
+  mealPlanAddLabel: "Rezept zum Plan hinzufügen",
+  mealPlanSelectAllRecipes: "Alle Rezepte auswählen",
+  mealPlanPageTitle: "Rezepte Planung",
+  mealPlanContinueDisabledHint: "Mehr Tage eintragen oder ein Rezept abwählen, um weiterzuplanen",
+  mealPlanRecent: "Letzter Essensplan",
+  mealPlanClear: "Plan löschen",
+  mealPlanViewShoppingList: "Einkaufsliste ansehen",
+  mealPlanPackagesSaved: "{n} Packungen gespart",
+  mealPlanSharedWith: "Auch verwendet in {recipe}",
+  mealPlanAddAllToCart: "Alles in den Warenkorb legen",
+  mealPlanAddingToCart: "Wird hinzugefügt…",
+  mealPlanAddedToCart: "Hinzugefügt!",
+  mealPlanGenerateError: "Der Plan konnte nicht generiert werden.",
+  mealPlanRateLimited: "Zu viele Anfragen. Warte kurz und versuche es erneut.",
+  mealPlanShoppingListTitle: "Einkaufsliste",
+  mealPlanShoppingListError: "Einkaufsliste konnte nicht geladen werden.",
+  mealPlanTotal: "Gesamt",
 
   // Auth
   signOut: "Abmelden",

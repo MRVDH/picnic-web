@@ -142,6 +142,7 @@ export const nl = {
 
   // Category products view
   backButton: "Terug",
+  breadcrumbLabel: "Navigatiepad",
   noProductsInCategory: "Geen producten gevonden in deze categorie.",
   productSingular: "product",
   productPlural: "producten",
@@ -166,8 +167,29 @@ export const nl = {
   mealPlanSelectAll: "Alles selecteren",
   mealPlanDays: "dagen",
   mealPlanGenerate: "Plan genereren",
-  mealPlanRegenerate: "Opnieuw genereren",
-  mealPlanSummary: "{n} recepten geselecteerd",
+  mealPlanContinue: "verder plannen",
+  mealPlanNotEnoughRecipes:
+    "Slechts {available} van de {requested} recepten beschikbaar in de gekozen categorieën — plan beperkt tot {available} dagen.",
+  mealPlanPeople: "personen",
+  mealPlanConfirmLabel: "Recept behouden in plan",
+  mealPlanAddLabel: "Recept aan plan toevoegen",
+  mealPlanSelectAllRecipes: "Alle recepten selecteren",
+  mealPlanPageTitle: "Receptenplanning",
+  mealPlanContinueDisabledHint:
+    "Verhoog het aantal dagen of vink een recept uit om verder te plannen",
+  mealPlanRecent: "Recent voedingsplan",
+  mealPlanClear: "Plan wissen",
+  mealPlanViewShoppingList: "Boodschappenlijst bekijken",
+  mealPlanPackagesSaved: "{n} verpakkingen bespaard",
+  mealPlanSharedWith: "Ook gebruikt in {recipe}",
+  mealPlanAddAllToCart: "Alles toevoegen aan winkelmandje",
+  mealPlanAddingToCart: "Toevoegen...",
+  mealPlanAddedToCart: "Toegevoegd!",
+  mealPlanGenerateError: "Het plan kon niet worden gegenereerd.",
+  mealPlanRateLimited: "Te veel verzoeken. Wacht een minuutje en probeer opnieuw.",
+  mealPlanShoppingListTitle: "Boodschappenlijst",
+  mealPlanShoppingListError: "Boodschappenlijst kon niet worden geladen.",
+  mealPlanTotal: "Totaal",
 
   // Auth
   signOut: "Uitloggen",

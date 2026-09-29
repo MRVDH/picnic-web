@@ -2,93 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { extractProductNutritionRows, extractProductTileData } from "@/lib/product/parse-fusion-product";
-import { parseRecipeDetail } from "@/lib/recipe/parse-recipe-detail";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
-import type { PicnicClientInstance } from "@/lib/core/picnic-client";
-import type { RecipeDetailApiResponse, RecipeIngredient } from "@/lib/core/types";
-
-type SendRequestClient = PicnicClientInstance & {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
-};
+import type { RecipeDetailApiResponse } from "@/lib/core/types";
+import { fetchRecipeDetail } from "@/lib/recipe/fetch-recipe-detail";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
-
-async function fetchRecipePage(
-  client: PicnicClientInstance,
-  id: string,
-  portions?: number
-): Promise<unknown> {
-  const portionsParam = portions ? `&portions=${portions}` : "";
-
-  // Try selling-group-details-page first (works for DE; NL may use either endpoint).
-  // Fall back to recipe-details-page-root if the first is not found.
-  try {
-    return await (client as unknown as SendRequestClient).sendRequest(
-      "GET",
-      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`,
-      null,
-      true
-    );
-  } catch {
-    // Fall through to the alternative endpoint
-  }
-
-  return (client as unknown as SendRequestClient).sendRequest(
-    "GET",
-    `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`,
-    null,
-    true
-  );
-}
-
-/** Fetch product detail pages in parallel to enrich ingredient stubs with real data. */
-async function enrichIngredients(
-  client: SendRequestClient,
-  ingredients: RecipeIngredient[]
-): Promise<RecipeIngredient[]> {
-  const uniqueIds = [...new Set(ingredients.map((i) => i.id))];
-
-  type TileEntry = ReturnType<typeof extractProductTileData> & {
-    nutritionRows: ReturnType<typeof extractProductNutritionRows>;
-  };
-  const tileMap = new Map<string, TileEntry>();
-
-  await Promise.all(
-    uniqueIds.map(async (unitId) => {
-      try {
-        const rawPage = await client.sendRequest(
-          "GET",
-          `/pages/product-details-page-root?id=${encodeURIComponent(unitId)}`,
-          null,
-          true
-        );
-        const tile = extractProductTileData(rawPage, unitId);
-        const nutritionRows = extractProductNutritionRows(rawPage);
-        if (tile.name) tileMap.set(unitId, { ...tile, nutritionRows });
-      } catch {
-        // leave as stub
-      }
-    })
-  );
-
-  return ingredients.map((ing) => {
-    const data = tileMap.get(ing.id);
-    if (!data) return ing;
-    return {
-      ...ing,
-      // Keep the recipe-page tile name (short display name); fall back to product page name
-      name: ing.name || data.name,
-      imageId: data.imageId || ing.imageId,
-      displayPrice: data.displayPrice ?? ing.displayPrice,
-      unitQuantity: data.unitQuantity || ing.unitQuantity,
-      maxCount: data.maxCount || ing.maxCount,
-      nutritionRows: data.nutritionRows,
-      originalPrice: data.originalPrice,
-      priceRanges: data.priceRanges,
-    };
-  });
-}
 
 export async function GET(
   request: NextRequest,
@@ -109,13 +27,12 @@ export async function GET(
     const client = buildPicnicClient(token, countryCode);
     const portionsParam = request.nextUrl.searchParams.get("portions");
     const portions = portionsParam ? parseInt(portionsParam, 10) : undefined;
-    const rawPage = await fetchRecipePage(client, id, portions && portions > 0 ? portions : undefined);
-    const detail = parseRecipeDetail(rawPage, id);
-    const ingredients = await enrichIngredients(
-      client as unknown as SendRequestClient,
-      detail.ingredients
+    const detail = await fetchRecipeDetail(
+      client,
+      id,
+      portions && portions > 0 ? portions : undefined
     );
-    return NextResponse.json({ ...detail, ingredients });
+    return NextResponse.json(detail);
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json({ error: "Your token has expired" }, { status: 401 });
