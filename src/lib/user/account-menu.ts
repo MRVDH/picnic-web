@@ -5,6 +5,7 @@ import type { ProfileMenuItem } from "@/lib/core/user-types";
 
 /** Entries that have a web page. Everything else is shown as "coming soon". */
 const WEB_ROUTES: Record<string, string> = {
+  membershipExisting: "/family",
   orders: "/deliveries",
   wallet: "/wallet",
   mgm: "/invite-friends",
