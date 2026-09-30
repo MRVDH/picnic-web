@@ -318,6 +318,7 @@ export const fr = {
 
   // Vriendenkorting
   referralLoadError: "Impossible de charger votre code de parrainage.",
+  familyLoadError: "Impossible de charger votre compte Family.",
   referralBodyBefore: "Vos amis ou voisins utilisent votre code lors de leur",
   referralBodyBold: "première commande",
   referralBodyAfter: " ? Vous gagnez alors tous les deux {amount} !",

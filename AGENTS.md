@@ -60,6 +60,26 @@ Path alias: `@/*` maps to `src/*`.
   user-facing formatting — prices, delivery windows, image language — must work
   for every supported country.
 
+## Personal data
+
+Everything in this repo is public, including its history, pull request
+descriptions and their edit history. Removing data afterwards means rewriting
+history and asking GitHub Support to purge cached commits, pull request diffs
+and forks, and it still stays readable until then.
+
+- **Never copy real account data** into code, comments, tests, fixtures, commit
+  messages, pull request descriptions or release notes. That covers names,
+  addresses, email addresses, phone numbers, order and shipment numbers,
+  referral codes, payment details, tokens and anything else taken from a live
+  API response or a screenshot of the app.
+- **Use made-up placeholders** instead: `"Jan Jansen"`, `"Dorpsstraat 1"`,
+  `"1234 AB Amsterdam"`, `"user@example.com"`, `"+31 6 00000000"`, shipment
+  number `"3SXXX0000000"`.
+- **Anonymize captured payloads** before committing them as fixtures. Replace
+  every personal field, not only the ones the code reads.
+- **Describe tests in general terms** in pull requests ("the panel shows the
+  account name and address"), never with the values you saw.
+
 ## Commands
 
 - `npm run dev` — start the dev server
