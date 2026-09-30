@@ -114,10 +114,11 @@ export const de = {
   depositGeneric: "Pfand",
   orderSummaryTitle: "Bestellübersicht",
   itemsLabel: "Artikel",
-  discountLabel: "Rabatt",
-  membershipSavingsLabel: "Picnic-Mitgliedschaftsersparnis",
   minimumOrderLabel: "Mindestbestellwert",
   totalLabel: "Gesamt",
+  cartPromoLabel: "Aktion",
+  cartDeliveryLabel: "Lieferung",
+  cartDeliveryFree: "Kostenlos",
 
   // Quantity stepper
   removeOneAriaLabel: "1 entfernen",

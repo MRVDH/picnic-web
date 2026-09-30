@@ -58,6 +58,8 @@ export type DeliveryDetailData = {
   depositTotal: number;
   depositBreakdown: DepositEntry[];
   membershipSavings: number;
+  /** Promotion savings over all orders (total_savings), without the membership discount. */
+  promoSavings: number;
   fees: FeeEntry[];
   cancellable: boolean;
 };

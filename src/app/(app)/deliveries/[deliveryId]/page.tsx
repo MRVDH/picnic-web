@@ -217,7 +217,7 @@ export default function DeliveryDetailPage() {
             <OrderSummary
               totalPrice={delivery.totalPrice}
               totalCount={delivery.totalCount}
-              totalDiscount={delivery.totalDiscount}
+              promoSavings={delivery.promoSavings}
               depositTotal={delivery.depositTotal}
               depositBreakdown={delivery.depositBreakdown}
               membershipSavings={delivery.membershipSavings}

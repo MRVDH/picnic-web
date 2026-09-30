@@ -407,6 +407,8 @@ export function parseCartResponse(rawData: unknown, countryCode: CountryCode): C
   const totalPrice = asNumber(rawData["checkout_total_price"]);
   const totalCount = asNumber(rawData["total_count"]);
   const membershipSavings = asNumber(rawData["membership_savings"]);
+  // The app shows this as "Actie": promotion savings, excluding the membership discount.
+  const promoSavings = asNumber(rawData["total_savings"]);
 
   // Fees (e.g. Picnic credit settlement)
   const fees = asArray(rawData["fees"])
@@ -475,6 +477,7 @@ export function parseCartResponse(rawData: unknown, countryCode: CountryCode): C
     depositTotal,
     depositBreakdown,
     membershipSavings,
+    promoSavings,
     fees,
     minimumOrderValue,
     suggestions,
@@ -493,6 +496,7 @@ function emptyCartData(countryCode: CountryCode): CartData {
     depositTotal: 0,
     depositBreakdown: [],
     membershipSavings: 0,
+    promoSavings: 0,
     fees: [],
     minimumOrderValue: null,
     suggestions: [],

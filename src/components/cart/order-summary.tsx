@@ -1,33 +1,47 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { useTranslations } from "@/contexts/country-context";
 import { formatPrice } from "@/lib/core/format-price";
-import type { DepositEntry, FeeEntry } from "@/lib/core/types";
+import type { CartFooterText, DepositEntry, FeeEntry } from "@/lib/core/types";
 
 type OrderSummaryProps = {
   totalPrice: number;
   totalCount: number;
-  totalDiscount: number;
   depositTotal: number;
   depositBreakdown: DepositEntry[];
   membershipSavings: number;
+  /** Promotion savings (the app's "Actie" line), without the membership discount. */
+  promoSavings: number;
   fees: FeeEntry[];
   minimumOrderValue: number | null;
+  /** Picnic's "Spaarpunten" line from the basket footer, shown under the total. */
+  loyaltyPoints?: { label: CartFooterText; value: CartFooterText } | null;
+  /** Plain rows like the app's basket, instead of a card with a heading. */
+  plain?: boolean;
 };
 
+/** The app's Family badge color. */
+const FAMILY_GREEN = "#295813";
+/** The app's promotion yellow. */
+const PROMO_YELLOW = "#fbd92b";
+
 /**
- * Displays the financial order summary: item total, discount, deposit
- * breakdown, membership savings, and the overall checkout total.
+ * The order summary, like the app's basket: savings as "Family" and "Actie"
+ * pills, deposits, fees, delivery, the minimum order and the total.
  * Hidden when the cart is empty (totalCount === 0).
  */
 export function OrderSummary({
   totalPrice,
   totalCount,
-  totalDiscount,
   depositBreakdown,
   membershipSavings,
+  promoSavings,
   fees,
   minimumOrderValue,
+  loyaltyPoints,
+  plain = false,
 }: OrderSummaryProps) {
   const t = useTranslations();
 
@@ -44,74 +58,119 @@ export function OrderSummary({
     }
   }
 
-  return (
-    <div className="border-card-border bg-card-bg rounded-xl border p-4">
-      <h2 className="text-foreground mb-3 text-base font-semibold">{t.orderSummaryTitle}</h2>
+  // Picnic lists a delivery fee among the fees when there is one; without it, delivery is free.
+  const hasDeliveryFee = fees.some((fee) => fee.type.toUpperCase().includes("DELIVERY"));
 
-      <div className="space-y-2 text-sm">
-        {/* Item count row */}
-        <div className="flex justify-between text-gray-700">
-          <span>
-            {t.itemsLabel} ({totalCount})
-          </span>
-        </div>
+  const rows = (
+    <div className="text-foreground space-y-3 text-base">
+      <Row label={<span className="text-text-muted">{`${t.itemsLabel} (${totalCount})`}</span>} />
 
-        {/* Discount row */}
-        {totalDiscount > 0 && (
-          <div className="text-picnic-green flex justify-between">
-            <span>{t.discountLabel}</span>
-            <span>−{formatPrice(totalDiscount)}</span>
-          </div>
-        )}
+      {membershipSavings > 0 && (
+        <Row
+          label={
+            <Pill color={FAMILY_GREEN} textColor="#ffffff">
+              {t.accountFamilyBadge}
+            </Pill>
+          }
+          value={`-${formatPrice(membershipSavings)}`}
+        />
+      )}
 
-        {/* Deposit breakdown rows */}
-        {depositBreakdown
-          .filter((entry) => entry.total > 0)
-          .map((entry) => (
-            <div key={entry.type} className="flex justify-between text-gray-700">
-              <span>{depositLabel(entry.type)}</span>
-              <span>{formatPrice(entry.total)}</span>
-            </div>
-          ))}
+      {promoSavings > 0 && (
+        <Row
+          label={
+            <Pill color={PROMO_YELLOW} textColor="#333333">
+              {t.cartPromoLabel}
+            </Pill>
+          }
+          value={`-${formatPrice(promoSavings)}`}
+        />
+      )}
 
-        {/* Membership savings row */}
-        {membershipSavings > 0 && (
-          <div className="text-picnic-green flex justify-between">
-            <span>{t.membershipSavingsLabel}</span>
-            <span>−{formatPrice(membershipSavings)}</span>
-          </div>
-        )}
-
-        {/* Fee rows (e.g. Picnic credit settlement) */}
-        {fees.map((fee) => (
-          <div
-            key={fee.type}
-            className={`flex justify-between ${fee.amount < 0 ? "text-picnic-green" : "text-gray-700"}`}
-          >
-            <span>{fee.name}</span>
-            <span>
-              {fee.amount < 0 ? `−${formatPrice(Math.abs(fee.amount))}` : formatPrice(fee.amount)}
-            </span>
-          </div>
+      {depositBreakdown
+        .filter((entry) => entry.total > 0)
+        .map((entry) => (
+          <Row key={entry.type} label={depositLabel(entry.type)} value={formatPrice(entry.total)} />
         ))}
 
-        {/* Minimum order value row */}
-        {minimumOrderValue !== null && minimumOrderValue > 0 && (
-          <div className="flex justify-between text-gray-700">
-            <span>{t.minimumOrderLabel}</span>
+      {fees.map((fee) => (
+        <Row
+          key={fee.type}
+          label={fee.name}
+          value={fee.amount < 0 ? `-${formatPrice(Math.abs(fee.amount))}` : formatPrice(fee.amount)}
+        />
+      ))}
+
+      {!hasDeliveryFee && <Row label={t.cartDeliveryLabel} value={t.cartDeliveryFree} />}
+
+      {minimumOrderValue !== null && minimumOrderValue > 0 && (
+        <Row
+          label={t.minimumOrderLabel}
+          value={
             <span className={totalPrice >= minimumOrderValue ? "text-picnic-green" : ""}>
               {totalPrice >= minimumOrderValue && <span className="mr-1">&#10003;</span>}
               {formatPrice(minimumOrderValue)}
             </span>
-          </div>
-        )}
+          }
+        />
+      )}
 
-        {/* Total row */}
-        <div className="border-card-border text-foreground flex justify-between border-t pt-2 font-bold">
-          <span>{t.totalLabel}</span>
-          <span>{formatPrice(totalPrice)}</span>
-        </div>
+      <div className="border-card-border flex justify-between border-t-2 pt-4 text-2xl font-bold">
+        <span>{t.totalLabel}</span>
+        <span>{formatPrice(totalPrice)}</span>
       </div>
+
+      {loyaltyPoints && (
+        <Row
+          label={
+            <span style={{ color: loyaltyPoints.label.color ?? undefined }}>
+              {loyaltyPoints.label.text}
+            </span>
+          }
+          value={
+            <span style={{ color: loyaltyPoints.value.color ?? undefined }}>
+              {loyaltyPoints.value.text}
+            </span>
+          }
+        />
+      )}
     </div>
+  );
+
+  if (plain) return rows;
+
+  return (
+    <div className="border-card-border bg-card-bg rounded-xl border p-4">
+      <h2 className="text-foreground mb-3 text-base font-semibold">{t.orderSummaryTitle}</h2>
+      {rows}
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: ReactNode; value?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span>{label}</span>
+      {value !== undefined && <span>{value}</span>}
+    </div>
+  );
+}
+
+function Pill({
+  color,
+  textColor,
+  children,
+}: {
+  color: string;
+  textColor: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className="inline-block rounded-md px-2 py-0.5 text-base"
+      style={{ backgroundColor: color, color: textColor }}
+    >
+      {children}
+    </span>
   );
 }

@@ -3,7 +3,7 @@
  *
  * Shows either a prompt when no explicit slot is selected, or the formatted
  * delivery window (e.g. "Morgen 14:40 - 15:40").
- * Soft gradient background with truck icon, text, and a chevron hint.
+ * Cream background like the app, with truck icon, text, and a chevron hint.
  */
 
 "use client";
@@ -22,7 +22,7 @@ export function DeliverySlotBanner({ bannerText, isExplicit, onTap }: DeliverySl
     <button
       type="button"
       onClick={onTap}
-      className="group flex w-full items-center gap-3.5 rounded-2xl bg-gray-100 px-5 py-4 text-left transition-all hover:bg-gray-200 hover:shadow-md active:scale-[0.99]"
+      className="group flex w-full items-center gap-3.5 rounded-2xl bg-[#f8f5f2] px-5 py-4 text-left transition-all hover:bg-[#f0e8dd] hover:shadow-md active:scale-[0.99]"
     >
       {/* Truck icon with clock overlay */}
       <div className="relative flex-shrink-0 rounded-xl bg-white p-2 shadow-sm">
@@ -35,13 +35,11 @@ export function DeliverySlotBanner({ bannerText, isExplicit, onTap }: DeliverySl
       {/* Banner text */}
       <div className="flex flex-1 flex-col">
         <span
-          className={`text-sm ${
-            isExplicit ? "text-foreground font-semibold" : "font-medium text-gray-500"
-          }`}
+          className={`text-lg ${isExplicit ? "text-foreground font-semibold" : "text-[#5b534e]"}`}
         >
           {bannerText}
         </span>
-        {!isExplicit && <span className="text-xs text-gray-400">{t.tapToChoose}</span>}
+        {!isExplicit && <span className="text-sm text-gray-400">{t.tapToChoose}</span>}
       </div>
 
       {/* Chevron hint */}
