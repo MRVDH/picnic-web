@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/badge/license-AGPL3.0-blue.svg?style=flat-square)](https://github.com/MRVDH/picnic-web/blob/master/LICENSE) [![Buy me an Affligem blond](https://img.shields.io/badge/buy%20me%20an-affligem%20blond-orange?style=flat-square)](https://www.buymeacoffee.com/MRVDH) [![MAAR3267](https://img.shields.io/badge/picnic%20discount-MAAR3267-E1171E?style=flat-square)](https://picnic.app/nl/vriendenkorting/MAAR3267)
+[![GitHub license](https://img.shields.io/badge/license-AGPL3.0-blue.svg?style=flat-square)](https://github.com/MRVDH/picnic-web/blob/master/LICENSE) [![MAAR3267](https://img.shields.io/badge/picnic%20discount-MAAR3267-E1171E?style=flat-square)](https://picnic.app/nl/vriendenkorting/MAAR3267)
 
 # Picnic web
 
@@ -6,7 +6,7 @@ Unofficial web interface for the online supermarket Picnic. Uses the npm library
 
 Live version: [picnic.maartenvandenhoven.com](http://picnic.maartenvandenhoven.com)
 
-<img alt="image" src="https://github.com/user-attachments/assets/774c2fd5-4c0e-4bcf-b789-a51c5b93a996" />
+<img width="1596" height="1279" alt="image" src="https://github.com/user-attachments/assets/dec2c62e-eb5d-4ccc-ae16-04703ac7558d" />
 
 ### FAQ
 
