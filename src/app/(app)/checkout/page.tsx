@@ -210,7 +210,7 @@ export default function CheckoutPage() {
             <OrderSummary
               totalPrice={pageState.cart.totalPrice}
               totalCount={pageState.cart.totalCount}
-              totalDiscount={pageState.cart.totalDiscount}
+              promoSavings={pageState.cart.promoSavings}
               depositTotal={pageState.cart.depositTotal}
               depositBreakdown={pageState.cart.depositBreakdown}
               membershipSavings={pageState.cart.membershipSavings}

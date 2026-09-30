@@ -114,10 +114,11 @@ export const fr = {
   depositGeneric: "Consigne",
   orderSummaryTitle: "Récapitulatif de la commande",
   itemsLabel: "Articles",
-  discountLabel: "Réduction",
-  membershipSavingsLabel: "Économies d'adhésion Picnic",
   minimumOrderLabel: "Montant minimum de commande",
   totalLabel: "Total",
+  cartPromoLabel: "Promo",
+  cartDeliveryLabel: "Livraison",
+  cartDeliveryFree: "Gratuit",
 
   // Quantity stepper
   removeOneAriaLabel: "Retirer 1",

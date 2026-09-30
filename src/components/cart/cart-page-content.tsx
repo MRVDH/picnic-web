@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
 
 import { CartItemCard } from "@/components/cart/cart-item";
+import { CartRecommendations } from "@/components/cart/cart-recommendations";
 import { CheckoutCta } from "@/components/cart/checkout-cta";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { DeliverySlotBanner } from "@/components/delivery/delivery-slot-banner";
@@ -13,7 +14,46 @@ import { ProductSlider } from "@/components/product/product-slider";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { buildRecipeImageUrl } from "@/lib/core/image-url";
-import type { CartData, CartItem, CartRecipeGroup } from "@/lib/core/types";
+import type {
+  ApiErrorResponse,
+  CartData,
+  CartFooterApiResponse,
+  CartFooterData,
+  CartItem,
+  CartRecipeGroup,
+} from "@/lib/core/types";
+
+/** Wait this long after the last cart change before refreshing the footer. */
+const FOOTER_REFRESH_DELAY_MS = 600;
+
+/**
+ * The app's basket footer (loyalty points, recommendations). Refetched when the
+ * total changes, since the points depend on it. Failing to load it only hides
+ * those parts.
+ */
+function useCartFooter(totalPrice: number): CartFooterData | null {
+  const [footer, setFooter] = useState<CartFooterData | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/cart/footer", { signal: controller.signal });
+        const data: CartFooterApiResponse | ApiErrorResponse = await response.json();
+        if (response.ok && !("error" in data)) setFooter(data);
+      } catch {
+        // Aborted or failed: keep what is shown.
+      }
+    }, FOOTER_REFRESH_DELAY_MS);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [totalPrice]);
+
+  return footer;
+}
 
 export function EmptyView() {
   const t = useTranslations();
@@ -95,6 +135,7 @@ export function CartPageContent({
 }) {
   const t = useTranslations();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const footer = useCartFooter(cart.totalPrice);
 
   // Group items by their recipe (basketGroupId), keeping API order within each group.
   // Recomputed only when the cart data changes, not on unrelated re-renders
@@ -171,15 +212,21 @@ export function CartPageContent({
       <OrderSummary
         totalPrice={cart.totalPrice}
         totalCount={cart.totalCount}
-        totalDiscount={cart.totalDiscount}
         depositTotal={cart.depositTotal}
         depositBreakdown={cart.depositBreakdown}
         membershipSavings={cart.membershipSavings}
+        promoSavings={cart.promoSavings}
         fees={cart.fees}
         minimumOrderValue={cart.minimumOrderValue}
+        loyaltyPoints={footer?.loyaltyPoints}
+        plain
       />
 
-      <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
+      {footer?.recommendations ? (
+        <CartRecommendations recommendations={footer.recommendations} />
+      ) : (
+        <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
+      )}
 
       <CheckoutCta totalPrice={cart.totalPrice} minimumOrderValue={cart.minimumOrderValue} />
 

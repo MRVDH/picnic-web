@@ -10,18 +10,17 @@
  */
 "use client";
 
-import { useTranslations } from "@/contexts/country-context";
-import type { BundleProgress } from "@/lib/core/types";
-
 import { BundleDots } from "@/components/ui/bundle-dots";
 import { SavingsLabel } from "@/components/ui/savings-label";
+import { useTranslations } from "@/contexts/country-context";
+import type { BundleProgress } from "@/lib/core/types";
 
 type QuantityStepperProps = {
   quantity: number;
   maxCount: number;
   onIncrement: () => void;
   onDecrement: () => void;
-  /** Visual variant: "plp" (compact, transparent) or "cart" (large, pink pill). */
+  /** Visual variant: "plp" (compact, transparent) or "cart" (large, cream pill like the app). */
   variant?: "plp" | "cart";
   /** Bundle progress data. Null when no bundle data is available. */
   bundleProgress?: BundleProgress | null;
@@ -93,7 +92,7 @@ export function QuantityStepper({
 
   if (variant === "cart") {
     return (
-      <div className="flex items-center gap-0 rounded-full bg-gray-100 px-0.5 py-0.5">
+      <div className="flex h-11 items-center gap-0 rounded-full bg-[#f5f1ec] px-0.5">
         {/* Minus button */}
         <button
           type="button"
@@ -105,9 +104,7 @@ export function QuantityStepper({
         </button>
 
         {/* Quantity count */}
-        <span className="text-foreground min-w-[1.5rem] text-center text-sm font-bold">
-          {quantity}
-        </span>
+        <span className="text-foreground min-w-[1.5rem] text-center text-lg">{quantity}</span>
 
         {/* Plus button */}
         <button

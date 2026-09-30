@@ -1,7 +1,6 @@
+import { ProductCard } from "@/components/product/product-card";
 import type { Product, SearchSection } from "@/lib/core/types";
 import { buildSectionId } from "@/lib/core/types";
-
-import { ProductCard } from "@/components/product/product-card";
 
 type ProductGridProps =
   | { sections: SearchSection[]; products?: never }
@@ -13,7 +12,11 @@ export function ProductGrid(props: ProductGridProps) {
     return (
       <div className="space-y-8">
         {props.sections.map((section, index) => (
-          <section key={section.title} id={buildSectionId(index)} className="scroll-mt-36">
+          <section
+            key={`${index}-${section.title}`}
+            id={buildSectionId(index)}
+            className="scroll-mt-36"
+          >
             <h2 className="text-foreground mb-3 text-lg font-semibold">{section.title}</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {section.products.map((product) => (

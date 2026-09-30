@@ -426,6 +426,8 @@ export type CartData = {
   depositBreakdown: DepositEntry[];
   /** Membership savings in cents (0 if none). */
   membershipSavings: number;
+  /** Promotion savings in cents (total_savings, without the membership discount). */
+  promoSavings: number;
   /** Fee/credit lines from the API (e.g. Picnic credit settlement). */
   fees: FeeEntry[];
   /** Minimum order value in cents for the selected delivery slot, or null. */
@@ -439,6 +441,26 @@ export type CartData = {
   /** Recipe groups from basket_sections; empty when no recipes are in the cart. */
   recipeGroups: CartRecipeGroup[];
 };
+
+/** A text from the basket footer page, with Picnic's color for it. */
+export type CartFooterText = { text: string; color: string | null };
+
+/** A product tile in the basket's "Niets vergeten?" row. */
+export type CartRecommendationTile = {
+  productId: string;
+  imageId: string;
+  backgroundColor: string | null;
+  /** Whether the tile shows the yellow promotion marker. */
+  hasPromo: boolean;
+};
+
+/** The app's basket footer (basket-footer-section-root): loyalty points and recommendations. */
+export type CartFooterData = {
+  loyaltyPoints: { label: CartFooterText; value: CartFooterText } | null;
+  recommendations: { title: string; pageId: string; tiles: CartRecommendationTile[] } | null;
+};
+
+export type CartFooterApiResponse = CartFooterData;
 
 /** Alias: the /api/cart route returns CartData directly. */
 export type CartApiResponse = CartData;

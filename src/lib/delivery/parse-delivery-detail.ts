@@ -122,6 +122,7 @@ export function parseDeliveryDetail(
   const depositBreakdown = orders.flatMap((order) => order.depositBreakdown);
   const depositTotal = depositBreakdown.reduce((sum, entry) => sum + entry.total, 0);
   const membershipSavings = orders.reduce((sum, order) => sum + order.membershipSavings, 0);
+  const promoSavings = orders.reduce((sum, order) => sum + order.totalSavings, 0);
   const fees = orders.flatMap((order) => order.fees);
   const cancellable = orders.some((order) => order.cancellable);
 
@@ -140,6 +141,7 @@ export function parseDeliveryDetail(
     depositTotal,
     depositBreakdown,
     membershipSavings,
+    promoSavings,
     fees,
     cancellable,
   };
@@ -161,6 +163,7 @@ function emptyDeliveryDetail(countryCode: CountryCode): DeliveryDetailData {
     depositTotal: 0,
     depositBreakdown: [],
     membershipSavings: 0,
+    promoSavings: 0,
     fees: [],
     cancellable: false,
   };

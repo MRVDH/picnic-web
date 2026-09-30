@@ -117,10 +117,11 @@ export const nl = {
   depositGeneric: "Statiegeld",
   orderSummaryTitle: "Besteloverzicht",
   itemsLabel: "Artikelen",
-  discountLabel: "Korting",
-  membershipSavingsLabel: "Picnic-lidmaatschapsbesparing",
   minimumOrderLabel: "Minimale bestelwaarde",
   totalLabel: "Totaal",
+  cartPromoLabel: "Actie",
+  cartDeliveryLabel: "Bezorging",
+  cartDeliveryFree: "Gratis",
 
   // Quantity stepper
   removeOneAriaLabel: "Verwijder 1",
