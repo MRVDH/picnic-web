@@ -321,6 +321,7 @@ export const nl = {
 
   // Vriendenkorting
   referralLoadError: "Je vriendenkortingscode kon niet worden geladen.",
+  familyLoadError: "Je Family-account kon niet worden geladen.",
   referralBodyBefore: "Gebruiken je vrienden of buren jouw code bij hun",
   referralBodyBold: "eerste bestelling",
   referralBodyAfter: "? Dan verdienen jullie allebei {amount}!",

@@ -317,6 +317,7 @@ export const de = {
 
   // Vriendenkorting
   referralLoadError: "Dein Empfehlungscode konnte nicht geladen werden.",
+  familyLoadError: "Dein Family-Konto konnte nicht geladen werden.",
   referralBodyBefore: "Nutzen deine Freunde oder Nachbarn deinen Code bei ihrer",
   referralBodyBold: "ersten Bestellung",
   referralBodyAfter: "? Dann bekommt ihr beide {amount}!",

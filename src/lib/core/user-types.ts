@@ -32,3 +32,31 @@ export type ReferralData = {
 };
 
 export type ReferralApiResponse = ReferralData;
+
+/** A text from the Family page, with the styling Picnic sends for it. */
+export type FamilyText = {
+  text: string;
+  size: number | null;
+  color: string | null;
+  /** CSS font weight (400–700), or null when Picnic sends none. */
+  weight: number | null;
+};
+
+/** One info row in the account section, e.g. the plan and its price, or the renewal date. */
+export type FamilyInfoGroup = { texts: FamilyText[] };
+
+/** The Mijn Family-account page (my-family-account). */
+export type FamilyPageData = {
+  /** "Bespaard met Family" (as separate texts, to keep the highlight) and the amount. */
+  savings: { title: FamilyText[]; amount: string } | null;
+  /** The banner that suggests another plan. */
+  upgrade: {
+    title: FamilyText;
+    subtitle: FamilyText | null;
+    backgroundColor: string | null;
+  } | null;
+  benefits: FamilyText[];
+  account: { heading: FamilyText; groups: FamilyInfoGroup[] } | null;
+};
+
+export type FamilyApiResponse = FamilyPageData;
