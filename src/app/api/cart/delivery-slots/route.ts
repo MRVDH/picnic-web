@@ -1,29 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { parseCartResponse } from "@/lib/cart/parse-cart";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { DeliverySlotPickerData } from "@/lib/core/delivery-slot-types";
-import { parseCartResponse } from "@/lib/cart/parse-cart";
-import { parseDeliverySlotsPicker } from "@/lib/delivery/parse-delivery-slots";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CartData } from "@/lib/core/types";
-
-// ─── sendRequest cast type ───────────────────────────────────────────────────
-
-type SendRequestClient = {
-  sendRequest: (
-    method: string,
-    path: string,
-    body: Record<string, unknown> | null,
-    includeFusion: boolean
-  ) => Promise<unknown>;
-};
+import { buildSlotPicker } from "@/lib/delivery/group-delivery-slots";
 
 // ─── GET /api/cart/delivery-slots ────────────────────────────────────────────
 
 /**
- * Fetches all available delivery slots from the Picnic API, parsed and grouped
- * by day with green-choice identification. Used by the slot picker modal.
+ * Fetches all available delivery slots, with green choices marked by picnic-api,
+ * grouped by day. Used by the slot picker modal.
  */
 export async function GET(
   request: NextRequest
@@ -42,14 +31,8 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const rawResult = await (client as unknown as SendRequestClient).sendRequest(
-      "GET",
-      "/cart/delivery_slots",
-      null,
-      false
-    );
-
-    const pickerData = parseDeliverySlotsPicker(rawResult, countryCode);
+    const overview = await client.cart.getDeliverySlotOverview();
+    const pickerData = buildSlotPicker(overview, countryCode);
 
     return NextResponse.json(pickerData);
   } catch (error) {
