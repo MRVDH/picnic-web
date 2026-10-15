@@ -14,10 +14,10 @@ import type {
   CartRecipeGroup,
   CountryCode,
   DepositEntry,
+  SelectedSlotData,
   SliderProduct,
 } from "@/lib/core/types";
 import { formatBannerText } from "@/lib/delivery/format-delivery-window";
-import { parseSelectedSlot } from "@/lib/delivery/parse-delivery-slots";
 
 // ─── Decorator helpers ────────────────────────────────────────────────────────
 
@@ -252,6 +252,33 @@ function extractMinimumOrderValue(raw: Record<string, unknown>): number | null {
   return mov;
 }
 
+// ─── Selected delivery slot ──────────────────────────────────────────────────
+
+/**
+ * Extract the selected slot for the delivery banner. Matches the selected
+ * slot_id against delivery_slots to get the window times.
+ */
+function parseSelectedSlot(raw: Record<string, unknown>): SelectedSlotData | null {
+  const selectedSlot = raw["selected_slot"];
+  if (!isObject(selectedSlot)) return null;
+
+  const slotId = asString(selectedSlot["slot_id"]);
+  if (!slotId) return null;
+
+  const state = asString(selectedSlot["state"]);
+  const matchedSlot = asArray(raw["delivery_slots"])
+    .filter(isObject)
+    .find((slot) => asString(slot["slot_id"]) === slotId);
+
+  return {
+    slotId,
+    state,
+    windowStart: (matchedSlot && asString(matchedSlot["window_start"])) || null,
+    windowEnd: (matchedSlot && asString(matchedSlot["window_end"])) || null,
+    isExplicitSelection: state !== "IMPLICIT" && state !== "",
+  };
+}
+
 // ─── Recipe groups from basket_sections ──────────────────────────────────────
 
 function extractRecipeGroups(raw: Record<string, unknown>): CartRecipeGroup[] {
@@ -459,10 +486,7 @@ export function parseCartResponse(rawData: unknown, countryCode: CountryCode): C
   const suggestions = extractSuggestions(rawData);
 
   // Delivery slot
-  const selectedSlot = parseSelectedSlot(
-    rawData["selected_slot"],
-    asArray(rawData["delivery_slots"])
-  );
+  const selectedSlot = parseSelectedSlot(rawData);
   const t = getTranslations(countryCode);
   const deliveryBannerText =
     (selectedSlot?.isExplicitSelection
