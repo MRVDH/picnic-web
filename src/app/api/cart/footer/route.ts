@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { parseCartFooter } from "@/lib/cart/parse-cart-footer";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CartFooterApiResponse } from "@/lib/core/types";
-
-/** The app's basket footer page. */
-const CART_FOOTER_PAGE_ID = "basket-footer-section-root";
 
 /**
  * GET /api/cart/footer
@@ -29,9 +25,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const rawPage = await client.app.getPage(CART_FOOTER_PAGE_ID);
-
-    return NextResponse.json(parseCartFooter(rawPage));
+    return NextResponse.json(await client.cart.getBasketFooter());
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
