@@ -1,5 +1,7 @@
 // Application-level type definitions for the Picnic web client.
 // These are our own domain types, decoupled from the upstream picnic-api types.
+import type PicnicClient from "picnic-api";
+
 import type { SelectedSlotData } from "@/lib/core/delivery-slot-types";
 import type { RscPageModel } from "@/lib/rsc/rsc-page-types";
 
@@ -443,22 +445,13 @@ export type CartData = {
 };
 
 /** A text from the basket footer page, with Picnic's color for it. */
-export type CartFooterText = { text: string; color: string | null };
+export type CartFooterText = PicnicClient.Types.cart.CartFooterText;
 
 /** A product tile in the basket's "Niets vergeten?" row. */
-export type CartRecommendationTile = {
-  productId: string;
-  imageId: string;
-  backgroundColor: string | null;
-  /** Whether the tile shows the yellow promotion marker. */
-  hasPromo: boolean;
-};
+export type CartRecommendationTile = PicnicClient.Types.cart.CartRecommendationTile;
 
 /** The app's basket footer (basket-footer-section-root): loyalty points and recommendations. */
-export type CartFooterData = {
-  loyaltyPoints: { label: CartFooterText; value: CartFooterText } | null;
-  recommendations: { title: string; pageId: string; tiles: CartRecommendationTile[] } | null;
-};
+export type CartFooterData = PicnicClient.Types.cart.CartFooter;
 
 export type CartFooterApiResponse = CartFooterData;
 
