@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type { ApiErrorResponse } from "@/lib/core/types";
 import type { DeliveriesApiResponse } from "@/lib/core/delivery-types";
-import { parseDeliveriesSummary } from "@/lib/delivery/parse-deliveries-summary";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse } from "@/lib/core/types";
+import { toDeliveryListItems } from "@/lib/delivery/to-delivery-list-items";
 
 const VALID_STATUSES = new Set(["CURRENT", "COMPLETED", "CANCELLED"]);
 
@@ -30,8 +30,8 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawDeliveries = await client.delivery.getDeliveries(filter);
-    const deliveries = parseDeliveriesSummary(rawDeliveries, countryCode);
+    const summaries = await client.delivery.getDeliverySummaries(filter);
+    const deliveries = toDeliveryListItems(summaries, countryCode);
 
     return NextResponse.json({ deliveries });
   } catch (error) {
