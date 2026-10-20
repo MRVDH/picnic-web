@@ -370,9 +370,9 @@ export type CartItem = {
   unitQuantity: string;
   /** Primary image ID (first in array, or empty string). */
   imageId: string;
-  /** Current price in cents (display_price from order line). */
+  /** Current price in cents for the whole line, i.e. all of `quantity` (display_price from order line). */
   displayPrice: number;
-  /** Original price in cents when discounted, or null. */
+  /** Original line price in cents when discounted, or null. */
   originalPrice: number | null;
   /** Quantity in cart (from QUANTITY decorator, default 1). */
   quantity: number;

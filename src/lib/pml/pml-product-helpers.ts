@@ -229,10 +229,14 @@ export function collectNutritionRows(node: unknown): NutritionRowData[] {
 
 // ─── Allergen badges ─────────────────────────────────────────────────────────
 
-/** Allergen heading pattern: NL "Bevat"/"Bevat mogelijk", DE "Enthält"/"Kann enthalten". */
-const ALLERGEN_HEADING_PATTERN = /^(bevat(\s+mogelijk)?|enthält|kann enthalten)$/i;
+/** "Contains" allergen headings: NL "Bevat", DE "Enthält", FR "Contient". */
+const ALLERGEN_CONFIRMED_HEADING_PATTERN = /^(bevat|enthält|contient)$/i;
 
-/** An allergen group: a heading ("Bevat"/"Bevat mogelijk") and its badges. */
+/** "May contain" allergen headings: NL "Bevat mogelijk", DE "Kann enthalten", FR "Peut contenir". */
+const ALLERGEN_MAY_CONTAIN_HEADING_PATTERN =
+  /^(bevat\s+mogelijk|kann\s+enthalten|peut\s+contenir)$/i;
+
+/** An allergen group: a heading ("Bevat"/"Bevat mogelijk" and translations) and its badges. */
 export type AllergenGroup = {
   category: "confirmed" | "mayContain";
   badges: LabelData[];
@@ -259,8 +263,12 @@ export function collectAllergenGroups(node: unknown): AllergenGroup[] {
 
     if (childRecord.type === "RICH_TEXT" && typeof childRecord.markdown === "string") {
       const text = stripColorTags(childRecord.markdown as string).trim();
-      if (ALLERGEN_HEADING_PATTERN.test(text)) {
-        currentCategory = text.toLowerCase().includes("mogelijk") ? "mayContain" : "confirmed";
+      if (ALLERGEN_MAY_CONTAIN_HEADING_PATTERN.test(text)) {
+        currentCategory = "mayContain";
+        continue;
+      }
+      if (ALLERGEN_CONFIRMED_HEADING_PATTERN.test(text)) {
+        currentCategory = "confirmed";
         continue;
       }
     }
