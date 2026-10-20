@@ -113,10 +113,11 @@ export function parseDeliveryDetail(
   const allItems = orders.flatMap((order) => order.items);
   const totalPrice = orders.reduce((sum, order) => sum + order.checkoutTotalPrice, 0);
   const totalCount = allItems.reduce((sum, item) => sum + item.quantity, 0);
+  // Line prices are already totals for the line's quantity, so don't multiply.
   let totalDiscount = 0;
   for (const item of allItems) {
     if (item.originalPrice !== null && item.originalPrice > item.displayPrice) {
-      totalDiscount += (item.originalPrice - item.displayPrice) * item.quantity;
+      totalDiscount += item.originalPrice - item.displayPrice;
     }
   }
   const depositBreakdown = orders.flatMap((order) => order.depositBreakdown);

@@ -75,10 +75,11 @@ export function useCartOptional(): CartContextValue | null {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Total quantity per product. A product can sit on several lines (e.g. in a recipe group). */
 function buildQuantitiesMap(cart: CartData): Map<string, number> {
   const map = new Map<string, number>();
   for (const item of cart.items) {
-    map.set(item.productId, item.quantity);
+    map.set(item.productId, (map.get(item.productId) ?? 0) + item.quantity);
   }
   return map;
 }
