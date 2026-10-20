@@ -332,11 +332,3 @@ function findAllByIdPrefix(obj: unknown, prefix: string, results: PmlRecord[] = 
   }
   return results;
 }
-
-/**
- * Legacy flat parser. Extracts all products without section grouping.
- * @deprecated Use parseFusionSearchSections instead.
- */
-export function parseFusionSearchPage(rawPage: unknown): Product[] {
-  return parseContentPageSections(rawPage).products;
-}

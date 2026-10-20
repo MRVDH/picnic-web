@@ -5,7 +5,6 @@ import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
-import { parseRscPage } from "@/lib/rsc/parse-rsc-page";
 import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
 
 /**
@@ -44,7 +43,7 @@ export async function GET(
       rawPage = await client.app.getPage(pageId);
     } catch (error) {
       if (!isUnexpectedPageFormatError(error)) throw error;
-      const rscPage = parseRscPage(pageId, await client.app.getRscPage(pageId));
+      const rscPage = await client.app.getRscPageContent(pageId);
       return NextResponse.json({ title: null, products: [], sections: [], rscPage });
     }
     const title = extractPageTitle(rawPage);

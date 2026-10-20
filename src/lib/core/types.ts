@@ -141,7 +141,7 @@ export type Product = {
 // ─── Search ──────────────────────────────────────────────────────────────────
 
 export type SearchSection = {
-  /** Display text for the section header (e.g., "Cherrytomaten"). */
+  /** Display text for the section header (e.g., "Cherrytomaten"); empty when the section has no header. */
   title: string;
   /** Products in this section, in API order. Always non-empty. */
   products: Product[];

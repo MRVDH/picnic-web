@@ -33,7 +33,8 @@ export function SectionNavBar({ sections }: SectionNavBarProps) {
     }
   }, [activeSectionIndex]);
 
-  if (sections.length === 0) return null;
+  // Sections the app shows without a header have no title and get no badge.
+  if (!sections.some((section) => section.title)) return null;
 
   return (
     <nav
@@ -44,22 +45,24 @@ export function SectionNavBar({ sections }: SectionNavBarProps) {
         ref={scrollContainerRef}
         className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-6 py-2"
       >
-        {sections.map((section, index) => (
-          <SectionBadge
-            key={index}
-            ref={(el) => {
-              if (el) {
-                badgeRefs.current.set(index, el);
-              } else {
-                badgeRefs.current.delete(index);
-              }
-            }}
-            index={index}
-            title={section.title}
-            isActive={index === activeSectionIndex}
-            goToPrefix={t.sectionNavGoTo}
-          />
-        ))}
+        {sections.map((section, index) =>
+          section.title ? (
+            <SectionBadge
+              key={index}
+              ref={(el) => {
+                if (el) {
+                  badgeRefs.current.set(index, el);
+                } else {
+                  badgeRefs.current.delete(index);
+                }
+              }}
+              index={index}
+              title={section.title}
+              isActive={index === activeSectionIndex}
+              goToPrefix={t.sectionNavGoTo}
+            />
+          ) : null
+        )}
       </div>
     </nav>
   );

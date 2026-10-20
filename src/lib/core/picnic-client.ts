@@ -11,7 +11,7 @@ export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
 
 /**
  * True when a page was served in a different format than requested: `getPage`
- * got a React Server Components payload (use `getRscPage`), or the other way around.
+ * got a React Server Components payload (use `getRscPageContent`), or the other way around.
  */
 export const isUnexpectedPageFormatError = PicnicClient.isUnexpectedPageFormatError;
 

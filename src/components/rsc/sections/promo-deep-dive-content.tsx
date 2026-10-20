@@ -6,8 +6,7 @@ import { ProductGrid } from "@/components/product/product-grid";
 import type { RscComponentProps } from "@/components/rsc/rsc-page-view";
 import { useRscRenderContext } from "@/components/rsc/rsc-render-context";
 import { useTranslations } from "@/contexts/country-context";
-import type { Product } from "@/lib/core/types";
-import { mapSellableTile } from "@/lib/rsc/map-sellable-tile";
+import { mapProductTiles } from "@/lib/product/map-product-tile";
 
 /**
  * The products of one promotion group (promo-group-deep-dive), e.g. all
@@ -19,14 +18,7 @@ export function PromoDeepDiveContent({ node }: RscComponentProps) {
   const { tokens } = useRscRenderContext();
   const tiles = node.props.sellableTiles;
 
-  const products = useMemo(
-    () =>
-      (Array.isArray(tiles) ? tiles : []).flatMap((tile) => {
-        const product = mapSellableTile((tile ?? {}) as Record<string, unknown>, tokens);
-        return product ? [product] : ([] as Product[]);
-      }),
-    [tiles, tokens]
-  );
+  const products = useMemo(() => mapProductTiles(tiles, tokens), [tiles, tokens]);
 
   if (products.length === 0) {
     return <p className="py-8 text-center text-sm text-gray-500">{t.noProductsInCategory}</p>;

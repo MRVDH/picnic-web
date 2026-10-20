@@ -5,17 +5,13 @@ import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { ProfileApiResponse } from "@/lib/core/user-types";
-import { parseRscPage } from "@/lib/rsc/parse-rsc-page";
-import { parseProfilePage } from "@/lib/user/parse-profile";
-
-/** The app's profile sheet, served as React Server Components. */
-const PROFILE_PAGE_ID = "profile-root";
+import { mapProfile } from "@/lib/user/map-profile";
 
 /**
  * GET /api/user/profile
  *
  * Returns the profile summary and the account menu (entry ids and deep links,
- * in app order) from profile-root.
+ * in app order), from picnic-api's user.getProfile.
  */
 export async function GET(
   request: NextRequest
@@ -31,9 +27,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const page = await client.app.getRscPage(PROFILE_PAGE_ID);
-
-    return NextResponse.json(parseProfilePage(parseRscPage(PROFILE_PAGE_ID, page)));
+    return NextResponse.json(mapProfile(await client.user.getProfile()));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
