@@ -15,6 +15,9 @@ export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
  */
 export const isUnexpectedPageFormatError = PicnicClient.isUnexpectedPageFormatError;
 
+/** True when Picnic serves its "product not found" page: unknown, or not sold at the user's location. */
+export const isProductNotFoundError = PicnicClient.isProductNotFoundError;
+
 /**
  * Create a new PicnicClient instance with the given auth token.
  * Must only be called server-side (route handlers).

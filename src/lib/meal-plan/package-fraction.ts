@@ -100,8 +100,7 @@ function findPieceCount(text: string | null): number | null {
  */
 export function packageFraction(
   recipeQuantityText: string | null,
-  recipePackageSize: string | null,
-  unitQuantity: string | null = null
+  unitQuantity: string | null
 ): number | null {
   const needed = parseNeeded(recipeQuantityText);
   if (!needed || !(needed.value > 0)) return null;
@@ -111,15 +110,14 @@ export function packageFraction(
 
   // Pieces only resolve when something states how many the package holds.
   if (PIECE_UNITS.test(needed.unit)) {
-    const perPack = findPieceCount(recipePackageSize) ?? findPieceCount(unitQuantity);
+    const perPack = findPieceCount(unitQuantity);
     return perPack ? needed.value / perPack : null;
   }
 
   // Spoons: exact against a volume package, capped high against a weight one.
   const spoonKey = needed.unit.toLowerCase().replace(/\.$/, "");
   if (SPOON_ML[spoonKey] !== undefined) {
-    const packSize =
-      normalize(findMeasure(recipePackageSize)) ?? normalize(findMeasure(unitQuantity));
+    const packSize = normalize(findMeasure(unitQuantity));
     if (!packSize || !(packSize.value > 0)) return null;
     return packSize.base === "ml"
       ? (needed.value * SPOON_ML[spoonKey]) / packSize.value
@@ -128,10 +126,8 @@ export function packageFraction(
 
   const neededBase = normalize(needed);
   if (!neededBase) return null;
-  // The recipe tile's package size first; the product's unit quantity covers
-  // the ingredients whose tile shows no size at all.
-  const packBase =
-    normalize(findMeasure(recipePackageSize)) ?? normalize(findMeasure(unitQuantity));
+  // The package size on the recipe tile.
+  const packBase = normalize(findMeasure(unitQuantity));
   if (!packBase || neededBase.base !== packBase.base || !(packBase.value > 0)) return null;
   return neededBase.value / packBase.value;
 }

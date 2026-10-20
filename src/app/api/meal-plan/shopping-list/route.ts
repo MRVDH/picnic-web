@@ -57,9 +57,9 @@ export async function POST(
     const countryCode = readCountryCode(request);
     const client = buildPicnicClient(token, countryCode);
 
-    // Capped rather than fired at once: each recipe additionally fetches a
-    // product page per ingredient, so an unbounded fan-out here is what put the
-    // whole plan over the upstream limit. Failures stay per-recipe, as before.
+    // Capped rather than fired at once, to stay under the upstream limit: a
+    // recipe can add a product page per ingredient without a name. Failures
+    // stay per-recipe.
     type Attempt = { ok: true; recipe: RecipeDetail } | { ok: false; error: unknown };
     const results = await mapWithConcurrency<string, Attempt>(
       recipeIds,

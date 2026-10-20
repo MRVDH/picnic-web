@@ -158,13 +158,14 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
           {/* Labels (Biologisch, 50% korting, etc.) */}
           <ProductLabels labels={product.labels} />
 
-          {/* Title / Brand / Weight / Unit Price / Category Tag */}
+          {/* Title / Brand / Size badge / Weight / Unit Price / Tags */}
           <ProductInfoHeader
             name={product.name}
             brand={product.brand}
+            quantityBadges={product.quantityBadges}
             unitQuantity={product.unitQuantity}
             unitPrice={product.unitPrice}
-            categoryTag={product.categoryTag}
+            tags={product.tags}
           />
 
           {/* Price / Promotion / Bundles */}

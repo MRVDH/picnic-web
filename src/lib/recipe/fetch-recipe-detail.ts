@@ -1,108 +1,21 @@
-import { mapWithConcurrency } from "@/lib/core/concurrency";
-import { INGREDIENT_CONCURRENCY } from "@/lib/core/constants";
-import { fetchCachedPage } from "@/lib/core/page-cache";
+import { cachedCall } from "@/lib/core/page-cache";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
-import type { RecipeDetail, RecipeIngredient } from "@/lib/core/types";
-import {
-  extractProductNutritionRows,
-  extractProductTileData,
-} from "@/lib/product/parse-fusion-product";
-import { parseRecipeDetail } from "@/lib/recipe/parse-recipe-detail";
-
-type SendRequestClient = PicnicClientInstance & {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
-};
+import type { RecipeDetail } from "@/lib/core/types";
+import { mapRecipeDetails } from "@/lib/recipe/map-recipe-details";
 
 /**
- * Fetch a recipe's raw Fusion page. Tries selling-group-details-page first
- * (works for DE; NL may use either endpoint), falling back to
- * recipe-details-page-root.
+ * Fetch and parse a recipe with picnic-api's recipe.getRecipe: steps, nutrition, allergens and
+ * the ingredients with their products and prices. Without `portions` it uses the count Picnic
+ * renders the recipe with. An ingredient whose tile has no name costs a product page request.
+ * Recent results are reused (see page-cache), so the meal-plan search and the shopping list
+ * share their requests.
  */
-export async function fetchRecipePage(
-  client: PicnicClientInstance,
-  id: string,
-  portions?: number
-): Promise<unknown> {
-  const portionsParam = portions ? `&portions=${portions}` : "";
-
-  try {
-    return await fetchCachedPage(
-      client,
-      `/pages/selling-group-details-page?selling_group_id=${encodeURIComponent(id)}${portionsParam}`
-    );
-  } catch {
-    // Fall through to the alternative endpoint
-  }
-
-  return fetchCachedPage(
-    client,
-    `/pages/recipe-details-page-root?recipe_id=${encodeURIComponent(id)}${portionsParam}`
-  );
-}
-
-/** Fetch product detail pages in parallel to enrich ingredient stubs with real data. */
-async function enrichIngredients(
-  client: SendRequestClient,
-  ingredients: RecipeIngredient[]
-): Promise<RecipeIngredient[]> {
-  const uniqueIds = [...new Set(ingredients.map((i) => i.id))];
-
-  type TileEntry = ReturnType<typeof extractProductTileData> & {
-    nutritionRows: ReturnType<typeof extractProductNutritionRows>;
-  };
-  const tileMap = new Map<string, TileEntry>();
-
-  await mapWithConcurrency(
-    uniqueIds,
-    async (unitId) => {
-      try {
-        const rawPage = await fetchCachedPage(
-          client,
-          `/pages/product-details-page-root?id=${encodeURIComponent(unitId)}`
-        );
-        const tile = extractProductTileData(rawPage, unitId);
-        const nutritionRows = extractProductNutritionRows(rawPage);
-        if (tile.name) tileMap.set(unitId, { ...tile, nutritionRows });
-      } catch {
-        // leave as stub
-      }
-    },
-    INGREDIENT_CONCURRENCY
-  );
-
-  return ingredients.map((ing) => {
-    const data = tileMap.get(ing.id);
-    if (!data) return ing;
-    return {
-      ...ing,
-      // Keep the recipe-page tile name (short display name); fall back to product page name
-      name: ing.name || data.name,
-      imageId: data.imageId || ing.imageId,
-      displayPrice: data.displayPrice ?? ing.displayPrice,
-      unitQuantity: data.unitQuantity || ing.unitQuantity,
-      maxCount: data.maxCount || ing.maxCount,
-      nutritionRows: data.nutritionRows,
-      originalPrice: data.originalPrice,
-      priceRanges: data.priceRanges,
-    };
-  });
-}
-
-/**
- * Fetch and fully parse a recipe: raw page + per-ingredient product
- * enrichment (name/price/image/nutrition backfill). Used by the recipe
- * detail route and the meal-plan shopping-list route.
- */
-export async function fetchRecipeDetail(
+export function fetchRecipeDetail(
   client: PicnicClientInstance,
   id: string,
   portions?: number
 ): Promise<RecipeDetail> {
-  const rawPage = await fetchRecipePage(client, id, portions);
-  const detail = parseRecipeDetail(rawPage, id);
-  const ingredients = await enrichIngredients(
-    client as unknown as SendRequestClient,
-    detail.ingredients
+  return cachedCall(client, `recipe:${id}:${portions ?? ""}`, () =>
+    client.recipe.getRecipe(id, portions, { resolveIngredientNames: true }).then(mapRecipeDetails)
   );
-  return { ...detail, ingredients };
 }

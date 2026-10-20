@@ -52,8 +52,7 @@ export function RecipeIngredientRow({
     ? scaleNeededText(ingredient.recipeQuantityText, portions, basePortion)
     : null;
 
-  const displayPkg = ingredient.recipePackageSize ?? ingredient.unitQuantity;
-  const packageLabel = qty > 1 ? `${qty} × ${displayPkg}` : displayPkg;
+  const packageLabel = qty > 1 ? `${qty} × ${ingredient.unitQuantity}` : ingredient.unitQuantity;
   const subtitle = scaledNeeded ? `${packageLabel} ${scaledNeeded}` : packageLabel;
 
   const bundleTier = ingredient.priceRanges?.filter((t) => t.quantity <= qty).at(-1);

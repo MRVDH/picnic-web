@@ -68,17 +68,30 @@ function evictIfFull(): void {
  * is one. Failures are never cached, so a blocked request does not poison the
  * entry for as long as the block lasts.
  */
-export async function fetchCachedPage(
+export function fetchCachedPage(
   client: PicnicClientInstance,
   path: string,
   ttlMs: number = PAGE_CACHE_TTL_MS
 ): Promise<unknown> {
   const typed = client as SendRequestClient;
-  const key = cacheKey(typed, path);
-  const hit = cache.get(key);
-  if (hit && hit.expiresAt > Date.now()) return hit.promise;
+  return cachedCall(client, path, () => typed.sendRequest("GET", path, null, true), ttlMs);
+}
 
-  const promise = typed.sendRequest("GET", path, null, true);
+/**
+ * Run a picnic-api call that reads catalogue data, reusing a recent result for
+ * the same `name` (e.g. "recipe:<id>:<portions>"). Same rules as fetchCachedPage.
+ */
+export function cachedCall<T>(
+  client: PicnicClientInstance,
+  name: string,
+  call: () => Promise<T>,
+  ttlMs: number = PAGE_CACHE_TTL_MS
+): Promise<T> {
+  const key = cacheKey(client as SendRequestClient, name);
+  const hit = cache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.promise as Promise<T>;
+
+  const promise = call();
   evictIfFull();
   cache.set(key, { promise, expiresAt: Date.now() + ttlMs });
 
