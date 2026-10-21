@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type { ApiErrorResponse } from "@/lib/core/types";
 import type { DeliveryDetailApiResponse } from "@/lib/core/delivery-types";
-import { parseDeliveryDetail } from "@/lib/delivery/parse-delivery-detail";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
+import type { ApiErrorResponse } from "@/lib/core/types";
+import { mapDeliveryDetails } from "@/lib/delivery/map-delivery";
 
 export async function GET(
   request: NextRequest,
@@ -29,8 +29,10 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawDelivery = await client.delivery.getDelivery(deliveryId);
-    const delivery = parseDeliveryDetail(rawDelivery, countryCode);
+    const delivery = mapDeliveryDetails(
+      await client.delivery.getDeliveryDetails(deliveryId),
+      countryCode
+    );
 
     if (!delivery.id) {
       return NextResponse.json({ error: "Delivery not found" }, { status: 404 });

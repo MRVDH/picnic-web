@@ -24,7 +24,8 @@ function mapBadges(line: CartLineItem): Badge[] {
   ];
 }
 
-function mapLine(line: CartLineItem): CartItem {
+/** Maps a cart or order line to the web's CartItem. */
+export function mapCartLine(line: CartLineItem): CartItem {
   return {
     id: line.id,
     productId: line.productId,
@@ -53,7 +54,7 @@ function mapLine(line: CartLineItem): CartItem {
 export function mapCart(cart: CartContents, countryCode: CountryCode): CartData {
   // Unavailable lines go to the bottom, keeping their order.
   const items = cart.items
-    .map(mapLine)
+    .map(mapCartLine)
     .sort((a, b) => Number(a.isUnavailable) - Number(b.isUnavailable));
   const slot = cart.selectedSlot;
   const deliveryBannerText =

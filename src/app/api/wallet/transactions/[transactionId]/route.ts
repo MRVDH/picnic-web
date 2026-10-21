@@ -5,7 +5,7 @@ import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { TransactionDetailApiResponse } from "@/lib/core/wallet-types";
-import { parseTransactionDetail } from "@/lib/wallet/parse-transaction-detail";
+import { mapWalletPayment } from "@/lib/wallet/map-wallet-payment";
 
 /**
  * GET /api/wallet/transactions/[transactionId]
@@ -30,9 +30,9 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const raw = await client.payment.getWalletTransactionDetails(transactionId);
+    const payment = await client.payment.getWalletPayment(transactionId);
 
-    return NextResponse.json(parseTransactionDetail(transactionId, raw));
+    return NextResponse.json(mapWalletPayment(payment));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
