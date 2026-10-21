@@ -3,7 +3,7 @@ import type PicnicClient from "picnic-api";
 
 import type { ReferralData } from "@/lib/core/user-types";
 
-type ProfileMenu = PicnicClient.Types.user.ProfileMenu;
+type ProfileMenu = PicnicClient.Types.user.RawProfileMenu;
 
 /** The referral of `user.getProfileMenu()`, or null when the account has no code. */
 export function mapReferral(menu: ProfileMenu): ReferralData | null {

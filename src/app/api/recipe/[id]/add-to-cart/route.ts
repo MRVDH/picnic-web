@@ -59,7 +59,7 @@ export async function POST(
       }
     } else {
       // Fallback: add all recipe ingredients via the native recipe endpoint.
-      await client.recipe.addRecipeToCart(id, 0, portions);
+      await client.recipe.addRecipeToCart(id, { dayOffset: 0, portions });
     }
 
     return NextResponse.json({ success: true });

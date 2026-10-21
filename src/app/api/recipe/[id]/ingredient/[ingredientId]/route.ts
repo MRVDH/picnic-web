@@ -146,22 +146,18 @@ export async function POST(
       quantityById[sellingUnitId] = count;
     }
 
-    const saveResult = await client.recipe.updateRecipeIngredient(
-      id,
-      ingredientId,
-      quantityById,
+    const saveResult = await client.recipe.updateRecipeIngredient(id, ingredientId, {
+      quantities: quantityById,
       portions,
-      swapType
-    );
+      swapType,
+    });
 
     if (saveResult?.shouldUpdateCart) {
-      await client.recipe.updateRecipeIngredientInCart(
-        id,
-        ingredientId,
-        selected,
+      await client.recipe.updateRecipeIngredientInCart(id, ingredientId, {
+        quantities: selected,
         portions,
-        swapType
-      );
+        swapType,
+      });
     }
 
     return NextResponse.json({ success: true });

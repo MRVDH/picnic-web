@@ -48,7 +48,7 @@ async function main() {
   console.log("Logging in...");
   const login = await client.auth.login(PICNIC_EMAIL, PICNIC_PASSWORD);
 
-  const authKey = login.second_factor_authentication_required ? await verify2FA() : login.authKey;
+  const authKey = login.secondFactorAuthenticationRequired ? await verify2FA() : login.authKey;
 
   if (!authKey) {
     throw new Error("Login failed: no auth key returned. Check your credentials.");

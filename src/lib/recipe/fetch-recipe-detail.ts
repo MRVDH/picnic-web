@@ -16,6 +16,6 @@ export function fetchRecipeDetail(
   portions?: number
 ): Promise<RecipeDetail> {
   return cachedCall(client, `recipe:${id}:${portions ?? ""}`, () =>
-    client.recipe.getRecipe(id, portions, { resolveIngredientNames: true }).then(mapRecipeDetails)
+    client.recipe.getRecipe(id, { portions, resolveIngredientNames: true }).then(mapRecipeDetails)
   );
 }

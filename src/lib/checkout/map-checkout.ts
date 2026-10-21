@@ -3,8 +3,8 @@ import type PicnicClient from "picnic-api";
 
 import type { CheckoutStartData, PaymentProfileData } from "@/lib/core/checkout-types";
 
-type CheckoutStartResult = PicnicClient.Types.checkout.CheckoutStartResult;
-type PaymentProfile = PicnicClient.Types.payment.PaymentProfile;
+type CheckoutStartResult = PicnicClient.Types.checkout.RawCheckoutStartResult;
+type PaymentProfile = PicnicClient.Types.payment.RawPaymentProfile;
 
 export function mapCheckoutStart(result: CheckoutStartResult): CheckoutStartData {
   return {
