@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
+import { buildPicnicClient, buildPicnicClientAnonymous } from "@/lib/core/picnic-client";
 
 const ALLOWED_HOST_SUFFIX = ".picnicinternational.com";
 
@@ -23,16 +24,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const token = readAuthToken(request);
   const countryCode = readCountryCode(request);
+  // Take the headers from picnic-api so the agent and device id follow its defaults.
+  const client = token
+    ? buildPicnicClient(token, countryCode)
+    : buildPicnicClientAnonymous(countryCode);
 
   try {
     const response = await fetch(url, {
-      headers: {
-        "User-Agent": "okhttp/4.9.0",
-        "Accept-Language": countryCode === "DE" ? "de" : countryCode === "FR" ? "fr" : "nl",
-        "x-picnic-agent": "30100;1.228.1-15480;",
-        "x-picnic-did": "3C417201548B2E3B",
-        ...(token && { "x-picnic-auth": token }),
-      },
+      headers: { ...client.baseHeaders, ...client.picnicHeaders },
     });
 
     if (!response.ok) {

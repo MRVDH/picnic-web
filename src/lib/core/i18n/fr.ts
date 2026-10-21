@@ -63,7 +63,6 @@ export const fr = {
   emptyCartText: "Ajoutez des produits via l'application Picnic ou recherchez quelque chose.",
   goToSearch: "Aller à la recherche",
   cartTitle: "Panier",
-  nothingForgotten: "Rien oublié ?",
   cartMutationError: "Une erreur s'est produite. Veuillez réessayer.",
   cartLoadError: "Une erreur s'est produite. Veuillez réessayer plus tard.",
   cartOtherItems: "Autres produits",

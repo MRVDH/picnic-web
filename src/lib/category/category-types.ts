@@ -1,9 +1,9 @@
-/** A single browsable product category. */
+/** A subcategory, or the promotions of a category ("Acties"), as listed on a category page. */
 export type CategoryItem = {
+  /** The subcategory id, or `promotions-<categoryId>` for the promotions of the category. */
   id: string;
   name: string;
   imageId: string;
-  deepLinkTarget: string;
 };
 
 /** Response shape for GET /api/categories/[categoryId]/subcategories. */

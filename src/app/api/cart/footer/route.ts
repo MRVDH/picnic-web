@@ -25,7 +25,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    return NextResponse.json(await client.cart.getBasketFooter());
+    return NextResponse.json(await client.cart.getCartFooter());
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

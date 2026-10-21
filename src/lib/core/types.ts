@@ -141,7 +141,7 @@ export type Product = {
 // ─── Search ──────────────────────────────────────────────────────────────────
 
 export type SearchSection = {
-  /** Display text for the section header (e.g., "Cherrytomaten"). */
+  /** Display text for the section header (e.g., "Cherrytomaten"); empty when the section has no header. */
   title: string;
   /** Products in this section, in API order. Always non-empty. */
   products: Product[];
@@ -188,17 +188,6 @@ export type ApiErrorResponse = {
 };
 
 // ─── Product Detail ──────────────────────────────────────────────────────
-
-/** Fusion page node IDs used by the product detail parser. */
-export const PRODUCT_MAIN_CONTAINER_ID = "product-details-page-root-main-container";
-export const PRODUCT_GALLERY_CONTAINER_ID = "product-page-image-gallery-main-image-container";
-export const PRODUCT_DESCRIPTION_ID = "description";
-export const PRODUCT_HIGHLIGHTS_ID = "product-page-highlights";
-export const PRODUCT_ALLERGIES_ID = "product-page-allergies";
-export const PRODUCT_ACCORDION_ID = "accordion-list";
-export const PRODUCT_BUNDLES_PREFIX = "product-page-bundles-";
-export const PRODUCT_ALTERNATIVES_ID = "alternatives-container";
-export const PRODUCT_LABELS_PREFIX = "product-page-labels-";
 
 /** A single allergen badge with its display color. */
 export type AllergenBadge = {
@@ -306,12 +295,14 @@ export type ProductDetail = {
   name: string;
   /** Brand/producer name. Empty string if unavailable. */
   brand: string;
+  /** Badges before the unit quantity, e.g. a size badge "XL". */
+  quantityBadges: ProductLabel[];
   /** Unit quantity description (e.g. "6 x 300 ml"). */
   unitQuantity: string;
   /** Unit price description (e.g. "€4.81/l"). Null if not available. */
   unitPrice: string | null;
-  /** Category tag text (e.g. "Diepvries") with color. Null if not available. */
-  categoryTag: { text: string; color: string } | null;
+  /** Tags after the unit price (e.g. "Diepvries"), with their color or null for the default. */
+  tags: { text: string; color: string | null }[];
   /** Selling price in euro cents. */
   displayPrice: number;
   /** Original price in cents before discount, or null. */
@@ -434,8 +425,6 @@ export type CartData = {
   fees: FeeEntry[];
   /** Minimum order value in cents for the selected delivery slot, or null. */
   minimumOrderValue: number | null;
-  /** "Niets vergeten?" suggestion products; empty array if unavailable. */
-  suggestions: SliderProduct[];
   /** Selected delivery slot summary for the banner. Null when no slot data. */
   selectedSlot: SelectedSlotData | null;
   /** Pre-formatted banner text: prompt or formatted time window. */
@@ -526,12 +515,8 @@ export type RecipeIngredient = {
   quantity: number;
   /** True for staples the user likely already has (salt, oil, spices) */
   isCondiment: boolean;
-  /** Nutrition rows from the product detail page; empty when unavailable */
-  nutritionRows: NutritionRow[];
-  /** Recipe quantity text from the ingredient tile (e.g. "100 g"), for base portions */
+  /** The amount the recipe needs as the ingredient tile shows it, e.g. "(100 g nodig)" */
   recipeQuantityText: string | null;
-  /** Package size as shown on the recipe page (e.g. "500g"), may differ from unitQuantity */
-  recipePackageSize: string | null;
   /** Original (crossed-out) price in cents for regular sale products, or null */
   originalPrice: number | null;
   /** Buy-more-pay-less tiers, or null if no bundle deal */

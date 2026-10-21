@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { parseCartResponse } from "@/lib/cart/parse-cart";
+import { mapCart } from "@/lib/cart/map-cart";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
@@ -9,10 +9,8 @@ import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/core
 /**
  * GET /api/cart
  *
- * Fetches the user's shopping cart from the Picnic API using the sendRequest
- * cast pattern (same as /api/search and /api/product). The raw response is
- * `unknown` and is validated/transformed at runtime by parseCartResponse.
- * Returns a CartData JSON object.
+ * Fetches the user's shopping cart with picnic-api's cart.getCart and
+ * returns it as CartData.
  */
 export async function GET(
   request: NextRequest
@@ -31,20 +29,7 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    // Use the sendRequest cast pattern — include Picnic headers (4th arg)
-    // so decorator_overrides (bundle discounts, etc.) are returned.
-    const rawCart = await (
-      client as unknown as {
-        sendRequest: (
-          method: string,
-          path: string,
-          body: null,
-          includeFusion: boolean
-        ) => Promise<unknown>;
-      }
-    ).sendRequest("GET", "/cart", null, true);
-
-    const cartData = parseCartResponse(rawCart, countryCode);
+    const cartData = mapCart(await client.cart.getCart(), countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {
@@ -91,8 +76,7 @@ export async function DELETE(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawCart = await client.cart.clearCart();
-    const cartData = parseCartResponse(rawCart, countryCode);
+    const cartData = mapCart(await client.cart.clearCart(), countryCode);
     return NextResponse.json(cartData);
   } catch (error) {
     if (isApiAuthError(error)) {
@@ -114,13 +98,8 @@ export async function DELETE(
 /**
  * POST /api/cart
  *
- * Adds or removes a product from the user's cart. Reads the `action` field
- * to determine which Picnic API endpoint to call:
- *   - "add"    → POST /cart/add_product
- *   - "remove" → POST /cart/remove_product
- *
- * Both Picnic endpoints return the full cart response, which is parsed by
- * parseCartResponse and returned as CartData.
+ * Adds or removes a product from the user's cart, depending on the `action`
+ * field ("add" or "remove"). Both return the full cart, returned as CartData.
  */
 export async function POST(
   request: NextRequest
@@ -154,31 +133,14 @@ export async function POST(
     return NextResponse.json({ error: 'action must be "add" or "remove"' }, { status: 400 });
   }
 
-  const endpoint = body.action === "add" ? "/cart/add_product" : "/cart/remove_product";
-
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const rawCart = await (
-      client as unknown as {
-        sendRequest: (
-          method: string,
-          path: string,
-          body: Record<string, unknown>,
-          includeFusion: boolean
-        ) => Promise<unknown>;
-      }
-    ).sendRequest(
-      "POST",
-      endpoint,
-      {
-        product_id: body.productId,
-        count: body.count,
-      },
-      true
-    );
-
-    const cartData = parseCartResponse(rawCart, countryCode);
+    const cart =
+      body.action === "add"
+        ? await client.cart.addProductToCart(body.productId, body.count)
+        : await client.cart.removeProductFromCart(body.productId, body.count);
+    const cartData = mapCart(cart, countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {

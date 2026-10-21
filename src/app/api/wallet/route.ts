@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, getFusionPage } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { WalletApiResponse } from "@/lib/core/wallet-types";
 import { parseWalletPage } from "@/lib/wallet/parse-wallet-pages";
@@ -30,7 +30,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const rawPage = await client.app.getPage(WALLET_PAGE_ID);
+    const rawPage = await getFusionPage(client, WALLET_PAGE_ID);
 
     return NextResponse.json(parseWalletPage(rawPage));
   } catch (error) {

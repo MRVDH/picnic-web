@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { extractPageTitle } from "@/lib/category/parse-subcategories";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
-import { parseRscPage } from "@/lib/rsc/parse-rsc-page";
-import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
+import { extractPageTitle } from "@/lib/pml/pml-helpers";
+import { parseProductPage } from "@/lib/product/parse-product-page";
 
 /**
  * GET /api/pages/products?pageId=...
  *
  * Fetches an arbitrary Picnic page by its full page ID (as extracted
  * from a deep-link target) and returns any products found in the PML
- * tree. Works for promotional pages, campaign pages, and category
- * pages alike. Pages Picnic serves as React Server Components come back as
- * `rscPage` instead, for the RSC renderer.
+ * tree: campaign pages, theme pages and promotion deep dives. Pages Picnic
+ * serves as React Server Components come back as `rscPage` instead, for the
+ * RSC renderer.
  */
 export async function GET(
   request: NextRequest
@@ -39,16 +38,12 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    let rawPage;
-    try {
-      rawPage = await client.app.getPage(pageId);
-    } catch (error) {
-      if (!isUnexpectedPageFormatError(error)) throw error;
-      const rscPage = parseRscPage(pageId, await client.app.getRscPage(pageId));
-      return NextResponse.json({ title: null, products: [], sections: [], rscPage });
+    const page = await client.app.getPage(pageId);
+    if (page.format === "rsc") {
+      return NextResponse.json({ title: null, products: [], sections: [], rscPage: page.content });
     }
-    const title = extractPageTitle(rawPage);
-    const { sections, products } = parseCategoryPageSections(rawPage);
+    const title = extractPageTitle(page.page);
+    const { sections, products } = parseProductPage(page.page);
 
     return NextResponse.json({ title, products, sections });
   } catch (error) {

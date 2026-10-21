@@ -49,7 +49,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthApiRe
       });
     }
 
-    if (result.second_factor_authentication_required) {
+    if (result.secondFactorAuthenticationRequired) {
       // Trigger the 2FA SMS code, then return the partial token to the client
       // so it can be used in the /api/auth/verify-2fa step.
       await client.auth.generate2FACode("SMS");

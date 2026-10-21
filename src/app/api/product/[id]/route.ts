@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseProductDetailPage } from "@/lib/product/parse-fusion-product";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, isProductNotFoundError } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, ProductDetail } from "@/lib/core/types";
+import { mapProductDetails } from "@/lib/product/map-product-details";
 
 /**
  * GET /api/product/[id]
  *
- * Fetches product details by requesting the raw product-details-page-root
- * Fusion page and parsing it server-side. Returns a ProductDetail JSON object.
+ * Fetches product details with picnic-api's catalog.getProduct and
+ * returns them as a ProductDetail JSON object.
  */
 export async function GET(
   request: NextRequest,
@@ -35,31 +35,13 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-
-    const rawPage = await (
-      client as unknown as {
-        sendRequest: (
-          method: string,
-          path: string,
-          body: null,
-          includeFusion: boolean
-        ) => Promise<unknown>;
-      }
-    ).sendRequest(
-      "GET",
-      `/pages/product-details-page-root?id=${encodeURIComponent(productId)}`,
-      null,
-      true
-    );
-
-    const productDetail = parseProductDetailPage(rawPage, productId);
-
-    if (!productDetail.name) {
+    const product = await client.catalog.getProduct(productId);
+    return NextResponse.json(mapProductDetails(product));
+  } catch (error) {
+    if (isProductNotFoundError(error)) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json(productDetail);
-  } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
         { error: "Your token has expired", code: "TOKEN_EXPIRED" as const },

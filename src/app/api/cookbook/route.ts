@@ -2,17 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { fetchCachedPage } from "@/lib/core/page-cache";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CookbookApiResponse } from "@/lib/core/types";
-import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
-import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
-import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
+import {
+  CATEGORY_KEY_RE,
+  SAVED_CATEGORY_ID,
+  fetchCategoryRecipes,
+  fetchRecipeOverview,
+  fetchSavedRecipes,
+} from "@/lib/recipe/fetch-recipe-lists";
 
-// DE uses short slug IDs (recipe-cattree-*); NL uses UUID-based content pages.
-const CATEGORY_ID_RE =
-  /^recipe-cattree-[\w-]+$|^meals-category-page-content\?category_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
+/**
+ * GET /api/cookbook?category=<id>
+ *
+ * Without a category: the recipes of the cookbook home and its categories. With
+ * `__saved__`: the saved recipes. With a category id from that list: its recipes.
+ */
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<CookbookApiResponse | ApiErrorResponse>> {
@@ -31,25 +36,20 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    if (categoryId === "__saved__") {
+    if (categoryId === SAVED_CATEGORY_ID) {
       const recipes = await fetchSavedRecipes(client);
       return NextResponse.json({ categories: [], recipes });
     }
 
     if (categoryId) {
-      if (!CATEGORY_ID_RE.test(categoryId)) {
+      if (!CATEGORY_KEY_RE.test(categoryId)) {
         return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
       }
-      const rawPage = await fetchCachedPage(client, `/pages/${categoryId}`);
-      const recipes = parseCookbookPage(rawPage);
+      const recipes = await fetchCategoryRecipes(client, categoryId);
       return NextResponse.json({ categories: [], recipes });
     }
 
-    // Default: editorial homepage + full hardcoded category list
-    const rawPage = await client.recipe.getRecipesPage();
-    const recipes = parseCookbookPage(rawPage);
-    const categories = getRecipeCategories(countryCode);
-    return NextResponse.json({ categories, recipes });
+    return NextResponse.json(await fetchRecipeOverview(client));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

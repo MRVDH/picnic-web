@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { PROMOTIONS_PREFIX } from "@/lib/category/map-categories";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
-import { extractPageTitle } from "@/lib/category/parse-subcategories";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
-
-const L2_PAGE_PREFIX = "L2-category-page-root?category_id=";
+import { mapSearchSections } from "@/lib/product/map-product-tile";
 
 /**
  * GET /api/categories/[categoryId]/products
  *
- * Fetches the L2 category page for the given sub-category ID
- * and returns its products parsed from the PML selling-unit tiles.
- * Sections are extracted when the PML tree contains section headers.
+ * Returns the products of a subcategory in sections, from picnic-api's
+ * catalog.getCategoryProducts. For `promotions-<categoryId>` it returns the
+ * promotions of that category (catalog.getCategoryPromotions).
  */
 export async function GET(
   request: NextRequest,
@@ -34,11 +32,12 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawPage = await client.app.getPage(`${L2_PAGE_PREFIX}${categoryId}`);
-    const title = extractPageTitle(rawPage);
-    const { sections, products } = parseCategoryPageSections(rawPage);
+    const page = categoryId.startsWith(PROMOTIONS_PREFIX)
+      ? await client.catalog.getCategoryPromotions(categoryId.slice(PROMOTIONS_PREFIX.length))
+      : await client.catalog.getCategoryProducts(categoryId);
+    const { sections, products } = mapSearchSections(page.results);
 
-    return NextResponse.json({ title, products, sections });
+    return NextResponse.json({ title: page.title || null, products, sections });
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

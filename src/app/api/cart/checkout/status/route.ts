@@ -25,7 +25,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const raw = await client.cart.getCheckoutStatus(transactionId);
+    const raw = await client.checkout.getCheckoutStatus(transactionId);
 
     return NextResponse.json({ checkoutStatus: raw.checkout_status });
   } catch (error) {

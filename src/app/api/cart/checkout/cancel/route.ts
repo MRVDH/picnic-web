@@ -30,7 +30,7 @@ export async function POST(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    await client.cart.cancelCheckout(transactionId);
+    await client.checkout.cancelCheckout(transactionId);
     return NextResponse.json({ success: true });
   } catch (error) {
     if (isApiAuthError(error)) {

@@ -7,7 +7,7 @@ import { formatDeliveryDayText, formatTime } from "@/lib/delivery/format-deliver
 
 type DeliveryRowProps = {
   delivery: DeliveryListItem;
-  /** True only when Picnic reports scenario_in_progress (van en route). */
+  /** True only when the delivery's position reports it in progress (van en route). */
   liveTrackingAvailable: boolean;
 };
 

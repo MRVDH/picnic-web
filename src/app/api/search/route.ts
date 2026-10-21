@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { parseFusionSearchSections } from "@/lib/search/parse-fusion-search";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, SearchApiResponse } from "@/lib/core/types";
+import { mapSearchSections } from "@/lib/product/map-product-tile";
 
 /**
  * GET /api/search?q=<query>
  *
- * Searches the Picnic catalog and returns transformed Product[].
- * Uses the raw Fusion page response to extract full product metadata
- * (promotions, size labels, Bio prefix, unavailability) from the PML structure.
+ * Searches the Picnic catalog the way the app does (picnic-api's
+ * catalog.getSearchResults) and returns the products and the sections
+ * ("Opnieuw bestellen", "Halfvol", ...).
  */
 export async function GET(
   request: NextRequest
@@ -36,26 +36,8 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    // Fetch the raw Fusion page to access the full PML structure.
-    // The picnic-api catalog.search() method loses PML-embedded metadata
-    // because it only extracts $..sellingUnit via JSONPath.
-    const rawPage = await (
-      client as unknown as {
-        sendRequest: (
-          method: string,
-          path: string,
-          body: null,
-          includeFusion: boolean
-        ) => Promise<unknown>;
-      }
-    ).sendRequest(
-      "GET",
-      `/pages/search-page-results?search_term=${encodeURIComponent(query)}`,
-      null,
-      true
-    );
-
-    const { products, sections } = parseFusionSearchSections(rawPage);
+    const results = await client.catalog.getSearchResults(query);
+    const { products, sections } = mapSearchSections(results.products);
 
     return NextResponse.json({ products, sections, query });
   } catch (error) {

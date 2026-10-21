@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { ParcelsApiResponse } from "@/lib/core/delivery-types";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, getFusionPage } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import { parseParcelsPage } from "@/lib/delivery/parse-parcels-page";
 
@@ -30,7 +30,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const rawPage = await client.app.getPage(PARCELS_PAGE_ID);
+    const rawPage = await getFusionPage(client, PARCELS_PAGE_ID);
 
     return NextResponse.json(parseParcelsPage(rawPage));
   } catch (error) {

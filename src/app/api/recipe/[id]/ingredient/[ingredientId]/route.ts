@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, getFusionPage } from "@/lib/core/picnic-client";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 import type { IngredientEditApiResponse, IngredientEditData } from "@/lib/core/types";
 import { parseIngredientEdit } from "@/lib/recipe/parse-ingredient-edit";
@@ -11,10 +11,6 @@ const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 /** PIM ingredients are UUIDs; user-defined ones are 32 hex chars without dashes. */
 const INGREDIENT_ID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
 
-type SendRequestClient = PicnicClientInstance & {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
-};
-
 type SaveBody = { portions: number; quantities: Record<string, number> };
 
 /** Picnic fails to render this page for portions < 1, which is the app bug we fix. */
@@ -22,19 +18,17 @@ function clampPortions(value: number | null): number {
   return value !== null && Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
 }
 
-async function fetchEditPage(
-  client: SendRequestClient,
+function fetchEditPage(
+  client: PicnicClientInstance,
   recipeId: string,
   ingredientId: string,
   portions: number
 ): Promise<unknown> {
-  return client.sendRequest(
-    "GET",
-    `/pages/selling-group-component-edit-page?ingredient_id=${encodeURIComponent(
+  return getFusionPage(
+    client,
+    `selling-group-component-edit-page?ingredient_id=${encodeURIComponent(
       ingredientId
-    )}&selling_group_id=${encodeURIComponent(recipeId)}&portions=${portions}`,
-    null,
-    true
+    )}&selling_group_id=${encodeURIComponent(recipeId)}&portions=${portions}`
   );
 }
 
@@ -67,12 +61,7 @@ export async function GET(
     const client = buildPicnicClient(checked.token, readCountryCode(request));
     const portionsParam = request.nextUrl.searchParams.get("portions");
     const portions = clampPortions(portionsParam ? parseInt(portionsParam, 10) : null);
-    const rawPage = await fetchEditPage(
-      client as unknown as SendRequestClient,
-      id,
-      ingredientId,
-      portions
-    );
+    const rawPage = await fetchEditPage(client, id, ingredientId, portions);
     return NextResponse.json(parseIngredientEdit(rawPage, ingredientId));
   } catch (error) {
     if (isApiAuthError(error)) {
@@ -130,19 +119,11 @@ export async function POST(
   const selectedIds = Object.keys(selected);
 
   try {
-    const client = buildPicnicClient(
-      checked.token,
-      readCountryCode(request)
-    ) as unknown as SendRequestClient;
+    const client = buildPicnicClient(checked.token, readCountryCode(request));
 
     // Deselecting everything removes the ingredient from the recipe.
     if (selectedIds.length === 0) {
-      await client.sendRequest(
-        "POST",
-        "/pages/task/delete-selling-group-component",
-        { payload: { selling_group_component_id: ingredientId, selling_group_id: id } },
-        true
-      );
+      await client.recipe.removeRecipeIngredient(id, ingredientId);
       return NextResponse.json({ success: true });
     }
 
@@ -165,36 +146,18 @@ export async function POST(
       quantityById[sellingUnitId] = count;
     }
 
-    const saveResult = (await client.sendRequest(
-      "POST",
-      "/pages/task/save-selling-group-edit-task",
-      {
-        payload: {
-          requested_sellable_portions: String(portions),
-          selling_group_component_id: ingredientId,
-          selling_group_id: id,
-          selling_unit_quantity_by_id: quantityById,
-          swapType,
-        },
-      },
-      true
-    )) as { shouldUpdateCart?: boolean } | null;
+    const saveResult = await client.recipe.updateRecipeIngredient(id, ingredientId, {
+      quantities: quantityById,
+      portions,
+      swapType,
+    });
 
     if (saveResult?.shouldUpdateCart) {
-      await client.sendRequest(
-        "POST",
-        "/pages/task/assign-sellable-component-to-day",
-        {
-          payload: {
-            component_swap_type: swapType,
-            portions: String(portions),
-            required_amount_by_selling_unit_id: selected,
-            selected_component_id: ingredientId,
-            selling_group_id: id,
-          },
-        },
-        true
-      );
+      await client.recipe.updateRecipeIngredientInCart(id, ingredientId, {
+        quantities: selected,
+        portions,
+        swapType,
+      });
     }
 
     return NextResponse.json({ success: true });

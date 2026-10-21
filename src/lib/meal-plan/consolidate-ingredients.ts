@@ -53,9 +53,7 @@ function buildIngredientGroups(recipes: RecipeDetail[]): IngredientGroup[] {
 
       // `quantity` is always 1 from the API; the real fractional need comes
       // from the tile text when its unit compares to the package size.
-      const need =
-        packageFraction(ing.recipeQuantityText, ing.recipePackageSize, ing.unitQuantity) ??
-        ing.quantity;
+      const need = packageFraction(ing.recipeQuantityText, ing.unitQuantity) ?? ing.quantity;
       const individual = Math.max(1, Math.ceil(need));
       const existing = groups.get(key);
       if (existing) {

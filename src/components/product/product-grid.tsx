@@ -17,7 +17,9 @@ export function ProductGrid(props: ProductGridProps) {
             id={buildSectionId(index)}
             className="scroll-mt-36"
           >
-            <h2 className="text-foreground mb-3 text-lg font-semibold">{section.title}</h2>
+            {section.title && (
+              <h2 className="text-foreground mb-3 text-lg font-semibold">{section.title}</h2>
+            )}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {section.products.map((product) => (
                 <ProductCard key={product.id} product={product} href={`/product/${product.id}`} />

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { isCheckoutIssueError, mapCheckoutIssue } from "@/lib/checkout/checkout-issue";
-import { parseCheckoutStart } from "@/lib/checkout/parse-checkout";
+import { mapCheckoutStart } from "@/lib/checkout/map-checkout";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type {
-  CheckoutIssueApiResponse,
-  CheckoutStartApiResponse,
-} from "@/lib/core/checkout-types";
+import type { CheckoutIssueApiResponse, CheckoutStartApiResponse } from "@/lib/core/checkout-types";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 
@@ -45,12 +42,9 @@ export async function POST(
       mts = cart.mts;
     }
 
-    const raw = await client.cart.startCheckout({
-      mts,
-      ...(resolveKey ? { resolve_key: resolveKey } : {}),
-    });
+    const result = await client.checkout.startCheckout({ mts, resolveKey });
 
-    return NextResponse.json(parseCheckoutStart(raw));
+    return NextResponse.json(mapCheckoutStart(result));
   } catch (error) {
     if (isCheckoutIssueError(error)) {
       return NextResponse.json({ issue: mapCheckoutIssue(error) }, { status: 409 });
@@ -66,6 +60,9 @@ export async function POST(
     const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("[/api/cart/checkout/start] Failed:", message);
 
-    return NextResponse.json({ error: "Failed to start checkout. Please try again later." }, { status: 502 });
+    return NextResponse.json(
+      { error: "Failed to start checkout. Please try again later." },
+      { status: 502 }
+    );
   }
 }

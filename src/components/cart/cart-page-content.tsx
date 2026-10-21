@@ -10,7 +10,6 @@ import { CartRecommendations } from "@/components/cart/cart-recommendations";
 import { CheckoutCta } from "@/components/cart/checkout-cta";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { DeliverySlotBanner } from "@/components/delivery/delivery-slot-banner";
-import { ProductSlider } from "@/components/product/product-slider";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
 import { buildRecipeImageUrl } from "@/lib/core/image-url";
@@ -222,11 +221,7 @@ export function CartPageContent({
         plain
       />
 
-      {footer?.recommendations ? (
-        <CartRecommendations recommendations={footer.recommendations} />
-      ) : (
-        <ProductSlider title={t.nothingForgotten} products={cart.suggestions} />
-      )}
+      {footer?.recommendations && <CartRecommendations recommendations={footer.recommendations} />}
 
       <CheckoutCta totalPrice={cart.totalPrice} minimumOrderValue={cart.minimumOrderValue} />
 

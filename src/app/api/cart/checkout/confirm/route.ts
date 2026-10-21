@@ -36,7 +36,7 @@ export async function POST(
     const client = buildPicnicClient(token, readCountryCode(request));
 
     if (transactionId) {
-      const status = await client.cart.getCheckoutStatus(transactionId);
+      const status = await client.checkout.getCheckoutStatus(transactionId);
       if (status.checkout_status !== "FINISHED") {
         return NextResponse.json(
           { error: "Payment not completed yet. Cannot confirm order." },
@@ -45,7 +45,7 @@ export async function POST(
       }
     }
 
-    const confirmation = await client.cart.confirmOrder(orderId);
+    const confirmation = await client.checkout.confirmOrder(orderId);
     return NextResponse.json({ success: true, orderId: confirmation.order_id });
   } catch (error) {
     if (isApiAuthError(error)) {

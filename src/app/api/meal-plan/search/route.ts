@@ -13,22 +13,19 @@ import type {
   RecipeDetail,
 } from "@/lib/core/types";
 import { findBestCombinations } from "@/lib/meal-plan/find-combinations";
-import { fetchRecipePage } from "@/lib/recipe/fetch-recipe-detail";
-import { parseRecipeDetail } from "@/lib/recipe/parse-recipe-detail";
+import { fetchRecipeDetail } from "@/lib/recipe/fetch-recipe-detail";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 const TOP_K = 5;
 
-/** Lightweight fetch for the search phase: raw page + parse only, no per-ingredient
- *  enrichment — scoring only needs quantities/condiment flags/stub prices. */
+/** Fetch for the search phase; a recipe that fails to load is left out of the plan. */
 async function fetchLightweight(
   client: PicnicClientInstance,
   id: string,
   portions: number
 ): Promise<RecipeDetail | null> {
   try {
-    const rawPage = await fetchRecipePage(client, id, portions);
-    return parseRecipeDetail(rawPage, id);
+    return await fetchRecipeDetail(client, id, portions);
   } catch (error) {
     // An expired token, or a block from the edge, fails every candidate
     // identically — let either reach the outer handler so the client is told

@@ -2,12 +2,12 @@
  * Delivery slot grouping for the slot picker.
  *
  * picnic-api parses the slots and marks the green choices
- * (`client.cart.getDeliverySlotOverview`); this file only groups them by day.
+ * (`client.cart.getDeliverySlots`); this file only groups them by day.
  */
 import type {
   DeliverySlotData,
-  DeliverySlotOverview,
   DeliverySlotPickerData,
+  DeliverySlots,
   SlotDayGroup,
 } from "@/lib/core/delivery-slot-types";
 import type { CountryCode } from "@/lib/core/types";
@@ -50,13 +50,13 @@ function groupSlotsByDay(slots: DeliverySlotData[], countryCode: CountryCode): S
 
 // ─── Picker data ─────────────────────────────────────────────────────────────
 
-/** Build the slot picker data from the slot overview picnic-api returns. */
+/** Build the slot picker data from the slots picnic-api returns. */
 export function buildSlotPicker(
-  overview: DeliverySlotOverview,
+  slots: DeliverySlots,
   countryCode: CountryCode
 ): DeliverySlotPickerData {
   return {
-    dayGroups: groupSlotsByDay(overview.slots, countryCode),
-    selectedSlot: overview.selectedSlot,
+    dayGroups: groupSlotsByDay(slots.slots, countryCode),
+    selectedSlot: slots.selectedSlot,
   };
 }

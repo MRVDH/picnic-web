@@ -5,7 +5,7 @@ import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { ReferralApiResponse } from "@/lib/core/user-types";
-import { parseReferral } from "@/lib/user/parse-referral";
+import { mapReferral } from "@/lib/user/map-referral";
 
 /**
  * GET /api/user/referral
@@ -27,7 +27,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const referral = parseReferral(await client.user.getProfileMenu());
+    const referral = mapReferral(await client.user.getProfileMenu());
 
     if (!referral) {
       return NextResponse.json({ error: "No referral code for this account." }, { status: 404 });

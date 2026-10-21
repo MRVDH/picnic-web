@@ -2,10 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useCountryCode } from "@/contexts/country-context";
-import type { DeliveryTrackingData } from "@/lib/core/delivery-types";
-import { parseDeliveryTracking } from "@/lib/delivery/parse-delivery-tracking";
 import { TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import type { DeliveryTrackingData } from "@/lib/core/delivery-types";
 import type { ApiErrorResponse } from "@/lib/core/types";
 
 type TrackingState =
@@ -23,41 +21,35 @@ type UseDeliveryTrackingResult = {
   refetch: () => void;
 };
 
+/**
+ * Polls where a delivery is (/api/deliveries/[id]/tracking) while the driver is
+ * on the way, at the interval Picnic asks for. The route and the vehicle image
+ * only come along when the route version changes; the hook keeps them in between.
+ */
 export function useDeliveryTracking({
   deliveryId,
   enabled,
 }: UseDeliveryTrackingOptions): UseDeliveryTrackingResult {
-  const countryCode = useCountryCode();
   const [tracking, setTracking] = useState<TrackingState>({ status: "loading" });
-  const scenarioRef = useRef<unknown>(null);
-  const scenarioVersionRef = useRef<number>(-1);
-  const intervalRef = useRef<number>(15000);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const routeRef = useRef<{ deliveryId: string; data: DeliveryTrackingData } | null>(null);
   const [pollGeneration, setPollGeneration] = useState(0);
 
-  const fetchScenario = useCallback(async (): Promise<boolean> => {
-    const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/scenario`);
-    const data = (await res.json()) as unknown & Partial<ApiErrorResponse>;
-    if ("error" in data && data.error) {
-      if (data.code === "TOKEN_EXPIRED") {
-        window.location.href = TOKEN_EXPIRED_REDIRECT;
-        return false;
-      }
-      return false;
-    }
-    scenarioRef.current = data;
-    return true;
-  }, [deliveryId]);
-
-  const pollPosition = useCallback(async () => {
+  const poll = useCallback(async () => {
     if (!enabled) return;
 
     try {
-      const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/position`);
-      const position = (await res.json()) as unknown & Partial<ApiErrorResponse>;
+      const known = routeRef.current?.deliveryId === deliveryId ? routeRef.current.data : null;
+      const query = known ? `?routeVersion=${known.routeVersion}` : "";
+      const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/tracking${query}`);
+      const response = (await res.json()) as DeliveryTrackingData & Partial<ApiErrorResponse>;
+      const unchanged = known !== null && response.routeVersion === known.routeVersion;
+      const data = unchanged
+        ? { ...response, route: known.route, vehicleImageDataUrl: known.vehicleImageDataUrl }
+        : response;
 
-      if ("error" in position && position.error) {
-        if (position.code === "TOKEN_EXPIRED") {
+      if ("error" in data && data.error) {
+        if (data.code === "TOKEN_EXPIRED") {
           window.location.href = TOKEN_EXPIRED_REDIRECT;
           return;
         }
@@ -65,34 +57,15 @@ export function useDeliveryTracking({
         return;
       }
 
-      const positionVersion =
-        typeof position === "object" &&
-        position !== null &&
-        "version" in position &&
-        typeof (position as { version: unknown }).version === "number"
-          ? (position as { version: number }).version
-          : -1;
-
-      if (scenarioRef.current === null || positionVersion !== scenarioVersionRef.current) {
-        const ok = await fetchScenario();
-        if (!ok && scenarioRef.current === null) {
-          setTracking({ status: "error" });
-          return;
-        }
-        scenarioVersionRef.current = positionVersion;
-      }
-
-      const parsed = parseDeliveryTracking(position, scenarioRef.current, countryCode);
-      intervalRef.current = parsed.queryInterval;
-      setTracking({ status: "ready", data: parsed });
+      routeRef.current = { deliveryId, data };
+      setTracking({ status: "ready", data });
     } catch {
       setTracking({ status: "error" });
     }
-  }, [countryCode, deliveryId, enabled, fetchScenario]);
+  }, [deliveryId, enabled]);
 
   const refetch = useCallback(() => {
-    scenarioRef.current = null;
-    scenarioVersionRef.current = -1;
+    routeRef.current = null;
     setTracking({ status: "loading" });
     setPollGeneration((g) => g + 1);
   }, []);
@@ -101,26 +74,26 @@ export function useDeliveryTracking({
     if (!enabled) return;
 
     const initialTimer = setTimeout(() => {
-      void pollPosition();
+      void poll();
     }, 0);
 
     return () => {
       clearTimeout(initialTimer);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [enabled, pollPosition, pollGeneration]);
+  }, [enabled, poll, pollGeneration]);
 
   useEffect(() => {
     if (!enabled || tracking.status !== "ready" || !tracking.data.scenarioInProgress) return;
 
     timerRef.current = setTimeout(() => {
-      void pollPosition();
-    }, intervalRef.current);
+      void poll();
+    }, tracking.data.queryInterval);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [enabled, tracking, pollPosition]);
+  }, [enabled, tracking, poll]);
 
   if (!enabled) {
     return { tracking: { status: "idle" }, refetch };
