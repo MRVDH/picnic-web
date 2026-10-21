@@ -12,11 +12,13 @@ import { mapDeliveryTracking } from "@/lib/delivery/map-delivery";
 const ROUTE_TTL_MS = 60 * 60 * 1000;
 
 /**
- * GET /api/deliveries/[deliveryId]/tracking
+ * GET /api/deliveries/[deliveryId]/tracking?routeVersion=<version>
  *
  * Where the delivery is: the position (fetched on every call, poll again after
  * `queryInterval`) combined with the route, which is fetched again only when the
- * position reports another route version.
+ * position reports another route version. When `routeVersion` is the current
+ * version, the response leaves out the route and the vehicle image, which the
+ * caller already has.
  */
 export async function GET(
   request: NextRequest,
@@ -47,8 +49,15 @@ export async function GET(
       () => client.delivery.getDeliveryScenario(deliveryId),
       ROUTE_TTL_MS
     );
+    const tracking = mapDeliveryTracking(
+      client.delivery.parseTracking(position, scenario),
+      countryCode
+    );
+    const knownVersion = request.nextUrl.searchParams.get("routeVersion");
     return NextResponse.json(
-      mapDeliveryTracking(client.delivery.parseTracking(position, scenario), countryCode)
+      knownVersion === String(tracking.scenarioVersion)
+        ? { ...tracking, route: [], vehicleImageDataUrl: null }
+        : tracking
     );
   } catch (error) {
     if (isApiAuthError(error)) {

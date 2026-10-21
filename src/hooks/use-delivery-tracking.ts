@@ -23,7 +23,8 @@ type UseDeliveryTrackingResult = {
 
 /**
  * Polls where a delivery is (/api/deliveries/[id]/tracking) while the driver is
- * on the way, at the interval Picnic asks for.
+ * on the way, at the interval Picnic asks for. The route and the vehicle image
+ * only come along when the route version changes; the hook keeps them in between.
  */
 export function useDeliveryTracking({
   deliveryId,
@@ -31,14 +32,21 @@ export function useDeliveryTracking({
 }: UseDeliveryTrackingOptions): UseDeliveryTrackingResult {
   const [tracking, setTracking] = useState<TrackingState>({ status: "loading" });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const routeRef = useRef<{ deliveryId: string; data: DeliveryTrackingData } | null>(null);
   const [pollGeneration, setPollGeneration] = useState(0);
 
   const poll = useCallback(async () => {
     if (!enabled) return;
 
     try {
-      const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/tracking`);
-      const data = (await res.json()) as DeliveryTrackingData & Partial<ApiErrorResponse>;
+      const known = routeRef.current?.deliveryId === deliveryId ? routeRef.current.data : null;
+      const query = known ? `?routeVersion=${known.scenarioVersion}` : "";
+      const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/tracking${query}`);
+      const response = (await res.json()) as DeliveryTrackingData & Partial<ApiErrorResponse>;
+      const unchanged = known !== null && response.scenarioVersion === known.scenarioVersion;
+      const data = unchanged
+        ? { ...response, route: known.route, vehicleImageDataUrl: known.vehicleImageDataUrl }
+        : response;
 
       if ("error" in data && data.error) {
         if (data.code === "TOKEN_EXPIRED") {
@@ -49,6 +57,7 @@ export function useDeliveryTracking({
         return;
       }
 
+      routeRef.current = { deliveryId, data };
       setTracking({ status: "ready", data });
     } catch {
       setTracking({ status: "error" });
@@ -56,6 +65,7 @@ export function useDeliveryTracking({
   }, [deliveryId, enabled]);
 
   const refetch = useCallback(() => {
+    routeRef.current = null;
     setTracking({ status: "loading" });
     setPollGeneration((g) => g + 1);
   }, []);
