@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { parsePaymentProfile } from "@/lib/checkout/parse-checkout";
+import { mapPaymentProfile } from "@/lib/checkout/map-checkout";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { PaymentProfileApiResponse } from "@/lib/core/checkout-types";
@@ -21,8 +21,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const raw = await client.payment.getPaymentProfile();
-    return NextResponse.json(parsePaymentProfile(raw));
+    return NextResponse.json(mapPaymentProfile(await client.payment.getPaymentProfile()));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

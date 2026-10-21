@@ -1,7 +1,8 @@
-// Parsers for content/promotional pages (campaign pages, "Nieuw" pages,
-// theme pages). Extracts product sections with headers from PML trees
-// that don't follow the standard search or category-tree layouts.
-import { containerToProduct } from "@/lib/search/parse-fusion-search";
+// Reads Picnic's Fusion pages that list product tiles: campaign pages, theme pages and the
+// promotion deep dives that the app still serves as Fusion. Pages served as RSC go through the
+// RSC renderer instead.
+import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
+import type { PmlNode, SellingUnitTileContainer } from "@/lib/pml/pml-helpers";
 import {
   collectMarkdowns,
   findNodeByIdPrefix,
@@ -9,7 +10,86 @@ import {
   findSellingUnitContainers,
   stripColorTags,
 } from "@/lib/pml/pml-helpers";
-import type { Product, SearchSection } from "@/lib/core/types";
+import {
+  extractDisplayPriceColor,
+  extractOriginalPriceFromPml,
+  extractPromotionBadge,
+  extractTextStackInfo,
+  extractUnavailabilityFromPml,
+  findTextStackChildren,
+} from "@/lib/product/extract-card-data";
+
+/** Parse raw price_ranges into BundleThreshold[], or null if empty/absent. */
+function parsePriceRangesFromRaw(raw: unknown[] | null): BundleThreshold[] | null {
+  if (!raw || raw.length === 0) return null;
+  const thresholds: BundleThreshold[] = [];
+  for (const entry of raw) {
+    if (
+      typeof entry === "object" &&
+      entry !== null &&
+      "price" in entry &&
+      typeof (entry as Record<string, unknown>).price === "number" &&
+      "from_quantity" in entry &&
+      typeof (entry as Record<string, unknown>).from_quantity === "number"
+    ) {
+      const e = entry as { price: number; from_quantity: number };
+      thresholds.push({ quantity: e.from_quantity, pricePerUnit: e.price });
+    }
+  }
+  if (thresholds.length === 0) return null;
+  thresholds.sort((a, b) => a.quantity - b.quantity);
+  return thresholds;
+}
+
+/** Convert a selling-unit tile container into a Product. */
+export function containerToProduct(container: SellingUnitTileContainer): Product | null {
+  const su = container.content?.sellingUnit;
+  if (!su) return null;
+
+  const pml = container.pml?.component ? (container.pml as PmlNode) : undefined;
+  const contexts = container.analytics?.contexts;
+
+  const stackChildren = findTextStackChildren(pml);
+  const promotion = extractPromotionBadge(contexts, pml, stackChildren);
+  const textInfo = extractTextStackInfo(stackChildren, su.name, su.unit_quantity);
+  const { isUnavailable, reason } = extractUnavailabilityFromPml(pml);
+  const originalPrice = extractOriginalPriceFromPml(stackChildren, su.display_price);
+
+  // The promotion pill is rendered specially (inline by the price or on the
+  // image); other labels (size, etc.) go in the generic badge row.
+  const badges: Badge[] = [];
+  if (textInfo.extraLabel) {
+    badges.push(textInfo.extraLabel);
+  }
+
+  const hasDiscount = originalPrice !== null && originalPrice > su.display_price;
+
+  return {
+    id: su.id,
+    name: textInfo.displayName ?? su.name,
+    namePrefix: textInfo.namePrefix,
+    subtitle: textInfo.subtitle,
+    subtitleColor: textInfo.subtitleColor,
+    subtitleLeadingIcon: textInfo.subtitleLeadingIcon,
+    subtitleTrailingIcon: textInfo.subtitleTrailingIcon,
+    brand: textInfo.brand,
+    highlight: textInfo.highlight,
+    flagIconKey: textInfo.flagIconKey,
+    flagFallbackImageId: textInfo.flagFallbackImageId,
+    imageId: su.image_id,
+    displayPrice: su.display_price,
+    originalPrice: hasDiscount ? originalPrice : null,
+    displayPriceColor: extractDisplayPriceColor(stackChildren, su.display_price),
+    unitQuantity: su.unit_quantity,
+    maxCount: su.max_count,
+    priceRanges: parsePriceRangesFromRaw(su.price_ranges),
+    badges,
+    promoBadge: promotion?.badge ?? null,
+    promoPlacement: promotion?.placement ?? null,
+    isUnavailable,
+    unavailableReason: reason,
+  };
+}
 
 type PmlRecord = Record<string, unknown>;
 
@@ -213,10 +293,12 @@ function fallbackFlatParse(rawPage: unknown): { sections: SearchSection[]; produ
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * Parse a content/promotional page into sections. Tries campaign layout
- * first, then horizontal-selling-unit layout, then flat product extraction.
+ * Reads the products of a Fusion page that lists product tiles (`/api/pages/products`) into
+ * sections. Tries the campaign layout (`promo-page-root`) first, then the horizontal sections of
+ * theme pages, then all tiles without sections (e.g. `fresh-market-wineshop`, the promotion deep
+ * dives).
  */
-export function parseContentPageSections(rawPage: unknown): {
+export function parseProductPage(rawPage: unknown): {
   sections: SearchSection[];
   products: Product[];
 } {

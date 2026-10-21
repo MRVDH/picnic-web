@@ -5,16 +5,16 @@ import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
 import { extractPageTitle } from "@/lib/pml/pml-helpers";
-import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
+import { parseProductPage } from "@/lib/product/parse-product-page";
 
 /**
  * GET /api/pages/products?pageId=...
  *
  * Fetches an arbitrary Picnic page by its full page ID (as extracted
  * from a deep-link target) and returns any products found in the PML
- * tree. Works for promotional pages, campaign pages, and category
- * pages alike. Pages Picnic serves as React Server Components come back as
- * `rscPage` instead, for the RSC renderer.
+ * tree: campaign pages, theme pages and promotion deep dives. Pages Picnic
+ * serves as React Server Components come back as `rscPage` instead, for the
+ * RSC renderer.
  */
 export async function GET(
   request: NextRequest
@@ -47,7 +47,7 @@ export async function GET(
       return NextResponse.json({ title: null, products: [], sections: [], rscPage });
     }
     const title = extractPageTitle(rawPage);
-    const { sections, products } = parseCategoryPageSections(rawPage);
+    const { sections, products } = parseProductPage(rawPage);
 
     return NextResponse.json({ title, products, sections });
   } catch (error) {
