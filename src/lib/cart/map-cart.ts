@@ -20,6 +20,7 @@ function mapBadges(line: CartLineItem): Badge[] {
     ),
     ...(line.freshness ? [{ text: line.freshness, variant: "freshness" as const }] : []),
     ...(line.basePrice ? [{ text: line.basePrice, variant: "unit-price" as const }] : []),
+    ...(line.bundlesLink ? [{ text: "BundelBonus", variant: "bundle" as const }] : []),
   ];
 }
 

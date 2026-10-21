@@ -31,11 +31,13 @@ async function count(name: string, recipes: () => Promise<RecipeItem[]>): Promis
 
 async function fetchCounts(client: PicnicClientInstance): Promise<Record<string, number>> {
   const overview = await fetchRecipeOverview(client);
+  // The lists run RECIPE_PAGE_CONCURRENCY at a time; a group fetches its categories one by one
+  // within that, so this never runs more requests at once.
   const [savedCount, ...categoryCounts] = await mapWithConcurrency(
     [SAVED_CATEGORY_ID, ...overview.categories.map((category) => category.id)],
     (id) =>
       count(id, () =>
-        id === SAVED_CATEGORY_ID ? fetchSavedRecipes(client) : fetchCategoryRecipes(client, id)
+        id === SAVED_CATEGORY_ID ? fetchSavedRecipes(client) : fetchCategoryRecipes(client, id, 1)
       ),
     RECIPE_PAGE_CONCURRENCY
   );

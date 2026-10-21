@@ -74,10 +74,14 @@ function fetchCategory(client: PicnicClientInstance, categoryId: string): Promis
   );
 }
 
-/** The recipes of a category, or of all categories of a group. `key` matches CATEGORY_KEY_RE. */
+/**
+ * The recipes of a category, or of all categories of a group, fetched `concurrency` at a time.
+ * `key` matches CATEGORY_KEY_RE.
+ */
 export async function fetchCategoryRecipes(
   client: PicnicClientInstance,
-  key: string
+  key: string,
+  concurrency: number = RECIPE_PAGE_CONCURRENCY
 ): Promise<RecipeItem[]> {
   const separator = key.indexOf(":");
   const type = key.slice(0, separator);
@@ -91,7 +95,7 @@ export async function fetchCategoryRecipes(
   const lists = await mapWithConcurrency(
     categories,
     (link) => fetchCategory(client, link.id),
-    RECIPE_PAGE_CONCURRENCY
+    concurrency
   );
   return uniqueRecipes(lists.flat());
 }
