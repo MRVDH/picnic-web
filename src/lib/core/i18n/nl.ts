@@ -66,7 +66,6 @@ export const nl = {
   emptyCartText: "Voeg producten toe via de Picnic app of zoek iets op.",
   goToSearch: "Naar zoeken",
   cartTitle: "Winkelwagen",
-  nothingForgotten: "Niets vergeten?",
   cartMutationError: "Er ging iets mis. Probeer het opnieuw.",
   cartLoadError: "Er is iets misgegaan. Probeer het later opnieuw.",
   cartOtherItems: "Overige producten",

@@ -63,7 +63,6 @@ export const de = {
   emptyCartText: "Füge Produkte über die Picnic-App hinzu oder suche etwas.",
   goToSearch: "Zur Suche",
   cartTitle: "Warenkorb",
-  nothingForgotten: "Alles dabei?",
   cartMutationError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
   cartLoadError: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
   cartOtherItems: "Weitere Produkte",

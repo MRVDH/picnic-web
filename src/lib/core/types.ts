@@ -425,8 +425,6 @@ export type CartData = {
   fees: FeeEntry[];
   /** Minimum order value in cents for the selected delivery slot, or null. */
   minimumOrderValue: number | null;
-  /** "Niets vergeten?" suggestion products; empty array if unavailable. */
-  suggestions: SliderProduct[];
   /** Selected delivery slot summary for the banner. Null when no slot data. */
   selectedSlot: SelectedSlotData | null;
   /** Pre-formatted banner text: prompt or formatted time window. */

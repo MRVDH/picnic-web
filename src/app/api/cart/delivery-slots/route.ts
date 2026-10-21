@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { parseCartResponse } from "@/lib/cart/parse-cart";
+import { mapCart } from "@/lib/cart/map-cart";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { DeliverySlotPickerData } from "@/lib/core/delivery-slot-types";
@@ -92,7 +92,7 @@ export async function POST(
     // Picnic requires x-picnic-agent / x-picnic-did for cart mutations (same as add/remove).
     const rawCart = await client.cart.setDeliverySlot(body.slotId);
 
-    const cartData = parseCartResponse(rawCart, countryCode);
+    const cartData = mapCart(client.cart.parseCart(rawCart), countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {
