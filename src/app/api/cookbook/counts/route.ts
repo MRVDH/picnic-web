@@ -4,24 +4,48 @@ import crypto from "node:crypto";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { fetchCachedPage } from "@/lib/core/page-cache";
+import { mapWithConcurrency } from "@/lib/core/concurrency";
+import { RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
-import { parseCookbookPage } from "@/lib/recipe/parse-cookbook";
-import { getRecipeCategories } from "@/lib/recipe/recipe-categories";
+import type { RecipeItem } from "@/lib/core/types";
+import {
+  SAVED_CATEGORY_ID,
+  fetchCategoryRecipes,
+  fetchRecipeOverview,
+  fetchSavedRecipes,
+} from "@/lib/recipe/fetch-recipe-lists";
 
 // Server-side cache per country, expires after an hour.
 const cache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
-async function fetchCount(client: PicnicClientInstance, categoryId: string): Promise<number> {
+async function count(name: string, recipes: () => Promise<RecipeItem[]>): Promise<number> {
   try {
-    const rawPage = await fetchCachedPage(client, `/pages/${categoryId}`);
-    return parseCookbookPage(rawPage).length;
+    return (await recipes()).length;
   } catch (err) {
-    console.error(`[cookbook/counts] Failed to fetch count for "${categoryId}":`, err);
+    console.error(`[cookbook/counts] Failed to fetch count for "${name}":`, err);
     return 0;
   }
+}
+
+async function fetchCounts(client: PicnicClientInstance): Promise<Record<string, number>> {
+  const overview = await fetchRecipeOverview(client);
+  const [savedCount, ...categoryCounts] = await mapWithConcurrency(
+    [SAVED_CATEGORY_ID, ...overview.categories.map((category) => category.id)],
+    (id) =>
+      count(id, () =>
+        id === SAVED_CATEGORY_ID ? fetchSavedRecipes(client) : fetchCategoryRecipes(client, id)
+      ),
+    RECIPE_PAGE_CONCURRENCY
+  );
+  return {
+    __featured__: overview.recipes.length,
+    [SAVED_CATEGORY_ID]: savedCount,
+    ...Object.fromEntries(
+      overview.categories.map((category, i) => [category.id, categoryCounts[i]])
+    ),
+  };
 }
 
 export async function GET(
@@ -40,20 +64,7 @@ export async function GET(
   }
 
   try {
-    const client = buildPicnicClient(token, countryCode);
-    const categories = getRecipeCategories(countryCode);
-
-    const [featuredCount, savedCount, ...categoryEntries] = await Promise.all([
-      fetchCount(client, "meals-page-root"),
-      fetchCount(client, "saved-deep-dive-page-content"),
-      ...categories.map(async (cat) => [cat.id, await fetchCount(client, cat.id)] as const),
-    ]);
-
-    const counts = {
-      __featured__: featuredCount,
-      __saved__: savedCount,
-      ...Object.fromEntries(categoryEntries),
-    };
+    const counts = await fetchCounts(buildPicnicClient(token, countryCode));
     const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
     if (total > 0) {
       cache.set(cacheKey, { counts, expiresAt: Date.now() + CACHE_TTL_MS });

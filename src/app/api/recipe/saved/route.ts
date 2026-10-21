@@ -4,7 +4,7 @@ import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, SavedRecipesApiResponse } from "@/lib/core/types";
-import { fetchSavedRecipes } from "@/lib/recipe/fetch-saved-recipes";
+import { fetchSavedRecipes } from "@/lib/recipe/fetch-recipe-lists";
 
 /**
  * Saved recipe IDs for the logged-in user.
