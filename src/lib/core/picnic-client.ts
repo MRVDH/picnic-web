@@ -12,10 +12,10 @@ const PicnicClient = require("picnic-api") as typeof import("picnic-api");
 export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
 
 /**
- * True when a page was served in another format than the caller reads: a React Server
- * Components payload where a Fusion page was expected, or the other way around.
+ * True for an error status from Picnic: the error carries the HTTP `status`, Picnic's
+ * error `code` and the response `body`.
  */
-export const isUnexpectedPageFormatError = PicnicClient.isUnexpectedPageFormatError;
+export const isPicnicApiError = PicnicClient.isPicnicApiError;
 
 type RscPageContent = PicnicApi.Types.pages.RscPageContent;
 

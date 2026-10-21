@@ -1,68 +1,48 @@
 /**
- * Shared authentication error detection utility.
+ * Shared detection of Picnic API errors.
  *
- * picnic-api builds the thrown message two different ways (see its
- * http-client). A JSON error body becomes just `error.message`, or the status
- * text when the body names none — no status code at all. A body that is not
- * JSON becomes `"<status> <statusText> - <body>"`, where the raw body is
- * appended to the message.
+ * picnic-api throws a PicnicApiError for an error status, with the HTTP `status`,
+ * Picnic's error `code` and the response `body`. Read those, not the message: a
+ * wrong password is a 401 with code AUTH_INVALID_CRED, a wrong 2FA code a 400
+ * with code OTP_NOT_VALID, and an expired token a 401.
  *
- * The status code is therefore only ever a prefix, and must be matched as one.
- * Searching the whole message for "401" also finds it in the appended body — in
- * a quota, a trace id, a timestamp, a product id — so any failing request whose
- * body happened to carry those digits read as an expired token and sent the
- * user to the login page.
- *
- * The status code alone is not enough either. Sending many requests in a short
- * window earns a "403 Forbidden" served as a bare HTML error page from the edge
- * in front of the API, and it lasts a minute or two. Picnic's own auth failures
- * come back as JSON, so the body tells the two apart: HTML means the request
- * never reached the API, and the session is still good.
+ * Sending many requests in a short window earns a "403 Forbidden" served as a
+ * bare HTML error page from the edge in front of the API, and it lasts a minute
+ * or two. Picnic's own auth failures come back as JSON, so the body tells the two
+ * apart: HTML means the request never reached the API, and the session is still
+ * good.
  */
+import { isPicnicApiError } from "@/lib/core/picnic-client";
 
-/** Auth status codes, anchored: picnic-api always puts the status first. */
-const AUTH_STATUS_PREFIX = /^(401|403)\b/;
-
-/** Wording that identifies an auth failure when no status code is present. */
-function hasAuthWording(message: string): boolean {
-  return (
-    message.includes("unauthorized") ||
-    message.includes("forbidden") ||
-    message.includes("login failed")
-  );
-}
+/** Picnic's error code for a wrong 2FA code, sent with HTTP 400. */
+const OTP_NOT_VALID = "OTP_NOT_VALID";
 
 /**
  * A block from the edge in front of Picnic's API rather than a decision by the
- * API itself, recognised by its body: the API answers in JSON, while the edge
- * serves a plain HTML error page. Throttling arrives this way, as a 403 whose
- * body is nginx's default page, and it clears on its own after a minute or two.
+ * API itself, recognised by its HTML body. Throttling arrives this way, as a 403
+ * whose body is nginx's default page, and it clears on its own after a minute or two.
  *
  * Signing the user out for one of these is wrong twice over: the token is fine,
  * and during the block they cannot sign back in anyway.
  */
 export function isUpstreamBlockError(error: unknown): boolean {
-  return error instanceof Error && /<html[\s>]/i.test(error.message);
+  return isPicnicApiError(error) && /<html[\s>]/i.test(error.body);
 }
 
 /**
- * Returns true if the error represents an authentication failure (401 or 403)
- * from the Picnic API, as opposed to a network/timeout/throttling/upstream
- * error. Only this must send the user back to the login page.
+ * Returns true if the error is an authentication failure (401 or 403) from the
+ * Picnic API, as opposed to a network/timeout/throttling/upstream error. Only
+ * this must send the user back to the login page.
  */
 export function isApiAuthError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  if (isUpstreamBlockError(error)) return false;
-  return AUTH_STATUS_PREFIX.test(message) || hasAuthWording(message);
+  return (
+    isPicnicApiError(error) &&
+    (error.status === 401 || error.status === 403) &&
+    !isUpstreamBlockError(error)
+  );
 }
 
-/**
- * Returns true if the error indicates a 2FA-related failure — a superset of
- * the standard auth error patterns plus 2FA-specific messages.
- */
+/** Returns true if a 2FA verification failed because of the code or the session. */
 export function is2FAError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  return message.includes("2fa") || AUTH_STATUS_PREFIX.test(message) || hasAuthWording(message);
+  return (isPicnicApiError(error) && error.code === OTP_NOT_VALID) || isApiAuthError(error);
 }
