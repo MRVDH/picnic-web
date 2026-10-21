@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, getFusionPage } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { FamilyApiResponse } from "@/lib/core/user-types";
 import { parseFamilyPage } from "@/lib/user/parse-family-page";
@@ -30,7 +30,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const rawPage = await client.app.getPage(FAMILY_PAGE_ID);
+    const rawPage = await getFusionPage(client, FAMILY_PAGE_ID);
 
     return NextResponse.json(parseFamilyPage(rawPage));
   } catch (error) {

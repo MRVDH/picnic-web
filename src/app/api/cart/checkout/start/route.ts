@@ -42,10 +42,7 @@ export async function POST(
       mts = cart.mts;
     }
 
-    const result = await client.cart.startCheckout({
-      mts,
-      ...(resolveKey ? { resolve_key: resolveKey } : {}),
-    });
+    const result = await client.checkout.startCheckout({ mts, resolveKey });
 
     return NextResponse.json(mapCheckoutStart(result));
   } catch (error) {

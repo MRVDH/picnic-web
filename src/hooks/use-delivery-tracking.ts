@@ -40,10 +40,10 @@ export function useDeliveryTracking({
 
     try {
       const known = routeRef.current?.deliveryId === deliveryId ? routeRef.current.data : null;
-      const query = known ? `?routeVersion=${known.scenarioVersion}` : "";
+      const query = known ? `?routeVersion=${known.routeVersion}` : "";
       const res = await fetch(`/api/deliveries/${encodeURIComponent(deliveryId)}/tracking${query}`);
       const response = (await res.json()) as DeliveryTrackingData & Partial<ApiErrorResponse>;
-      const unchanged = known !== null && response.scenarioVersion === known.scenarioVersion;
+      const unchanged = known !== null && response.routeVersion === known.routeVersion;
       const data = unchanged
         ? { ...response, route: known.route, vehicleImageDataUrl: known.vehicleImageDataUrl }
         : response;

@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import type PicnicClient from "picnic-api";
+
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { DeliveryTrackingData } from "@/lib/core/delivery-types";
-import { cachedCall } from "@/lib/core/page-cache";
+import { scopedCacheKey } from "@/lib/core/page-cache";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import { mapDeliveryTracking } from "@/lib/delivery/map-delivery";
 
-/** The route only changes with its version, so keep it for the length of a delivery. */
-const ROUTE_TTL_MS = 60 * 60 * 1000;
+type DeliveryRoute = PicnicClient.Types.delivery.DeliveryRoute;
+
+/** Polls keep at most this many routes, the last one per delivery and user. */
+const MAX_KNOWN_ROUTES = 200;
+
+/** The last route per delivery and user, so a poll skips the route while its version holds. */
+const knownRoutes = new Map<string, DeliveryRoute>();
 
 /**
  * GET /api/deliveries/[deliveryId]/tracking?routeVersion=<version>
  *
- * Where the delivery is: the position (fetched on every call, poll again after
- * `queryInterval`) combined with the route, which is fetched again only when the
- * position reports another route version. When `routeVersion` is the current
- * version, the response leaves out the route and the vehicle image, which the
- * caller already has.
+ * Where the delivery is: picnic-api's getDeliveryTracking with the last route of this delivery,
+ * which fetches the position on every call (poll again after `queryInterval`) and the route
+ * only when the position reports another route version. When `routeVersion` is the current
+ * version, the response leaves out the route and the vehicle image, which the caller already
+ * has.
  */
 export async function GET(
   request: NextRequest,
@@ -42,20 +49,14 @@ export async function GET(
   try {
     const countryCode = readCountryCode(request);
     const client = buildPicnicClient(token, countryCode);
-    const position = await client.delivery.getDeliveryPosition(deliveryId);
-    const scenario = await cachedCall(
-      client,
-      `delivery-route:${deliveryId}:${position.version}`,
-      () => client.delivery.getDeliveryScenario(deliveryId),
-      ROUTE_TTL_MS
-    );
-    const tracking = mapDeliveryTracking(
-      client.delivery.parseTracking(position, scenario),
-      countryCode
-    );
+    const routeKey = scopedCacheKey(client, `delivery-route:${deliveryId}`);
+    const result = await client.delivery.getDeliveryTracking(deliveryId, knownRoutes.get(routeKey));
+    if (knownRoutes.size >= MAX_KNOWN_ROUTES) knownRoutes.clear();
+    knownRoutes.set(routeKey, result.route);
+    const tracking = mapDeliveryTracking(result, countryCode);
     const knownVersion = request.nextUrl.searchParams.get("routeVersion");
     return NextResponse.json(
-      knownVersion === String(tracking.scenarioVersion)
+      knownVersion === String(tracking.routeVersion)
         ? { ...tracking, route: [], vehicleImageDataUrl: null }
         : tracking
     );

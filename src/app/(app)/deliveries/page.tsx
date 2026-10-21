@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import type PicnicClient from "picnic-api";
+
 import { DeliveryList } from "@/components/delivery/delivery-list";
 import { ErrorView } from "@/components/ui/error-view";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -25,6 +27,8 @@ const TABS: DeliveryTab[] = ["ALL", "CURRENT", "COMPLETED", "CANCELLED"];
 const TABS_WITH_CURRENT: ReadonlySet<DeliveryTab> = new Set(["ALL", "CURRENT"]);
 
 const EMPTY_LIVE_TRACKING_IDS: ReadonlySet<string> = new Set();
+
+type DeliveryPosition = PicnicClient.Types.delivery.DeliveryPosition;
 
 export default function DeliveriesPage() {
   const t = useTranslations();
@@ -72,8 +76,8 @@ export default function DeliveriesPage() {
           const res = await fetch(`/api/deliveries/${encodeURIComponent(delivery.id)}/position`, {
             signal: controller.signal,
           });
-          const data = (await res.json()) as { scenario_in_progress?: boolean };
-          return data.scenario_in_progress === true ? delivery.id : null;
+          const data = (await res.json()) as Partial<DeliveryPosition>;
+          return data.inProgress === true ? delivery.id : null;
         } catch {
           return null;
         }

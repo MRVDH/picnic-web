@@ -34,11 +34,14 @@ export async function POST(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const raw = await client.cart.initiatePayment(orderId, returnUrl);
+    const raw = await client.checkout.initiatePayment(orderId, returnUrl);
 
     const redirectUrl = raw.action?.redirect_url ?? raw.issuer_authentication_url ?? "";
     if (!redirectUrl) {
-      return NextResponse.json({ error: "Payment redirect URL missing from Picnic response" }, { status: 502 });
+      return NextResponse.json(
+        { error: "Payment redirect URL missing from Picnic response" },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient } from "@/lib/core/picnic-client";
+import { buildPicnicClient, getRscPageContent } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
 import type { RscPageApiResponse } from "@/lib/rsc/rsc-page-types";
 
@@ -34,7 +34,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    return NextResponse.json(await client.app.getRscPageContent(pageId));
+    return NextResponse.json(await getRscPageContent(client, pageId));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

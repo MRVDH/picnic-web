@@ -3,7 +3,7 @@ import type PicnicClient from "picnic-api";
 
 import type { ProductDetail } from "@/lib/core/types";
 
-type ProductDetails = PicnicClient.Types.catalog.ProductDetails;
+type ProductDetails = PicnicClient.Types.catalog.Product;
 
 export function mapProductDetails(product: ProductDetails): ProductDetail {
   return {

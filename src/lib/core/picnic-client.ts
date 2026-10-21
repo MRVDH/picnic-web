@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import type PicnicApi from "picnic-api";
+
 import { type CountryCode, DEFAULT_COUNTRY_CODE } from "@/lib/core/types";
 
 /**
@@ -10,10 +12,35 @@ const PicnicClient = require("picnic-api") as typeof import("picnic-api");
 export type PicnicClientInstance = InstanceType<typeof PicnicClient>;
 
 /**
- * True when a page was served in a different format than requested: `getPage`
- * got a React Server Components payload (use `getRscPageContent`), or the other way around.
+ * True when a page was served in another format than the caller reads: a React Server
+ * Components payload where a Fusion page was expected, or the other way around.
  */
 export const isUnexpectedPageFormatError = PicnicClient.isUnexpectedPageFormatError;
+
+type RscPageContent = PicnicApi.Types.pages.RscPageContent;
+
+/**
+ * Fetch a page the web reads as Fusion. Throws an UnexpectedPageFormatError when Picnic
+ * serves it as RSC, so the route fails clearly instead of parsing the wrong format.
+ */
+export async function getFusionPage(
+  client: PicnicClientInstance,
+  pageId: string
+): Promise<unknown> {
+  const page = await client.app.getPage(pageId);
+  if (page.format !== "fusion") throw new PicnicClient.UnexpectedPageFormatError(pageId, "rsc");
+  return page.page;
+}
+
+/** Fetch a page the web renders as RSC. Throws an UnexpectedPageFormatError for a Fusion page. */
+export async function getRscPageContent(
+  client: PicnicClientInstance,
+  pageId: string
+): Promise<RscPageContent> {
+  const page = await client.app.getPage(pageId);
+  if (page.format !== "rsc") throw new PicnicClient.UnexpectedPageFormatError(pageId, "fusion");
+  return page.content;
+}
 
 /** True when Picnic serves its "product not found" page: unknown, or not sold at the user's location. */
 export const isProductNotFoundError = PicnicClient.isProductNotFoundError;

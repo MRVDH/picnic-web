@@ -1,4 +1,4 @@
-// Maps picnic-api's delivery details and tracking to the web's delivery types, adding the
+// Maps picnic-api's delivery and tracking to the web's delivery types, adding the
 // display texts.
 import type PicnicClient from "picnic-api";
 
@@ -7,13 +7,10 @@ import type { DeliveryDetailData, DeliveryTrackingData } from "@/lib/core/delive
 import type { CountryCode } from "@/lib/core/types";
 import { formatDeliveryWindowText, formatEtaText } from "@/lib/delivery/format-delivery-window";
 
-type DeliveryDetails = PicnicClient.Types.delivery.DeliveryDetails;
+type Delivery = PicnicClient.Types.delivery.Delivery;
 type DeliveryTracking = PicnicClient.Types.delivery.DeliveryTracking;
 
-export function mapDeliveryDetails(
-  delivery: DeliveryDetails,
-  countryCode: CountryCode
-): DeliveryDetailData {
+export function mapDelivery(delivery: Delivery, countryCode: CountryCode): DeliveryDetailData {
   return {
     id: delivery.id,
     status: delivery.status,
@@ -61,10 +58,20 @@ export function mapDeliveryTracking(
   tracking: DeliveryTracking,
   countryCode: CountryCode
 ): DeliveryTrackingData {
-  const { inProgress, ...rest } = tracking;
   return {
-    ...rest,
-    scenarioInProgress: inProgress,
+    routeVersion: tracking.routeVersion,
+    scenarioInProgress: tracking.inProgress,
+    queryInterval: tracking.queryInterval,
+    eta: tracking.eta,
+    etaWindowStart: tracking.etaWindowStart,
+    etaWindowEnd: tracking.etaWindowEnd,
     etaText: formatEtaText(tracking.eta, countryCode),
+    currentPosition: tracking.currentPosition,
+    route: tracking.route.points,
+    driverName: tracking.route.driverName,
+    driverPhotoUrl: tracking.route.driverPhotoUrl,
+    vehicleName: tracking.route.vehicleName,
+    vehicleImageDataUrl: tracking.route.vehicleImageDataUrl,
+    destination: tracking.route.destination,
   };
 }

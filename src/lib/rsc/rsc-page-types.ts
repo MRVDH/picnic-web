@@ -2,9 +2,9 @@ import type PicnicClient from "picnic-api";
 
 /**
  * A page Picnic serves as a React Server Components payload, as a tree of its
- * components: picnic-api's `app.getRscPageContent`.
+ * components: the `content` of picnic-api's `app.getPage` for an RSC page.
  */
-export type RscPageModel = PicnicClient.Types.app.RscPageContent;
+export type RscPageModel = PicnicClient.Types.pages.RscPageContent;
 
 /**
  * One content component of the page. `component` is the module name, e.g.
@@ -12,7 +12,7 @@ export type RscPageModel = PicnicClient.Types.app.RscPageContent;
  * or "promo-deep-dive-content" for ./pages/promotions/shared/promo-deep-dive-content.tsx.
  * Components nested in its props (e.g. `children`) are in `children`.
  */
-export type RscNode = PicnicClient.Types.app.RscNode;
+export type RscNode = PicnicClient.Types.pages.RscNode;
 
 /**
  * An action attached to an interaction slot, e.g. `rowPress` or `imagePress`.

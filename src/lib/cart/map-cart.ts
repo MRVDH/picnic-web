@@ -5,7 +5,7 @@ import { getTranslations } from "@/lib/core/i18n";
 import type { Badge, CartData, CartItem, CountryCode } from "@/lib/core/types";
 import { formatBannerText } from "@/lib/delivery/format-delivery-window";
 
-type CartContents = PicnicClient.Types.cart.CartContents;
+type Cart = PicnicClient.Types.cart.Cart;
 type CartLineItem = PicnicClient.Types.cart.CartLineItem;
 
 function mapBadges(line: CartLineItem): Badge[] {
@@ -51,7 +51,7 @@ export function mapCartLine(line: CartLineItem): CartItem {
   };
 }
 
-export function mapCart(cart: CartContents, countryCode: CountryCode): CartData {
+export function mapCart(cart: Cart, countryCode: CountryCode): CartData {
   // Unavailable lines go to the bottom, keeping their order.
   const items = cart.items
     .map(mapCartLine)

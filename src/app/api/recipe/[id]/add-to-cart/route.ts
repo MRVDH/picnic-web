@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
-import type { PicnicClientInstance } from "@/lib/core/picnic-client";
 
 const RECIPE_ID_RE = /^[0-9a-f]{24}$/;
 
@@ -12,10 +11,6 @@ type SelectedIngredient = { id: string; count: number; ingredientId?: string | n
 type RequestBody = {
   portions: number;
   selectedIngredients?: SelectedIngredient[];
-};
-
-type SendRequestClient = PicnicClientInstance & {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
 };
 
 export async function POST(
@@ -48,33 +43,23 @@ export async function POST(
     if (Array.isArray(body.selectedIngredients)) {
       // Add only the selected ingredients individually — sequentially to avoid
       // concurrent cart mutation conflicts on the Picnic API side.
-      const rawClient = client as unknown as SendRequestClient;
       for (const item of body.selectedIngredients) {
         if (item.count <= 0) continue;
-        await rawClient.sendRequest(
-          "POST",
-          "/cart/add_product",
+        await client.cart.addProductToCart(item.id, item.count, [
+          { type: "MEAL_PLAN", day_relative_to_slot: 999, number_of_servings: portions },
           {
-            product_id: item.id,
-            count: item.count,
-            selling_unit_contexts: [
-              { type: "MEAL_PLAN", day_relative_to_slot: 999, number_of_servings: portions },
-              {
-                type: "SELLING_GROUP",
-                selling_group_id: id,
-                selling_group_creator_type: "PIM",
-                selling_group_component_id: item.ingredientId ?? null,
-                selling_group_component_type: "CORE",
-                selling_group_component_swap_type: null,
-              },
-            ],
+            type: "SELLING_GROUP",
+            selling_group_id: id,
+            selling_group_creator_type: "PIM",
+            selling_group_component_id: item.ingredientId ?? null,
+            selling_group_component_type: "CORE",
+            selling_group_component_swap_type: null,
           },
-          true
-        );
+        ]);
       }
     } else {
       // Fallback: add all recipe ingredients via the native recipe endpoint.
-      await client.recipe.assignSellingGroupToBasket(id, 0, portions);
+      await client.recipe.addRecipeToCart(id, 0, portions);
     }
 
     return NextResponse.json({ success: true });

@@ -9,7 +9,7 @@ import type { ApiErrorResponse, CartData, CartMutationRequest } from "@/lib/core
 /**
  * GET /api/cart
  *
- * Fetches the user's shopping cart with picnic-api's cart.getCartContents and
+ * Fetches the user's shopping cart with picnic-api's cart.getCart and
  * returns it as CartData.
  */
 export async function GET(
@@ -29,7 +29,7 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const cartData = mapCart(await client.cart.getCartContents(), countryCode);
+    const cartData = mapCart(await client.cart.getCart(), countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {
@@ -76,7 +76,7 @@ export async function DELETE(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const cartData = mapCart(client.cart.parseCart(await client.cart.clearCart()), countryCode);
+    const cartData = mapCart(await client.cart.clearCart(), countryCode);
     return NextResponse.json(cartData);
   } catch (error) {
     if (isApiAuthError(error)) {
@@ -136,11 +136,11 @@ export async function POST(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const rawCart =
+    const cart =
       body.action === "add"
         ? await client.cart.addProductToCart(body.productId, body.count)
         : await client.cart.removeProductFromCart(body.productId, body.count);
-    const cartData = mapCart(client.cart.parseCart(rawCart), countryCode);
+    const cartData = mapCart(cart, countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {

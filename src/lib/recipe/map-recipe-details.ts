@@ -4,7 +4,7 @@ import type PicnicClient from "picnic-api";
 
 import type { AllergenInfo, RecipeDetail, RecipeIngredient } from "@/lib/core/types";
 
-type RecipeDetails = PicnicClient.Types.recipe.RecipeDetails;
+type RecipeDetails = PicnicClient.Types.recipe.Recipe;
 type RecipeAllergens = PicnicClient.Types.recipe.RecipeAllergens;
 
 /** Ingredient tiles don't carry a max count; the cart API enforces the real limit. */

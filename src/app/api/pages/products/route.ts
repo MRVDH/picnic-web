@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
+import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
 import { extractPageTitle } from "@/lib/pml/pml-helpers";
 import { parseProductPage } from "@/lib/product/parse-product-page";
@@ -38,16 +38,12 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    let rawPage;
-    try {
-      rawPage = await client.app.getPage(pageId);
-    } catch (error) {
-      if (!isUnexpectedPageFormatError(error)) throw error;
-      const rscPage = await client.app.getRscPageContent(pageId);
-      return NextResponse.json({ title: null, products: [], sections: [], rscPage });
+    const page = await client.app.getPage(pageId);
+    if (page.format === "rsc") {
+      return NextResponse.json({ title: null, products: [], sections: [], rscPage: page.content });
     }
-    const title = extractPageTitle(rawPage);
-    const { sections, products } = parseProductPage(rawPage);
+    const title = extractPageTitle(page.page);
+    const { sections, products } = parseProductPage(page.page);
 
     return NextResponse.json({ title, products, sections });
   } catch (error) {

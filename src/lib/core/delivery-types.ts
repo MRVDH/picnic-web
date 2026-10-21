@@ -71,7 +71,7 @@ export type DeliveryRoutePoint = {
 };
 
 export type DeliveryTrackingData = {
-  scenarioVersion: number;
+  routeVersion: number;
   scenarioInProgress: boolean;
   queryInterval: number;
   eta: number | null;

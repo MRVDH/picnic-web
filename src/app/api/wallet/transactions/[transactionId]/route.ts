@@ -30,7 +30,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, readCountryCode(request));
-    const payment = await client.payment.getWalletPayment(transactionId);
+    const payment = await client.payment.getWalletTransaction(transactionId);
 
     return NextResponse.json(mapWalletPayment(payment));
   } catch (error) {

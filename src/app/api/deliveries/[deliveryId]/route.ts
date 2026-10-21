@@ -5,7 +5,7 @@ import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import type { DeliveryDetailApiResponse } from "@/lib/core/delivery-types";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
-import { mapDeliveryDetails } from "@/lib/delivery/map-delivery";
+import { mapDelivery } from "@/lib/delivery/map-delivery";
 
 export async function GET(
   request: NextRequest,
@@ -29,10 +29,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const delivery = mapDeliveryDetails(
-      await client.delivery.getDeliveryDetails(deliveryId),
-      countryCode
-    );
+    const delivery = mapDelivery(await client.delivery.getDelivery(deliveryId), countryCode);
 
     if (!delivery.id) {
       return NextResponse.json({ error: "Delivery not found" }, { status: 404 });

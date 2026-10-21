@@ -31,8 +31,8 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
 
-    const overview = await client.cart.getDeliverySlotOverview();
-    const pickerData = buildSlotPicker(overview, countryCode);
+    const slots = await client.cart.getDeliverySlots();
+    const pickerData = buildSlotPicker(slots, countryCode);
 
     return NextResponse.json(pickerData);
   } catch (error) {
@@ -90,9 +90,7 @@ export async function POST(
     const client = buildPicnicClient(token, countryCode);
 
     // Picnic requires x-picnic-agent / x-picnic-did for cart mutations (same as add/remove).
-    const rawCart = await client.cart.setDeliverySlot(body.slotId);
-
-    const cartData = mapCart(client.cart.parseCart(rawCart), countryCode);
+    const cartData = mapCart(await client.cart.setDeliverySlot(body.slotId), countryCode);
 
     return NextResponse.json(cartData);
   } catch (error) {

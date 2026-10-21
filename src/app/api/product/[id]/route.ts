@@ -9,7 +9,7 @@ import { mapProductDetails } from "@/lib/product/map-product-details";
 /**
  * GET /api/product/[id]
  *
- * Fetches product details with picnic-api's catalog.getProductDetails and
+ * Fetches product details with picnic-api's catalog.getProduct and
  * returns them as a ProductDetail JSON object.
  */
 export async function GET(
@@ -35,7 +35,7 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const product = await client.catalog.getProductDetails(productId);
+    const product = await client.catalog.getProduct(productId);
     return NextResponse.json(mapProductDetails(product));
   } catch (error) {
     if (isProductNotFoundError(error)) {

@@ -33,20 +33,18 @@ export const PAGE_CACHE_TTL_MS = 10 * 60 * 1000;
 /** One session produces a few hundred distinct pages; this keeps a lid on growth. */
 const MAX_ENTRIES = 500;
 
-type SendRequestClient = PicnicClientInstance & {
-  sendRequest: (method: string, path: string, body: unknown, fusion: boolean) => Promise<unknown>;
-  countryCode?: string;
-};
+type ScopedClient = PicnicClientInstance & { countryCode?: string; authKey?: string | null };
 
 /**
  * Recipe pages carry member pricing, so two accounts can be shown different
  * numbers for the same recipe. Keying by the token keeps one user's pages out
  * of another's, at no cost when there is only one.
  */
-function cacheKey(client: SendRequestClient, path: string): string {
-  const token = (client as unknown as { authKey?: string }).authKey ?? "";
+export function scopedCacheKey(client: PicnicClientInstance, path: string): string {
+  const scoped = client as ScopedClient;
+  const token = scoped.authKey ?? "";
   const scope = createHash("sha256").update(token).digest("hex").slice(0, 16);
-  return `${client.countryCode ?? ""}:${scope}:${path}`;
+  return `${scoped.countryCode ?? ""}:${scope}:${path}`;
 }
 
 function evictIfFull(): void {
@@ -64,22 +62,9 @@ function evictIfFull(): void {
 }
 
 /**
- * Fetch a Fusion page, reusing a recent response for the same path when there
- * is one. Failures are never cached, so a blocked request does not poison the
- * entry for as long as the block lasts.
- */
-export function fetchCachedPage(
-  client: PicnicClientInstance,
-  path: string,
-  ttlMs: number = PAGE_CACHE_TTL_MS
-): Promise<unknown> {
-  const typed = client as SendRequestClient;
-  return cachedCall(client, path, () => typed.sendRequest("GET", path, null, true), ttlMs);
-}
-
-/**
  * Run a picnic-api call that reads catalogue data, reusing a recent result for
- * the same `name` (e.g. "recipe:<id>:<portions>"). Same rules as fetchCachedPage.
+ * the same `name` (e.g. "recipe:<id>:<portions>"). Failures are never cached, so a blocked
+ * request does not poison the entry for as long as the block lasts.
  */
 export function cachedCall<T>(
   client: PicnicClientInstance,
@@ -87,7 +72,7 @@ export function cachedCall<T>(
   call: () => Promise<T>,
   ttlMs: number = PAGE_CACHE_TTL_MS
 ): Promise<T> {
-  const key = cacheKey(client as SendRequestClient, name);
+  const key = scopedCacheKey(client, name);
   const hit = cache.get(key);
   if (hit && hit.expiresAt > Date.now()) return hit.promise as Promise<T>;
 
