@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { extractPageTitle } from "@/lib/category/parse-subcategories";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient, isUnexpectedPageFormatError } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
+import { extractPageTitle } from "@/lib/pml/pml-helpers";
 import { parseCategoryPageSections } from "@/lib/search/parse-fusion-search";
 
 /**

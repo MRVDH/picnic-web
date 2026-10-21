@@ -267,3 +267,27 @@ export function findIconNodes(
   }
   return results;
 }
+
+/**
+ * Extract the page title from a FusionPage's header.
+ *
+ * The header lives under `layout.header` on newer pages and directly under
+ * `header` on older ones. Prefer the nested location, but fall back to the
+ * top-level header when the nested one is missing or malformed.
+ *
+ * Returns null if neither location yields a header with a string title.
+ */
+export function extractPageTitle(rawPage: unknown): string | null {
+  const page = asRecord(rawPage);
+  if (!page) return null;
+
+  const header = asRecord(asRecord(page.layout)?.header) ?? asRecord(page.header);
+  if (!header) return null;
+
+  const title = header.title;
+  return typeof title === "string" ? title : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
+}

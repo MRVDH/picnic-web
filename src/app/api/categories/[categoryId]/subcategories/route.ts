@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import type { SubcategoriesApiResponse } from "@/lib/category/category-types";
+import { mapSubcategories } from "@/lib/category/map-categories";
 import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
-import type { SubcategoriesApiResponse } from "@/lib/category/category-types";
-import { extractPageTitle, parseSubcategoryPage } from "@/lib/category/parse-subcategories";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse } from "@/lib/core/types";
-
-const L1_PAGE_PREFIX = "L1-category-page-root?category_id=";
 
 /**
  * GET /api/categories/[categoryId]/subcategories
  *
- * Fetches the L1 category page for the given parent category ID
- * and returns its sub-categories parsed from the PML tree.
+ * Returns the subcategories of a category and its promotions entry, from
+ * picnic-api's catalog.getSubcategories (the app's subcategory page).
  */
 export async function GET(
   request: NextRequest,
@@ -33,11 +31,12 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const rawPage = await client.app.getPage(`${L1_PAGE_PREFIX}${categoryId}`);
-    const title = extractPageTitle(rawPage) ?? categoryId;
-    const subcategories = parseSubcategoryPage(rawPage);
+    const page = await client.catalog.getSubcategories(categoryId);
 
-    return NextResponse.json({ title, subcategories });
+    return NextResponse.json({
+      title: page.title || categoryId,
+      subcategories: mapSubcategories(page),
+    });
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(
