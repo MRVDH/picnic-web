@@ -39,14 +39,6 @@ export function mapCartLine(line: CartLineItem): CartItem {
     badges: mapBadges(line),
     isUnavailable: line.isUnavailable,
     unavailableExplanation: line.unavailableReason,
-    replacements: line.replacements.map((product) => ({
-      id: product.id,
-      name: product.name,
-      imageId: product.imageId ?? "",
-      displayPrice: product.displayPrice,
-      unitQuantity: product.unitQuantity,
-      maxCount: product.maxCount,
-    })),
     basketGroupId: line.recipeId,
   };
 }

@@ -375,8 +375,6 @@ export type CartItem = {
   isUnavailable: boolean;
   /** Short unavailability reason, or null. */
   unavailableExplanation: string | null;
-  /** Replacement product suggestions for unavailable items. */
-  replacements: SliderProduct[];
   /** ID of the recipe group (selling group) this item belongs to, or null. */
   basketGroupId: string | null;
 };
