@@ -1,11 +1,20 @@
-// Maps picnic-api's product tiles (search results, promotion pages) to the
+// Maps picnic-api's product tiles (search results, promotions, favorites) to the
 // web's Product type, so they render with the same ProductCard as other lists.
 import type PicnicClient from "picnic-api";
 
-import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
+import type {
+  Badge,
+  BundleThreshold,
+  FavoritesAisle,
+  Product,
+  PromotionsSection,
+  SearchSection,
+} from "@/lib/core/types";
 
 type ProductTile = PicnicClient.Types.catalog.ProductTile;
 type SearchProductResults = PicnicClient.Types.catalog.SearchProductResults;
+type Promotions = PicnicClient.Types.catalog.Promotions;
+type Favorites = PicnicClient.Types.catalog.Favorites;
 
 /** Tiles don't carry a max count; the Fusion pages send 99, and the cart API enforces the real limit. */
 const DEFAULT_MAX_COUNT = 99;
@@ -103,6 +112,27 @@ export function mapSearchSections(results: SearchProductResults | null): {
   sections: SearchSection[];
 } {
   return mapProductSections(results?.sections ?? []);
+}
+
+/** Map the promotions page's sections; sections left without products or groups are dropped. */
+export function mapPromotionsSections(promotions: Promotions): PromotionsSection[] {
+  return promotions.sections
+    .map((section) => ({
+      title: section.title,
+      products: mapProductTiles(section.products),
+      groups: section.groups,
+    }))
+    .filter((section) => section.products.length > 0 || section.groups.length > 0);
+}
+
+/** Map the favorites page's aisles; aisles the page left empty keep `complete: false`. */
+export function mapFavoritesAisles(favorites: Favorites): FavoritesAisle[] {
+  return favorites.aisles.map((aisle) => ({
+    id: aisle.id,
+    title: aisle.title,
+    products: mapProductTiles(aisle.products),
+    complete: aisle.complete,
+  }));
 }
 
 /** Whether a value is a product tile as picnic-api parses it (it always has `labels`). */
