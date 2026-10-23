@@ -12,7 +12,7 @@ import { parseProductPage } from "@/lib/product/parse-product-page";
  *
  * Fetches an arbitrary Picnic page by its full page ID (as extracted
  * from a deep-link target) and returns any products found in the PML
- * tree: campaign pages, theme pages and promotion deep dives. Pages Picnic
+ * tree, such as theme pages and shop pages. Pages Picnic
  * serves as React Server Components come back as `rscPage` instead, for the
  * RSC renderer.
  */

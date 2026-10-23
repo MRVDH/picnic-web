@@ -61,7 +61,7 @@ function buildNavItems(t: Translations): NavItem[] {
       href: "/search",
       label: t.navSearch,
       Icon: SearchIcon,
-      activePrefixes: ["/categories", "/product", "/pages"],
+      activePrefixes: ["/categories", "/product", "/pages", "/promotions"],
     },
     {
       key: "cart",

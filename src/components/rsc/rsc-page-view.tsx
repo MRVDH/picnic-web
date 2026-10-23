@@ -5,7 +5,6 @@ import { type ComponentType, type ReactNode, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation";
 
 import { RscRenderContext } from "@/components/rsc/rsc-render-context";
-import { PromoDeepDiveContent } from "@/components/rsc/sections/promo-deep-dive-content";
 import { SellableOverviewItems } from "@/components/rsc/sections/sellable-overview-items";
 import { VerticalList } from "@/components/rsc/sections/vertical-list";
 import { useCartOptional } from "@/contexts/cart-context";
@@ -27,7 +26,6 @@ const COMPONENTS: Record<string, ComponentType<RscComponentProps>> = {
   "vertical-list": VerticalList,
   // A category's subcategories (subcategory-page): the same row items as the category tree.
   "category-list": VerticalList,
-  "promo-deep-dive-content": PromoDeepDiveContent,
 };
 
 /**

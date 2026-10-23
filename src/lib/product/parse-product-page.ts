@@ -1,12 +1,11 @@
-// Reads Picnic's Fusion pages that list product tiles: campaign pages, theme pages and the
-// promotion deep dives that the app still serves as Fusion. Pages served as RSC go through the
-// RSC renderer instead.
+// Reads Picnic's Fusion pages that list product tiles, such as theme pages and shop pages
+// (`fresh-market-wineshop`). Pages served as RSC go through the RSC renderer instead, and the
+// promotions page goes through picnic-api's catalog.getPromotions.
 import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
 import type { PmlNode, SellingUnitTileContainer } from "@/lib/pml/pml-helpers";
 import {
   collectMarkdowns,
   findNodeByIdPrefix,
-  findNodeByIdSubstring,
   findSellingUnitContainers,
   stripColorTags,
 } from "@/lib/pml/pml-helpers";
@@ -138,83 +137,6 @@ function findAllByIdPrefix(obj: unknown, prefix: string, results: PmlRecord[] = 
   return results;
 }
 
-/** Find all nodes whose `id` matches the given regex. */
-function findAllByRegex(obj: unknown, regex: RegExp, results: PmlRecord[] = []): PmlRecord[] {
-  if (typeof obj !== "object" || obj === null) return results;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) findAllByRegex(item, regex, results);
-    return results;
-  }
-
-  const record = obj as PmlRecord;
-  if (typeof record.id === "string" && regex.test(record.id)) {
-    results.push(record);
-    return results;
-  }
-
-  for (const value of Object.values(record)) {
-    findAllByRegex(value, regex, results);
-  }
-  return results;
-}
-
-// ─── Campaign / promotional page parser ──────────────────────────────────────
-
-/**
- * Regex matching campaign section IDs (with optional numeric prefix and UUID).
- * Examples:
- *   campaign-promo-section_UUID
- *   5-campaign-highlight-section_UUID
- *   campaign-selling-unit-horizontal-carousel-section_UUID
- */
-const CAMPAIGN_SECTION_RE =
-  /^(?:\d+-)?campaign-(?:promo|highlight|selling-unit-horizontal-carousel)-section_/;
-
-const CORE_SUB_HEADER_SUFFIX = "-core-sub-header";
-
-/**
- * Parse a campaign/promotional page into sections with headers.
- *
- * Campaign pages use a `campaign-page-layout-content` container whose
- * children follow a marker → section → end-marker pattern. Each section
- * node contains a `core-sub-header` child with the title (in the PML
- * markdown) and product tiles in sibling subtrees.
- */
-function parseCampaignPageSections(rawPage: unknown): {
-  sections: SearchSection[];
-  products: Product[];
-} {
-  const campaignSections = findAllByRegex(rawPage, CAMPAIGN_SECTION_RE);
-
-  if (campaignSections.length === 0) {
-    return parseHorizontalSellingSections(rawPage);
-  }
-
-  const seenIds = new Set<string>();
-  const sections: SearchSection[] = [];
-
-  for (const section of campaignSections) {
-    const sectionId = (section.id as string) ?? "";
-
-    const subHeaderId = sectionId + CORE_SUB_HEADER_SUFFIX;
-    const subHeader = findNodeByIdSubstring(section, subHeaderId);
-    let title = "";
-    if (subHeader) {
-      title = extractSectionTitle(subHeader);
-    }
-
-    const products = extractProductsFromWrappers([section], seenIds);
-    if (products.length === 0) continue;
-
-    if (!title) title = "Producten";
-    sections.push({ title, products });
-  }
-
-  const products = sections.flatMap((s) => s.products);
-  return { sections, products };
-}
-
 // ─── Horizontal selling-unit section parser ──────────────────────────────────
 
 const HORIZONTAL_SECTION_PREFIX = "core-horizontal-selling-unit-section-localized";
@@ -294,13 +216,12 @@ function fallbackFlatParse(rawPage: unknown): { sections: SearchSection[]; produ
 
 /**
  * Reads the products of a Fusion page that lists product tiles (`/api/pages/products`) into
- * sections. Tries the campaign layout (`promo-page-root`) first, then the horizontal sections of
- * theme pages, then all tiles without sections (e.g. `fresh-market-wineshop`, the promotion deep
- * dives).
+ * sections. Tries the horizontal sections of theme pages, then all tiles without sections (e.g.
+ * `fresh-market-wineshop`).
  */
 export function parseProductPage(rawPage: unknown): {
   sections: SearchSection[];
   products: Product[];
 } {
-  return parseCampaignPageSections(rawPage);
+  return parseHorizontalSellingSections(rawPage);
 }

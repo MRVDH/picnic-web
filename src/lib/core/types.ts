@@ -182,6 +182,52 @@ export type CategoryProductsApiResponse = {
   rscPage?: RscPageModel;
 };
 
+/** A promotion on several products, shown as a card on the promotions page. */
+export type PromotionGroupCard = {
+  /** The promotion group id, for `/promotions/<id>`. */
+  id: string;
+  /** The name, e.g. "Alpro vers". */
+  name: string;
+  /** The line below the name, usually an example product, or null. */
+  example: string | null;
+  /** The promotion, e.g. "2 voor €3.99", or null. */
+  label: string | null;
+};
+
+/** A section of the promotions page. It has products, promotion group cards, or both. */
+export type PromotionsSection = {
+  title: string;
+  products: Product[];
+  groups: PromotionGroupCard[];
+};
+
+export type PromotionsApiResponse = {
+  sections: PromotionsSection[];
+};
+
+export type PromotionGroupApiResponse = {
+  name: string;
+  products: Product[];
+};
+
+/** An aisle of the favorites page. */
+export type FavoritesAisle = {
+  /** The aisle id, e.g. "DAIRY", for `/api/favorites/<id>`. */
+  id: string;
+  title: string;
+  products: Product[];
+  /** False when the page showed part of the aisle (or none of it); `/api/favorites/<id>` returns all of it. */
+  complete: boolean;
+};
+
+export type FavoritesApiResponse = {
+  aisles: FavoritesAisle[];
+};
+
+export type FavoritesAisleApiResponse = {
+  products: Product[];
+};
+
 export type ApiErrorResponse = {
   error: string;
   code?: AuthErrorCode;

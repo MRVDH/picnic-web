@@ -217,9 +217,19 @@ export const nl = {
   accountFaq: "Veelgestelde vragen",
   comingSoon: "Binnenkort",
 
-  // Discover and favorites placeholders
+  // Discover placeholder
   discoverTitle: "Ontdek",
+
+  // Favorites
   favoritesTitle: "Favorieten",
+  favoritesLoadError: "Favorieten konden niet worden geladen.",
+  favoritesEmpty: "Nog geen favorieten. Producten die je bestelt verschijnen hier.",
+  favoritesShowAll: "Toon alles",
+
+  // Promotions
+  promotionsTitle: "Aanbiedingen",
+  promotionsLoadError: "Aanbiedingen konden niet worden geladen.",
+  promotionsEmpty: "Er zijn nu geen aanbiedingen.",
 
   // Recipe detail
   recipeIngredients: "Ingrediënten",

@@ -213,9 +213,19 @@ export const de = {
   accountFaq: "Häufige Fragen",
   comingSoon: "Demnächst",
 
-  // Discover and favorites placeholders
+  // Discover placeholder
   discoverTitle: "Entdecken",
+
+  // Favorites
   favoritesTitle: "Favoriten",
+  favoritesLoadError: "Favoriten konnten nicht geladen werden.",
+  favoritesEmpty: "Noch keine Favoriten. Produkte, die du bestellst, erscheinen hier.",
+  favoritesShowAll: "Alle anzeigen",
+
+  // Promotions
+  promotionsTitle: "Angebote",
+  promotionsLoadError: "Angebote konnten nicht geladen werden.",
+  promotionsEmpty: "Zurzeit gibt es keine Angebote.",
 
   // Recipe detail
   recipeIngredients: "Zutaten",
