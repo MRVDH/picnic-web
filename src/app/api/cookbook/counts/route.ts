@@ -8,7 +8,7 @@ import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { PicnicClientInstance } from "@/lib/core/picnic-client";
-import type { RecipeItem } from "@/lib/core/types";
+import type { CountryCode, RecipeItem } from "@/lib/core/types";
 import {
   SAVED_CATEGORY_ID,
   fetchCategoryRecipes,
@@ -29,8 +29,11 @@ async function count(name: string, recipes: () => Promise<RecipeItem[]>): Promis
   }
 }
 
-async function fetchCounts(client: PicnicClientInstance): Promise<Record<string, number>> {
-  const overview = await fetchRecipeOverview(client);
+async function fetchCounts(
+  client: PicnicClientInstance,
+  countryCode: CountryCode
+): Promise<Record<string, number>> {
+  const overview = await fetchRecipeOverview(client, countryCode);
   // The lists run RECIPE_PAGE_CONCURRENCY at a time; a group fetches its categories one by one
   // within that, so this never runs more requests at once.
   const [savedCount, ...categoryCounts] = await mapWithConcurrency(
@@ -66,7 +69,7 @@ export async function GET(
   }
 
   try {
-    const counts = await fetchCounts(buildPicnicClient(token, countryCode));
+    const counts = await fetchCounts(buildPicnicClient(token, countryCode), countryCode);
     const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
     if (total > 0) {
       cache.set(cacheKey, { counts, expiresAt: Date.now() + CACHE_TTL_MS });
