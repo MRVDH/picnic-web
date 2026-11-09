@@ -49,7 +49,7 @@ export async function GET(
       return NextResponse.json({ categories: [], recipes });
     }
 
-    return NextResponse.json(await fetchRecipeOverview(client));
+    return NextResponse.json(await fetchRecipeOverview(client, countryCode));
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

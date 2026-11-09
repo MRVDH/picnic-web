@@ -85,10 +85,13 @@ and forks, and it still stays readable until then.
 - `npm run dev` — start the dev server
 - `npm run build` / `npm run start` — production build and serve
 - `npm run lint` — ESLint (eslint-config-next, core-web-vitals + TS)
+- `npm test` — vitest (`src/**/*.test.ts`)
 - `npm run format` / `npm run format:check` — Prettier
 - `npm run auth-key` — CLI to generate a Picnic auth key (see README)
 
-There is no test suite. Verify changes with `npm run lint` and a build.
+Verify changes with `npm test`, `npm run lint` and a build. Tests run the real picnic-api client
+against hand-built Fusion pages with `fetch` stubbed ([src/test/picnic-fake.ts](src/test/picnic-fake.ts));
+they never call the live API.
 
 ## Code style
 

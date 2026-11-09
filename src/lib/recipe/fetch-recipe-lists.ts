@@ -5,8 +5,14 @@ import type PicnicClient from "picnic-api";
 import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
 import { cachedCall } from "@/lib/core/page-cache";
-import type { PicnicClientInstance } from "@/lib/core/picnic-client";
-import type { RecipeCategory, RecipeItem } from "@/lib/core/types";
+import {
+  type PicnicClientInstance,
+  getFusionPage,
+  isPicnicApiError,
+} from "@/lib/core/picnic-client";
+import type { CountryCode, RecipeCategory, RecipeItem } from "@/lib/core/types";
+import { parseGroupCategoryIds, parseRecipeTiles } from "@/lib/recipe/parse-recipe-pages";
+import { findRecipeCattreePage } from "@/lib/recipe/recipe-cattree-pages";
 
 type RecipeSummary = PicnicClient.Types.recipe.RecipeSummary;
 type RecipeCategoryLink = PicnicClient.Types.recipe.RecipeCategoryLink;
@@ -15,12 +21,19 @@ type RecipeCategoryLink = PicnicClient.Types.recipe.RecipeCategoryLink;
 export const SAVED_CATEGORY_ID = "__saved__";
 
 /**
- * The web's id for a category link: `category:<category_id>` or `group:<group_name>`. A group
- * stands for the recipes of its categories.
+ * The web's id for a category link: `category:<category_id>` or `group:<group_name>`, where a
+ * group stands for the recipes of its categories, or `legacy:<recipe-cattree page>` for a DE
+ * category read from its full recipe-cattree page.
  */
-export const CATEGORY_KEY_RE = /^category:[\w-]{1,80}$|^group:[^/?#]{1,80}$/;
+export const CATEGORY_KEY_RE =
+  /^category:[\w-]{1,80}$|^group:[^/?#]{1,80}$|^legacy:recipe-cattree-[\w-]{1,60}$/;
 
-const categoryKey = (link: RecipeCategoryLink): string => `${link.type}:${link.id}`;
+function categoryKey(link: RecipeCategoryLink, countryCode: CountryCode): string {
+  // Groups keep their own page: the recipe-cattree-l2-* group pages hold no recipe tiles.
+  const cattreePage =
+    countryCode === "DE" && link.type === "category" ? findRecipeCattreePage(link.name) : null;
+  return cattreePage ? `legacy:${cattreePage}` : `${link.type}:${link.id}`;
+}
 
 function mapRecipe(recipe: RecipeSummary): RecipeItem {
   return {
@@ -32,13 +45,9 @@ function mapRecipe(recipe: RecipeSummary): RecipeItem {
 }
 
 /** Each recipe once, in order. */
-function uniqueRecipes(recipes: RecipeSummary[]): RecipeItem[] {
+function uniqueRecipes(recipes: RecipeItem[]): RecipeItem[] {
   const seen = new Set<string>();
-  return recipes.flatMap((recipe) => {
-    if (seen.has(recipe.id)) return [];
-    seen.add(recipe.id);
-    return [mapRecipe(recipe)];
-  });
+  return recipes.filter((recipe) => !seen.has(recipe.id) && seen.add(recipe.id));
 }
 
 /**
@@ -46,7 +55,8 @@ function uniqueRecipes(recipes: RecipeSummary[]): RecipeItem[] {
  * the order the app shows them.
  */
 export async function fetchRecipeOverview(
-  client: PicnicClientInstance
+  client: PicnicClientInstance,
+  countryCode: CountryCode
 ): Promise<{ recipes: RecipeItem[]; categories: RecipeCategory[] }> {
   const overview = await cachedCall(client, "recipes:overview", () =>
     client.recipe.getRecipeOverview()
@@ -54,9 +64,9 @@ export async function fetchRecipeOverview(
   const links = overview.categorySections.flatMap((section) => section.categories);
   const seen = new Set<string>();
   return {
-    recipes: uniqueRecipes(overview.sections.flatMap((section) => section.recipes)),
+    recipes: uniqueRecipes(overview.sections.flatMap((section) => section.recipes.map(mapRecipe))),
     categories: links.flatMap((link) => {
-      const id = categoryKey(link);
+      const id = categoryKey(link, countryCode);
       if (seen.has(id)) return [];
       seen.add(id);
       return [{ id, name: link.name }];
@@ -68,10 +78,40 @@ export async function fetchSavedRecipes(client: PicnicClientInstance): Promise<R
   return (await client.recipe.getSavedRecipes()).map(mapRecipe);
 }
 
-function fetchCategory(client: PicnicClientInstance, categoryId: string): Promise<RecipeSummary[]> {
-  return cachedCall(client, `recipes:category:${categoryId}`, () =>
-    client.recipe.getRecipeCategory(categoryId).then((category) => category.recipes)
-  );
+/** True for Picnic's answer to a page it doesn't have. */
+const isPageNotFound = (error: unknown) => isPicnicApiError(error) && error.status === 404;
+
+/**
+ * The recipes of a category, with one request where Picnic serves the page as Fusion (DE): the
+ * content page holds the recipe tiles. Where it has no Fusion content page, picnic-api reads the
+ * RSC category page (NL). Other errors are passed on, not retried, so a throttled request isn't
+ * repeated.
+ */
+function fetchCategory(client: PicnicClientInstance, categoryId: string): Promise<RecipeItem[]> {
+  return cachedCall(client, `recipes:category:${categoryId}`, async () => {
+    try {
+      const page = await client.app.getPage(
+        `meals-category-page-content?category_id=${encodeURIComponent(categoryId)}`
+      );
+      if (page.format === "fusion") return parseRecipeTiles(page.page);
+    } catch (error) {
+      if (!isPageNotFound(error)) throw error;
+    }
+    const category = await client.recipe.getRecipeCategory(categoryId);
+    return uniqueRecipes(category.recipes.map(mapRecipe));
+  });
+}
+
+/** The category ids of a group: from the Fusion page (DE), or with picnic-api from RSC (NL). */
+function fetchGroupCategoryIds(client: PicnicClientInstance, groupName: string): Promise<string[]> {
+  return cachedCall(client, `recipes:group:${groupName}`, async () => {
+    const page = await client.app.getPage(
+      `meals-category-group-page?group_name=${encodeURIComponent(groupName)}`
+    );
+    if (page.format === "fusion") return parseGroupCategoryIds(page.page);
+    const group = await client.recipe.getRecipeCategoryGroup(groupName);
+    return group.categories.filter((link) => link.type === "category").map((link) => link.id);
+  });
 }
 
 /**
@@ -86,15 +126,17 @@ export async function fetchCategoryRecipes(
   const separator = key.indexOf(":");
   const type = key.slice(0, separator);
   const id = key.slice(separator + 1);
-  if (type === "category") return uniqueRecipes(await fetchCategory(client, id));
+  if (type === "category") return fetchCategory(client, id);
+  if (type === "legacy") {
+    return cachedCall(client, `recipes:legacy:${id}`, async () =>
+      parseRecipeTiles(await getFusionPage(client, id))
+    );
+  }
 
-  const group = await cachedCall(client, `recipes:group:${id}`, () =>
-    client.recipe.getRecipeCategoryGroup(id)
-  );
-  const categories = group.categories.filter((link) => link.type === "category");
+  const categoryIds = await fetchGroupCategoryIds(client, id);
   const lists = await mapWithConcurrency(
-    categories,
-    (link) => fetchCategory(client, link.id),
+    categoryIds,
+    (categoryId) => fetchCategory(client, categoryId),
     concurrency
   );
   return uniqueRecipes(lists.flat());

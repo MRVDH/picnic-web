@@ -4,9 +4,7 @@ import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
-
-/** The cooking time tag on a recipe tile, e.g. "15 min". */
-const COOKING_TIME_PATTERN = /^(\d+)\s*min/;
+import { firstMinutes } from "@/lib/recipe/parse-recipe-pages";
 
 export async function GET(
   request: NextRequest
@@ -29,15 +27,12 @@ export async function GET(
   try {
     const client = buildPicnicClient(token, countryCode);
     const results = await client.catalog.getSearchResults(q, { context: "MEALS" });
-    const recipes: RecipeItem[] = results.recipes.map((recipe) => {
-      const minutes = recipe.tags.map((tag) => COOKING_TIME_PATTERN.exec(tag)?.[1]).find(Boolean);
-      return {
-        id: recipe.id,
-        name: recipe.name,
-        imageId: recipe.imageId,
-        cookingTimeMinutes: minutes ? Number(minutes) : null,
-      };
-    });
+    const recipes: RecipeItem[] = results.recipes.map((recipe) => ({
+      id: recipe.id,
+      name: recipe.name,
+      imageId: recipe.imageId,
+      cookingTimeMinutes: firstMinutes(recipe.tags),
+    }));
     return NextResponse.json({ categories: [], recipes });
   } catch (error) {
     if (isApiAuthError(error)) {
