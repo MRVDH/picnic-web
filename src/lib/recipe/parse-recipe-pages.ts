@@ -1,6 +1,5 @@
-// The Fusion versions of the recipe category pages, which picnic-api only reads as RSC. Picnic DE
-// serves them as Fusion: meals-category-page is a shell that loads meals-category-page-content
-// (the recipe tiles), and meals-category-group-page lists links to its categories.
+// Reads the recipe tiles of the DE recipe-cattree-* pages (see recipe-cattree-pages.ts), which the
+// app doesn't link to, so picnic-api has no method for them. Other recipe lists come from picnic-api.
 import type { RecipeItem } from "@/lib/core/types";
 import {
   type AnalyticsContext,
@@ -11,13 +10,9 @@ import {
 } from "@/lib/pml/pml-helpers";
 
 const RECIPE_SCHEMA = "iglu:tech.picnic.snowplow.analytics/recipe/jsonschema/";
-const PML_COMPONENT_SCHEMA = "iglu:tech.picnic.snowplow.analytics/pml_component/jsonschema/";
-
-/** A deep link to a category, e.g. `app.picnic://store/page;id=meals-category-page,category_id=<id>`. */
-const CATEGORY_DEEPLINK = /id=meals-category-page,category_id=([^,&;]+)/;
 
 /** Minutes in a tag such as "20 min", "15 + 25 min" (preparation plus waiting) or "1 Std 10 min". */
-export function parseMinutes(tag: string): number | null {
+function parseMinutes(tag: string): number | null {
   const sum = tag.match(/^(\d+(?:\s*\+\s*\d+)*)\s*min/i)?.[1];
   if (sum) return sum.split("+").reduce((total, part) => total + Number(part.trim()), 0);
   const hours = tag.match(/(\d+)\s*(?:uur|u|std|h)\b/i)?.[1];
@@ -27,7 +22,7 @@ export function parseMinutes(tag: string): number | null {
 }
 
 /** The cooking time of the first tag that states one, e.g. ["Vegan", "20 min"] → 20. */
-export function firstMinutes(tags: string[]): number | null {
+function firstMinutes(tags: string[]): number | null {
   return tags.map(parseMinutes).find((minutes) => minutes !== null) ?? null;
 }
 
@@ -73,25 +68,4 @@ export function parseRecipeTiles(page: unknown): RecipeItem[] {
   };
   visit(page);
   return [...recipes.values()];
-}
-
-/** The category ids a category group page (`meals-category-group-page`) links to, in order. */
-export function parseGroupCategoryIds(page: unknown): string[] {
-  const ids = new Set<string>();
-  const visit = (value: unknown): void => {
-    if (Array.isArray(value)) return value.forEach(visit);
-    if (typeof value !== "object" || value === null) return;
-    const node = value as PmlNode;
-    for (const context of (node.analytics as { contexts?: AnalyticsContext[] } | undefined)
-      ?.contexts ?? []) {
-      const deeplink = context?.schema?.startsWith(PML_COMPONENT_SCHEMA)
-        ? context.data?.deeplink
-        : undefined;
-      const id = typeof deeplink === "string" ? deeplink.match(CATEGORY_DEEPLINK)?.[1] : undefined;
-      if (id) ids.add(decodeURIComponent(id));
-    }
-    Object.values(node).forEach(visit);
-  };
-  visit(page);
-  return [...ids];
 }

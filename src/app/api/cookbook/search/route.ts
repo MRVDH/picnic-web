@@ -4,7 +4,6 @@ import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CookbookApiResponse, RecipeItem } from "@/lib/core/types";
-import { firstMinutes } from "@/lib/recipe/parse-recipe-pages";
 
 export async function GET(
   request: NextRequest
@@ -31,7 +30,7 @@ export async function GET(
       id: recipe.id,
       name: recipe.name,
       imageId: recipe.imageId,
-      cookingTimeMinutes: firstMinutes(recipe.tags),
+      cookingTimeMinutes: recipe.cookingTimeMinutes,
     }));
     return NextResponse.json({ categories: [], recipes });
   } catch (error) {

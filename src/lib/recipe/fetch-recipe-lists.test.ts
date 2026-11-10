@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import {
   categoryContentPageId,
+  categoryPageId,
   categoryPages,
   cookbookHomePage,
   errorResponse,
@@ -195,14 +196,14 @@ describe("fetchCategoryRecipes", () => {
     ]);
   });
 
-  it("asks Picnic once per category", async () => {
+  it("follows the category page to its content page, as the app does", async () => {
     const { requested } = stubPicnicPages(
       categoryPages(PASTA, [{ id: "e".repeat(24), name: "Gnocchi" }])
     );
 
     await fetchCategoryRecipes(client(), `category:${PASTA}`);
 
-    expect(requested).toEqual([categoryContentPageId(PASTA)]);
+    expect(requested).toEqual([categoryPageId(PASTA), categoryContentPageId(PASTA)]);
   });
 
   it("reads the recipes of a group's categories, each recipe once", async () => {
@@ -247,7 +248,7 @@ describe("fetchCategoryRecipes", () => {
   });
 
   it("does not ask again after Picnic rejects the request", async () => {
-    const { requested } = stubPicnicPages({ [categoryContentPageId(PASTA)]: errorResponse(403) });
+    const { requested } = stubPicnicPages({ [categoryPageId(PASTA)]: errorResponse(403) });
 
     await expect(fetchCategoryRecipes(client(), `category:${PASTA}`)).rejects.toMatchObject({
       status: 403,
