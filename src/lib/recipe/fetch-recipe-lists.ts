@@ -5,13 +5,9 @@ import type PicnicClient from "picnic-api";
 import { mapWithConcurrency } from "@/lib/core/concurrency";
 import { RECIPE_PAGE_CONCURRENCY } from "@/lib/core/constants";
 import { cachedCall } from "@/lib/core/page-cache";
-import {
-  type PicnicClientInstance,
-  getFusionPage,
-  isPicnicApiError,
-} from "@/lib/core/picnic-client";
+import { type PicnicClientInstance, getFusionPage } from "@/lib/core/picnic-client";
 import type { CountryCode, RecipeCategory, RecipeItem } from "@/lib/core/types";
-import { parseGroupCategoryIds, parseRecipeTiles } from "@/lib/recipe/parse-recipe-pages";
+import { parseRecipeTiles } from "@/lib/recipe/parse-recipe-pages";
 import { findRecipeCattreePage } from "@/lib/recipe/recipe-cattree-pages";
 
 type RecipeSummary = PicnicClient.Types.recipe.RecipeSummary;
@@ -78,37 +74,17 @@ export async function fetchSavedRecipes(client: PicnicClientInstance): Promise<R
   return (await client.recipe.getSavedRecipes()).map(mapRecipe);
 }
 
-/** True for Picnic's answer to a page it doesn't have. */
-const isPageNotFound = (error: unknown) => isPicnicApiError(error) && error.status === 404;
-
-/**
- * The recipes of a category, with one request where Picnic serves the page as Fusion (DE): the
- * content page holds the recipe tiles. Where it has no Fusion content page, picnic-api reads the
- * RSC category page (NL). Other errors are passed on, not retried, so a throttled request isn't
- * repeated.
- */
+/** The recipes of a category; picnic-api reads the category page in either format. */
 function fetchCategory(client: PicnicClientInstance, categoryId: string): Promise<RecipeItem[]> {
   return cachedCall(client, `recipes:category:${categoryId}`, async () => {
-    try {
-      const page = await client.app.getPage(
-        `meals-category-page-content?category_id=${encodeURIComponent(categoryId)}`
-      );
-      if (page.format === "fusion") return parseRecipeTiles(page.page);
-    } catch (error) {
-      if (!isPageNotFound(error)) throw error;
-    }
     const category = await client.recipe.getRecipeCategory(categoryId);
     return uniqueRecipes(category.recipes.map(mapRecipe));
   });
 }
 
-/** The category ids of a group: from the Fusion page (DE), or with picnic-api from RSC (NL). */
+/** The category ids of a group. */
 function fetchGroupCategoryIds(client: PicnicClientInstance, groupName: string): Promise<string[]> {
   return cachedCall(client, `recipes:group:${groupName}`, async () => {
-    const page = await client.app.getPage(
-      `meals-category-group-page?group_name=${encodeURIComponent(groupName)}`
-    );
-    if (page.format === "fusion") return parseGroupCategoryIds(page.page);
     const group = await client.recipe.getRecipeCategoryGroup(groupName);
     return group.categories.filter((link) => link.type === "category").map((link) => link.id);
   });
