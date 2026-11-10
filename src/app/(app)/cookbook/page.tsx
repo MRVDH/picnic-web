@@ -11,6 +11,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { CategoryCheckboxPanel } from "@/components/ui/category-checkbox-panel";
 import { Chip } from "@/components/ui/chip";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { ErrorView } from "@/components/ui/error-view";
 import { IndeterminateCheckbox } from "@/components/ui/indeterminate-checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -18,13 +19,19 @@ import { CartProvider } from "@/contexts/cart-context";
 import { useTranslations } from "@/contexts/country-context";
 import { SavedRecipesProvider } from "@/contexts/saved-recipes-context";
 import {
+  type MealPlanCacheEntry,
   clearMealPlanCache,
   readMealPlanCache,
   useMealPlanCache,
   writeMealPlanCache,
 } from "@/hooks/use-meal-plan-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { MEAL_PLAN_MAX_CANDIDATES, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
+import {
+  MEAL_PLAN_MAX_CANDIDATES,
+  MEAL_PLAN_MAX_DAYS,
+  MEAL_PLAN_MAX_PEOPLE,
+  TOKEN_EXPIRED_REDIRECT,
+} from "@/lib/core/constants";
 import { DEBOUNCE_DELAY_MS } from "@/lib/core/types";
 import type {
   ApiErrorResponse,
@@ -33,6 +40,11 @@ import type {
   MealPlanSearchResponse,
   RecipeItem,
 } from "@/lib/core/types";
+import {
+  mealPlanFileName,
+  parseMealPlanFile,
+  serializeMealPlan,
+} from "@/lib/meal-plan/meal-plan-file";
 
 const PAGE_SIZE = 24;
 const DEFAULT_DAYS = 7;
@@ -68,6 +80,9 @@ export default function CookbookPage() {
   // themselves. Errors ask to be read, so they are given longer.
   const [toast, setToast] = useState<{ text: string; variant: "info" | "error" } | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  // An imported plan waiting for the user to confirm it may replace the current one.
+  const [pendingImport, setPendingImport] = useState<MealPlanCacheEntry | null>(null);
   const cachedPlan = useMealPlanCache();
 
   // The grid shows the planning view whenever a plan is on screen.
@@ -387,6 +402,57 @@ export default function CookbookPage() {
     setVisibleCount(PAGE_SIZE);
   }, [cachedPlan, mealPlan, closePlan]);
 
+  /** Downloads the saved plan as a file another browser can import. */
+  const handleExport = useCallback(() => {
+    if (!cachedPlan) return;
+    const blob = new Blob([serializeMealPlan(cachedPlan)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = mealPlanFileName();
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [cachedPlan]);
+
+  /**
+   * Opens the imported plan as the plan on screen, all of it confirmed. Plan, confirmations and
+   * counts change together, so the effect that mirrors the plan on screen into the saved plan
+   * writes the imported one, never the plan that was open before.
+   */
+  const applyImport = useCallback(
+    (entry: MealPlanCacheEntry) => {
+      setPendingImport(null);
+      setDaysCount(entry.days);
+      setPeopleCount(entry.people);
+      setMealPlan(entry.recipes);
+      setConfirmedIds(new Set(entry.recipes.map((r) => r.id)));
+      setVisibleCount(PAGE_SIZE);
+      writeMealPlanCache(entry);
+      showInfo(t.mealPlanImported.replace("{count}", String(entry.recipes.length)));
+    },
+    [showInfo, t.mealPlanImported]
+  );
+
+  // The plan an import would replace: the one on screen, otherwise the saved one.
+  const currentPlanSize = mealPlan?.length || cachedPlan?.recipes.length || 0;
+
+  const handleImportFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      // Cleared so choosing the same file again fires another change.
+      event.target.value = "";
+      if (!file) return;
+      const entry = parseMealPlanFile(await file.text());
+      if (!entry) {
+        showError(t.mealPlanImportInvalid);
+        return;
+      }
+      if (currentPlanSize > 0) setPendingImport(entry);
+      else applyImport(entry);
+    },
+    [applyImport, currentPlanSize, showError, t.mealPlanImportInvalid]
+  );
+
   // Continuing needs a free slot: a day count above what it would keep.
   const continueDisabled =
     !!debouncedQuery ||
@@ -475,9 +541,11 @@ export default function CookbookPage() {
               <input
                 type="number"
                 min={1}
-                max={30}
+                max={MEAL_PLAN_MAX_DAYS}
                 value={daysCount}
-                onChange={(e) => setDaysCount(Math.max(1, Math.min(30, Number(e.target.value))))}
+                onChange={(e) =>
+                  setDaysCount(Math.max(1, Math.min(MEAL_PLAN_MAX_DAYS, Number(e.target.value))))
+                }
                 disabled={!!debouncedQuery}
                 className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
               />
@@ -485,9 +553,13 @@ export default function CookbookPage() {
               <input
                 type="number"
                 min={1}
-                max={12}
+                max={MEAL_PLAN_MAX_PEOPLE}
                 value={peopleCount}
-                onChange={(e) => setPeopleCount(Math.max(1, Math.min(12, Number(e.target.value))))}
+                onChange={(e) =>
+                  setPeopleCount(
+                    Math.max(1, Math.min(MEAL_PLAN_MAX_PEOPLE, Number(e.target.value)))
+                  )
+                }
                 disabled={!!debouncedQuery}
                 className="focus:ring-picnic-red border-card-border bg-card-bg h-8 w-14 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
               />
@@ -511,6 +583,23 @@ export default function CookbookPage() {
                   disabled={planLoading}
                 />
               )}
+              <Button type="button" onClick={handleExport} disabled={!cachedPlan || planLoading}>
+                {t.mealPlanExport}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                disabled={planLoading}
+              >
+                {t.mealPlanImport}
+              </Button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportFile}
+                className="hidden"
+              />
             </div>
           </div>
 
@@ -560,6 +649,18 @@ export default function CookbookPage() {
         </main>
       </div>
       <CartToast message={toast?.text ?? null} variant={toast?.variant} onDismiss={dismissToast} />
+      {pendingImport && (
+        <ConfirmModal
+          title={t.mealPlanImportReplaceTitle}
+          message={t.mealPlanImportReplaceMessage
+            .replace("{current}", String(currentPlanSize))
+            .replace("{imported}", String(pendingImport.recipes.length))}
+          confirmLabel={t.mealPlanImportReplaceConfirm}
+          cancelLabel={t.cancelButton}
+          onConfirm={() => applyImport(pendingImport)}
+          onCancel={() => setPendingImport(null)}
+        />
+      )}
       {shoppingListOpen && mealPlan && (
         <CartProvider showToast={showInfo}>
           <ShoppingListModal

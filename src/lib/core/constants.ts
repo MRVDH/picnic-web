@@ -23,6 +23,10 @@ export const CHECKOUT_STORAGE_KEY = "picnic_checkout_session";
  */
 export const MEAL_PLAN_MAX_CANDIDATES = 40;
 
+/** The day and people counts a meal plan can have (the cookbook's number inputs). */
+export const MEAL_PLAN_MAX_DAYS = 30;
+export const MEAL_PLAN_MAX_PEOPLE = 12;
+
 /**
  * Upstream fan-out caps: recipes fetched at a time by the meal-plan search and
  * by the shopping list. A recipe can add a product page for each ingredient
