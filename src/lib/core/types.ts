@@ -439,6 +439,28 @@ export type CartItem = {
   unavailableExplanation: string | null;
   /** ID of the recipe group (selling group) this item belongs to, or null. */
   basketGroupId: string | null;
+  /** The price of one package per kg, litre or piece, or null when the size has none. */
+  comparisonPrice: ComparisonPrice | null;
+};
+
+/** A similar product that costs less per kg, litre or piece than a cart line. */
+export type CheaperAlternative = {
+  id: string;
+  name: string;
+  imageId: string;
+  /** The price of one package in cents. */
+  displayPrice: number;
+  unitQuantity: string;
+  maxCount: number;
+  comparisonPrice: ComparisonPrice;
+  /** How much less it costs per unit than the cart line, in cents. */
+  savingPerUnit: number;
+};
+
+/** GET /api/product/[id]/alternatives. */
+export type CheaperAlternativesResponse = {
+  comparisonPrice: ComparisonPrice | null;
+  alternatives: CheaperAlternative[];
 };
 
 /** A single deposit category entry in the deposit breakdown. */

@@ -40,6 +40,7 @@ export function mapCartLine(line: CartLineItem): CartItem {
     isUnavailable: line.isUnavailable,
     unavailableExplanation: line.unavailableReason,
     basketGroupId: line.recipeId,
+    comparisonPrice: line.comparisonPrice,
   };
 }
 

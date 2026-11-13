@@ -20,6 +20,7 @@ import type {
   CartFooterData,
   CartItem,
   CartRecipeGroup,
+  CheaperAlternative,
 } from "@/lib/core/types";
 
 /** Wait this long after the last cart change before refreshing the footer. */
@@ -125,12 +126,15 @@ export function CartPageContent({
   onDecrement,
   onOpenPicker,
   onClearCart,
+  onReplace,
 }: {
   cart: CartData;
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onOpenPicker: () => void;
   onClearCart: () => void;
+  /** Replaces a line with a cheaper alternative. Offered outside recipe groups only, so recipes keep their ingredients. */
+  onReplace: (item: CartItem, alternative: CheaperAlternative) => void;
 }) {
   const t = useTranslations();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -202,6 +206,7 @@ export function CartPageContent({
                 item={item}
                 onIncrement={item.isUnavailable ? undefined : () => onIncrement(item.productId)}
                 onDecrement={item.isUnavailable ? undefined : () => onDecrement(item.productId)}
+                onReplace={onReplace}
               />
             ))}
           </div>

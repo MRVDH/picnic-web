@@ -12,7 +12,7 @@ import { writeCartBadgeCache } from "@/hooks/use-cart-badge-cache";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { createMutationQueue } from "@/lib/cart/mutation-queue";
 import { TOKEN_EXPIRED_MESSAGE, TOKEN_EXPIRED_REDIRECT } from "@/lib/core/constants";
-import type { ApiErrorResponse, CartData } from "@/lib/core/types";
+import type { ApiErrorResponse, CartData, CartItem, CheaperAlternative } from "@/lib/core/types";
 
 type CartPageState =
   | { status: "loading" }
@@ -42,11 +42,15 @@ async function fetchCart(loadErrorMessage: string): Promise<CartPageState> {
   }
 }
 
-async function postCartMutation(productId: string, action: "add" | "remove"): Promise<CartData> {
+async function postCartMutation(
+  productId: string,
+  action: "add" | "remove",
+  count = 1
+): Promise<CartData> {
   const response = await fetch("/api/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ productId, action, count: 1 }),
+    body: JSON.stringify({ productId, action, count }),
   });
 
   const data = await response.json();
@@ -236,6 +240,22 @@ export default function CartPage() {
     [enqueueMutation, pageState]
   );
 
+  // Swap a line for a cheaper alternative: remove all of it, then add as many of the alternative.
+  const handleReplace = useCallback(
+    async (item: CartItem, alternative: CheaperAlternative) => {
+      const count = Math.min(item.quantity, alternative.maxCount);
+      try {
+        await postCartMutation(item.productId, "remove", item.quantity);
+        reconcileFromServer(await postCartMutation(alternative.id, "add", count));
+      } catch {
+        setToastMessage(t.replaceInCartError);
+        // Show what the cart holds now, whichever step failed.
+        handleRetry();
+      }
+    },
+    [handleRetry, reconcileFromServer, t.replaceInCartError]
+  );
+
   // Keep the header badge in step with what this page shows.
   const badgeTotalPrice =
     pageState.status === "success"
@@ -269,6 +289,7 @@ export default function CartPage() {
             onDecrement={handleDecrement}
             onOpenPicker={() => setIsPickerOpen(true)}
             onClearCart={handleClearCart}
+            onReplace={handleReplace}
           />
         )}
       </main>

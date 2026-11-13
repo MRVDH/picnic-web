@@ -6,17 +6,20 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CartPrice } from "@/components/cart/cart-price";
+import { CheaperAlternatives } from "@/components/cart/cheaper-alternatives";
 import { UnavailableOverlay } from "@/components/product/unavailable-product";
 import { Badge } from "@/components/ui/badge";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCountryCode } from "@/contexts/country-context";
 import { buildImageUrl } from "@/lib/core/image-url";
-import type { CartItem } from "@/lib/core/types";
+import type { CartItem, CheaperAlternative } from "@/lib/core/types";
 
 type CartItemCardProps = {
   item: CartItem;
   onIncrement?: () => void;
   onDecrement?: () => void;
+  /** When set, the line offers cheaper alternatives that replace it. */
+  onReplace?: (item: CartItem, alternative: CheaperAlternative) => void;
 };
 
 /**
@@ -26,7 +29,7 @@ type CartItemCardProps = {
  * tap-to-edit); without them, as on past orders, it only shows the count.
  * The image and name link to the product page.
  */
-export function CartItemCard({ item, onIncrement, onDecrement }: CartItemCardProps) {
+export function CartItemCard({ item, onIncrement, onDecrement, onReplace }: CartItemCardProps) {
   const countryCode = useCountryCode();
   const [imgError, setImgError] = useState(false);
   const imageSrc =
@@ -94,6 +97,10 @@ export function CartItemCard({ item, onIncrement, onDecrement }: CartItemCardPro
           </div>
         )}
       </div>
+
+      {onReplace && !item.isUnavailable && (
+        <CheaperAlternatives item={item} onReplace={onReplace} />
+      )}
 
       {/* Unavailability explanation */}
       {item.isUnavailable && <UnavailableOverlay explanation={item.unavailableExplanation} />}
