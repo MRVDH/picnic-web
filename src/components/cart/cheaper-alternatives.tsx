@@ -27,7 +27,7 @@ type PanelState =
 type CheaperAlternativesProps = {
   item: CartItem;
   /** Swaps the cart line for the alternative, keeping the quantity. */
-  onReplace: (item: CartItem, alternative: CheaperAlternative) => void;
+  onReplace: (item: CartItem, alternative: CheaperAlternative) => Promise<void>;
 };
 
 /**
@@ -38,6 +38,17 @@ type CheaperAlternativesProps = {
 export function CheaperAlternatives({ item, onReplace }: CheaperAlternativesProps) {
   const t = useTranslations();
   const [state, setState] = useState<PanelState>({ status: "closed" });
+  // One swap at a time: a second click would remove and add again.
+  const [isReplacing, setIsReplacing] = useState(false);
+
+  const replace = async (alternative: CheaperAlternative) => {
+    setIsReplacing(true);
+    try {
+      await onReplace(item, alternative);
+    } finally {
+      setIsReplacing(false);
+    }
+  };
 
   if (!item.comparisonPrice) return null;
   const unit = item.comparisonPrice.unit;
@@ -90,7 +101,8 @@ export function CheaperAlternatives({ item, onReplace }: CheaperAlternativesProp
             <AlternativeRow
               key={alternative.id}
               alternative={alternative}
-              onReplace={() => onReplace(item, alternative)}
+              disabled={isReplacing}
+              onReplace={() => replace(alternative)}
             />
           ))}
         </ul>
@@ -101,9 +113,11 @@ export function CheaperAlternatives({ item, onReplace }: CheaperAlternativesProp
 
 function AlternativeRow({
   alternative,
+  disabled,
   onReplace,
 }: {
   alternative: CheaperAlternative;
+  disabled: boolean;
   onReplace: () => void;
 }) {
   const t = useTranslations();
@@ -148,8 +162,9 @@ function AlternativeRow({
       <button
         type="button"
         onClick={onReplace}
+        disabled={disabled}
         aria-label={t.replaceInCartAriaLabel.replace("{name}", alternative.name)}
-        className="shrink-0 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-100"
+        className="shrink-0 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-50"
       >
         {t.replaceInCart}
       </button>

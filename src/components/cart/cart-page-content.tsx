@@ -134,7 +134,7 @@ export function CartPageContent({
   onOpenPicker: () => void;
   onClearCart: () => void;
   /** Replaces a line with a cheaper alternative. Offered outside recipe groups only, so recipes keep their ingredients. */
-  onReplace: (item: CartItem, alternative: CheaperAlternative) => void;
+  onReplace: (item: CartItem, alternative: CheaperAlternative) => Promise<void>;
 }) {
   const t = useTranslations();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);

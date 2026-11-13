@@ -19,7 +19,7 @@ type CartItemCardProps = {
   onIncrement?: () => void;
   onDecrement?: () => void;
   /** When set, the line offers cheaper alternatives that replace it. */
-  onReplace?: (item: CartItem, alternative: CheaperAlternative) => void;
+  onReplace?: (item: CartItem, alternative: CheaperAlternative) => Promise<void>;
 };
 
 /**

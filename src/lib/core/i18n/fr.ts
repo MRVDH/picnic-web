@@ -33,7 +33,7 @@ export const fr = {
   cheaperBy: "{price} de moins",
   replaceInCart: "Remplacer",
   replaceInCartAriaLabel: "Remplacer par {name}",
-  replaceInCartError: "Le remplacement a échoué. Réessaie.",
+  replaceInCartError: "Le remplacement a échoué. Veuillez réessayer.",
 
   // Login page
   loginTitle: "Connexion",
