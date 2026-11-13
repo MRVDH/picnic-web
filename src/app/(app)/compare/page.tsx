@@ -18,8 +18,6 @@ import {
   cheapestPerUnitIndex,
   compareNutrition,
   nutritionHeadings,
-  nutritionPreference,
-  parseNutritionNumber,
 } from "@/lib/product/compare-products";
 
 type LoadState =
@@ -218,12 +216,8 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
             </tr>
           )}
           {nutrition.map((nutritionRow) => {
-            const preference = nutritionPreference(nutritionRow.label);
-            const best = preference
-              ? bestIndexes(
-                  nutritionRow.values.map((value) => (value ? parseNutritionNumber(value) : null)),
-                  preference
-                )
+            const best = nutritionRow.preference
+              ? bestIndexes(nutritionRow.amounts, nutritionRow.preference)
               : new Set<number>();
             return (
               <tr key={nutritionRow.label} className="border-t border-gray-100">

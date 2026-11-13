@@ -5,7 +5,11 @@ import type { NutritionRow, ProductDetail } from "@/lib/core/types";
 export type ComparedNutritionRow = {
   label: string;
   isCategory: boolean;
+  /** Whether less or more is better, as picnic-api reads it from the label. */
+  preference: NutritionRow["preference"];
   values: (string | null)[];
+  /** The numbers of `values`, to find the better one. */
+  amounts: (number | null)[];
 };
 
 /**
@@ -25,9 +29,14 @@ export function compareNutrition(
       const compared = rows.get(key) ?? {
         label: row.label,
         isCategory: row.isCategory,
+        preference: row.preference,
         values: products.map(() => null),
+        amounts: products.map(() => null),
       };
-      compared.values[index] ??= row.value;
+      if (compared.values[index] === null) {
+        compared.values[index] = row.value;
+        compared.amounts[index] = row.amount;
+      }
       rows.set(key, compared);
     }
   });
@@ -73,70 +82,15 @@ function rowKey(row: NutritionRow): string {
   return row.label.trim().toLowerCase();
 }
 
-/** Which value of a row is the better one. */
-export type Preference = "lower" | "higher";
-
-/**
- * Nutrients where less is better (energy, fat, sugars, salt) or more is better
- * (protein, fibre), by words in the row label in Dutch, German, French and
- * English. Carbohydrates and other rows have no better value.
- */
-const LOWER_IS_BETTER = [
-  "energie",
-  "énergie",
-  "energy",
-  "kcal",
-  "kj",
-  "vet",
-  "fett",
-  "graisse",
-  "matières grasses",
-  "fat",
-  "verzadigd",
-  "gesättigt",
-  "saturé",
-  "saturated",
-  "suiker",
-  "zucker",
-  "sucre",
-  "sugar",
-  "zout",
-  "salz",
-  "sel",
-  "salt",
-];
-const HIGHER_IS_BETTER = [
-  "eiwit",
-  "eiweiß",
-  "eiweiss",
-  "protéine",
-  "protein",
-  "vezel",
-  "ballaststoff",
-  "fibre",
-  "fiber",
-];
-
-/** Whether less or more of a nutrient is better, or null when neither is. */
-export function nutritionPreference(label: string): Preference | null {
-  const text = label.toLowerCase();
-  if (HIGHER_IS_BETTER.some((word) => text.includes(word))) return "higher";
-  if (LOWER_IS_BETTER.some((word) => text.includes(word))) return "lower";
-  return null;
-}
-
-/** The first number in a nutrition value: "206 kJ /" → 206, "4,8g" → 4.8, "<0,5 g" → 0.5. */
-export function parseNutritionNumber(value: string): number | null {
-  const match = /\d+(?:[.,]\d+)?/.exec(value);
-  return match ? Number(match[0].replace(",", ".")) : null;
-}
-
 /**
  * The columns with the best value: the lowest or highest number. Empty when
  * fewer than two columns have a value, or when they are all the same, so a
  * row only lights up when it tells the products apart.
  */
-export function bestIndexes(values: (number | null)[], preference: Preference): Set<number> {
+export function bestIndexes(
+  values: (number | null)[],
+  preference: "lower" | "higher"
+): Set<number> {
   const known = values.flatMap((value, index) => (value === null ? [] : [{ value, index }]));
   if (known.length < 2) return new Set();
   const numbers = known.map(({ value }) => value);

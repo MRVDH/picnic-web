@@ -347,6 +347,10 @@ export type NutritionRow = {
   isCategory: boolean;
   /** Background color for zebra striping, or null. */
   backgroundColor: string | null;
+  /** The number in `value` (e.g. 4.8 for "4,8g"), from picnic-api, or null. */
+  amount: number | null;
+  /** Whether less or more of the nutrient is the healthier choice, from picnic-api, or null. */
+  preference: "lower" | "higher" | null;
 };
 
 /** Comprehensive product detail displayed on the product detail page. */
