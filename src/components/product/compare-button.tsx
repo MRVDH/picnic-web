@@ -35,3 +35,39 @@ export function CompareButton({ productId }: { productId: string }) {
     </div>
   );
 }
+
+/**
+ * A small compare toggle for a product card in a list. The card is a link, so
+ * the click doesn't open the product.
+ */
+export function CompareToggle({ productId }: { productId: string }) {
+  const t = useTranslations();
+  const ids = useCompareList();
+  const [isFull, setIsFull] = useState(false);
+  const isAdded = ids.includes(productId);
+  const fullText = t.compareFull.replace("{count}", String(MAX_COMPARE_PRODUCTS));
+
+  const toggle = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsFull(!toggleCompareId(productId));
+  };
+
+  return (
+    <button
+      type="button"
+      aria-pressed={isAdded}
+      title={isFull && !isAdded ? fullText : undefined}
+      onClick={toggle}
+      className={`rounded-full border px-2 py-0.5 text-xs shadow-sm transition-colors ${
+        isAdded
+          ? "border-gray-800 bg-gray-800 text-white"
+          : isFull
+            ? "border-gray-300 bg-white text-gray-400"
+            : "border-gray-300 bg-white/90 text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      {isAdded ? `✓ ${t.compareAdd}` : `+ ${t.compareAdd}`}
+    </button>
+  );
+}

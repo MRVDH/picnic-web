@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { CompareToggle } from "@/components/product/compare-button";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
@@ -90,6 +91,11 @@ export function ProductCard({ product, href, isCheapestPerUnit = false }: Produc
             }
           }}
         />
+
+        {/* Add to the side-by-side comparison */}
+        <div className="absolute top-0 left-0 z-10">
+          <CompareToggle productId={product.id} />
+        </div>
 
         {/* Promotion pill overlaid on the image (e.g. "20% korting") */}
         {product.promoBadge && product.promoPlacement === "image" && (
