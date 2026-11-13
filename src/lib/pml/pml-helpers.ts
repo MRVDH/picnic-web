@@ -10,28 +10,6 @@ export type AnalyticsContext = {
   schema: string;
 };
 
-export type SellingUnitTileContainer = {
-  type: "PML";
-  id: string;
-  analytics?: { contexts?: AnalyticsContext[] };
-  content?: {
-    type: string;
-    sellingUnit?: RawSellingUnit;
-  };
-  pml?: { component?: PmlNode };
-};
-
-export type RawSellingUnit = {
-  id: string;
-  name: string;
-  image_id: string;
-  display_price: number;
-  unit_quantity: string;
-  max_count: number;
-  decorators: unknown[];
-  price_ranges: unknown[] | null;
-};
-
 // ─── PML markdown helpers ────────────────────────────────────────────────────
 
 /** Strip Picnic markdown color tags: #(#aabbcc)text#(#aabbcc) → text */
@@ -75,37 +53,6 @@ export function extractInnerColor(md: string): string | null {
 }
 
 // ─── Recursive finders ───────────────────────────────────────────────────────
-
-/** Find all selling-unit tile containers in the Fusion page tree. */
-export function findSellingUnitContainers(obj: unknown): SellingUnitTileContainer[] {
-  const results: SellingUnitTileContainer[] = [];
-
-  if (typeof obj !== "object" || obj === null) return results;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      results.push(...findSellingUnitContainers(item));
-    }
-    return results;
-  }
-
-  const record = obj as Record<string, unknown>;
-
-  if (
-    record.type === "PML" &&
-    typeof record.id === "string" &&
-    record.id.includes("selling-unit") &&
-    record.id.includes("tile")
-  ) {
-    results.push(record as unknown as SellingUnitTileContainer);
-  }
-
-  for (const value of Object.values(record)) {
-    results.push(...findSellingUnitContainers(value));
-  }
-
-  return results;
-}
 
 /** Collect all markdown strings from a PML subtree. */
 export function collectMarkdowns(node: unknown): string[] {
@@ -157,60 +104,6 @@ export function findNodeById(obj: unknown, id: string): PmlNode | null {
 }
 
 /**
- * Find the first node whose `id` starts with the given prefix.
- * Traverses all object values recursively.
- */
-export function findNodeByIdPrefix(obj: unknown, prefix: string): PmlNode | null {
-  if (typeof obj !== "object" || obj === null) return null;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const result = findNodeByIdPrefix(item, prefix);
-      if (result) return result;
-    }
-    return null;
-  }
-
-  const record = obj as PmlNode;
-  if (typeof record.id === "string" && record.id.startsWith(prefix)) {
-    return record;
-  }
-
-  for (const value of Object.values(record)) {
-    const result = findNodeByIdPrefix(value, prefix);
-    if (result) return result;
-  }
-  return null;
-}
-
-/**
- * Find the first node whose `id` contains the given substring.
- * Traverses all object values recursively.
- */
-export function findNodeByIdSubstring(obj: unknown, idSubstring: string): PmlNode | null {
-  if (typeof obj !== "object" || obj === null) return null;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const result = findNodeByIdSubstring(item, idSubstring);
-      if (result) return result;
-    }
-    return null;
-  }
-
-  const record = obj as PmlNode;
-  if (typeof record.id === "string" && record.id.includes(idSubstring)) {
-    return record;
-  }
-
-  for (const value of Object.values(record)) {
-    const result = findNodeByIdSubstring(value, idSubstring);
-    if (result) return result;
-  }
-  return null;
-}
-
-/**
  * Recursively collect all values for a given property name.
  * Replaces JSONPath `$..key` pattern without adding a dependency.
  */
@@ -235,59 +128,4 @@ export function collectPropertyValues(node: unknown, key: string): unknown[] {
     }
   }
   return results;
-}
-
-/** Find all ICON nodes in a PML subtree. */
-export function findIconNodes(
-  node: unknown
-): { iconKey: string; fallbackId: string | null; color: string | null }[] {
-  const results: { iconKey: string; fallbackId: string | null; color: string | null }[] = [];
-  if (typeof node !== "object" || node === null) return results;
-
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      results.push(...findIconNodes(item));
-    }
-    return results;
-  }
-
-  const record = node as Record<string, unknown>;
-  if (record.type === "ICON" && typeof record.iconKey === "string") {
-    const fallback = record.fallback as { id?: string } | undefined;
-    results.push({
-      iconKey: record.iconKey as string,
-      fallbackId: fallback?.id ?? null,
-      color: typeof record.color === "string" ? record.color : null,
-    });
-  }
-  for (const value of Object.values(record)) {
-    if (typeof value === "object" && value !== null) {
-      results.push(...findIconNodes(value));
-    }
-  }
-  return results;
-}
-
-/**
- * Extract the page title from a FusionPage's header.
- *
- * The header lives under `layout.header` on newer pages and directly under
- * `header` on older ones. Prefer the nested location, but fall back to the
- * top-level header when the nested one is missing or malformed.
- *
- * Returns null if neither location yields a header with a string title.
- */
-export function extractPageTitle(rawPage: unknown): string | null {
-  const page = asRecord(rawPage);
-  if (!page) return null;
-
-  const header = asRecord(asRecord(page.layout)?.header) ?? asRecord(page.header);
-  if (!header) return null;
-
-  const title = header.title;
-  return typeof title === "string" ? title : null;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 }
