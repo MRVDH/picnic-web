@@ -45,6 +45,8 @@ export const fr = {
   compareRowContains: "Contient",
   compareRowMayContain: "Peut contenir",
   compareRowNutrition: "Valeurs nutritionnelles",
+  compareBestHint:
+    "En vert, la meilleure valeur de chaque ligne : plus bas pour le prix, les allergènes, l'énergie, les graisses, le sucre et le sel, plus haut pour les protéines et les fibres.",
 
   // Login page
   loginTitle: "Connexion",

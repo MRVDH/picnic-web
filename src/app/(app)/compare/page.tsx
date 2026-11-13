@@ -14,9 +14,12 @@ import { buildImageUrl } from "@/lib/core/image-url";
 import type { AllergenBadge, ApiErrorResponse, ProductDetail } from "@/lib/core/types";
 import { clearCompareIds, removeCompareId } from "@/lib/product/compare-list";
 import {
+  bestIndexes,
   cheapestPerUnitIndex,
   compareNutrition,
   nutritionHeadings,
+  nutritionPreference,
+  parseNutritionNumber,
 } from "@/lib/product/compare-products";
 
 type LoadState =
@@ -108,7 +111,24 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
     column.state.status === "loaded" ? [index] : []
   );
   const cheapestLoaded = cheapestPerUnitIndex(loaded);
-  const cheapestColumn = cheapestLoaded === null ? null : loadedIndexes[cheapestLoaded];
+  const cheapestPerUnit = new Set(cheapestLoaded === null ? [] : [loadedIndexes[cheapestLoaded]]);
+  const valuesOf = (read: (product: ProductDetail) => number | null) =>
+    columns.map((_, index) => {
+      const product = productAt(index);
+      return product ? read(product) : null;
+    });
+  const cheapestPrice = bestIndexes(
+    valuesOf((product) => product.displayPrice),
+    "lower"
+  );
+  const fewestAllergens = bestIndexes(
+    valuesOf((product) => product.allergens.confirmed.length),
+    "lower"
+  );
+  const fewestMayContain = bestIndexes(
+    valuesOf((product) => product.allergens.mayContain.length),
+    "lower"
+  );
   const nutrition = compareNutrition(
     columns.map((_, index) => productAt(index) ?? { nutritionRows: [] })
   );
@@ -116,7 +136,11 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
     columns.map((_, index) => productAt(index) ?? { nutritionRows: [] })
   );
 
-  const row = (label: string, cell: (product: ProductDetail, index: number) => ReactNode) => (
+  const row = (
+    label: string,
+    best: Set<number>,
+    cell: (product: ProductDetail, index: number) => ReactNode
+  ) => (
     <tr className="border-card-border border-t align-top">
       <th scope="row" className="py-2 pr-4 text-left text-sm font-medium text-gray-500">
         {label}
@@ -124,8 +148,9 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
       {columns.map((column, index) => {
         const product = productAt(index);
         return (
-          <td key={column.id} className="px-3 py-2 text-sm">
+          <td key={column.id} className={`px-3 py-2 text-sm ${bestClass(best.has(index))}`}>
             {product ? cell(product, index) : null}
+            {product && best.has(index) && <BestMark />}
           </td>
         );
       })}
@@ -134,6 +159,7 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
 
   return (
     <div className="overflow-x-auto">
+      <p className="mb-3 text-sm text-gray-500">{t.compareBestHint}</p>
       <table className="w-full min-w-[640px] table-fixed border-collapse">
         <colgroup>
           <col className="w-36" />
@@ -152,8 +178,8 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
           </tr>
         </thead>
         <tbody>
-          {row(t.compareRowPrice, (product) => (
-            <span className="font-semibold">
+          {row(t.compareRowPrice, cheapestPrice, (product) => (
+            <span>
               {formatPrice(product.displayPrice)}
               {product.originalPrice !== null && product.originalPrice > product.displayPrice && (
                 <span className="text-price-original ml-1.5 font-normal line-through">
@@ -162,28 +188,21 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
               )}
             </span>
           ))}
-          {row(t.compareRowComparisonPrice, (product, index) =>
+          {row(t.compareRowComparisonPrice, cheapestPerUnit, (product) =>
             product.comparisonPrice ? (
-              <span className={index === cheapestColumn ? "text-text-bio-green font-semibold" : ""}>
-                {formatComparisonPrice(
-                  product.comparisonPrice.price,
-                  product.comparisonPrice.unit,
-                  t
-                )}
-                {index === cheapestColumn && " ✓"}
-              </span>
+              formatComparisonPrice(product.comparisonPrice.price, product.comparisonPrice.unit, t)
             ) : (
               <span className="text-gray-400">–</span>
             )
           )}
-          {row(t.compareRowUnitQuantity, (product) => product.unitQuantity || "–")}
-          {row(t.compareRowLabels, (product) => (
+          {row(t.compareRowUnitQuantity, new Set(), (product) => product.unitQuantity || "–")}
+          {row(t.compareRowLabels, new Set(), (product) => (
             <BadgeList badges={product.labels} />
           ))}
-          {row(t.compareRowContains, (product) => (
+          {row(t.compareRowContains, fewestAllergens, (product) => (
             <BadgeList badges={product.allergens.confirmed} />
           ))}
-          {row(t.compareRowMayContain, (product) => (
+          {row(t.compareRowMayContain, fewestMayContain, (product) => (
             <BadgeList badges={product.allergens.mayContain} />
           ))}
           {nutrition.length > 0 && (
@@ -198,21 +217,34 @@ function CompareTable({ ids, states }: { ids: readonly string[]; states: Map<str
               ))}
             </tr>
           )}
-          {nutrition.map((nutritionRow) => (
-            <tr key={nutritionRow.label} className="border-t border-gray-100">
-              <th
-                scope="row"
-                className={`py-1 text-left text-sm font-normal ${nutritionRow.isCategory ? "" : "pl-3 text-gray-500"}`}
-              >
-                {nutritionRow.label}
-              </th>
-              {nutritionRow.values.map((value, index) => (
-                <td key={columns[index].id} className="px-3 py-1 text-sm">
-                  {value ?? <span className="text-gray-400">–</span>}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {nutrition.map((nutritionRow) => {
+            const preference = nutritionPreference(nutritionRow.label);
+            const best = preference
+              ? bestIndexes(
+                  nutritionRow.values.map((value) => (value ? parseNutritionNumber(value) : null)),
+                  preference
+                )
+              : new Set<number>();
+            return (
+              <tr key={nutritionRow.label} className="border-t border-gray-100">
+                <th
+                  scope="row"
+                  className={`py-1 text-left text-sm font-normal ${nutritionRow.isCategory ? "" : "pl-3 text-gray-500"}`}
+                >
+                  {nutritionRow.label}
+                </th>
+                {nutritionRow.values.map((value, index) => (
+                  <td
+                    key={columns[index].id}
+                    className={`px-3 py-1 text-sm ${bestClass(best.has(index))}`}
+                  >
+                    {value ?? <span className="text-gray-400">–</span>}
+                    {best.has(index) && <BestMark />}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -266,4 +298,13 @@ function BadgeList({ badges }: { badges: Pick<AllergenBadge, "text">[] }) {
       ))}
     </ul>
   );
+}
+
+/** The better value of a row, in green. */
+function bestClass(isBest: boolean): string {
+  return isBest ? "bg-green-50 font-semibold text-text-bio-green" : "";
+}
+
+function BestMark() {
+  return <span aria-hidden="true"> ✓</span>;
 }

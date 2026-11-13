@@ -45,6 +45,8 @@ export const de = {
   compareRowContains: "Enthält",
   compareRowMayContain: "Kann enthalten",
   compareRowNutrition: "Nährwerte",
+  compareBestHint:
+    "Grün ist pro Zeile der bessere Wert: niedriger bei Preis, Allergenen, Energie, Fett, Zucker und Salz, höher bei Eiweiß und Ballaststoffen.",
 
   // Login page
   loginTitle: "Anmelden",

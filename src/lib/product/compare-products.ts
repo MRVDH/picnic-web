@@ -72,3 +72,75 @@ export function cheapestPerUnitIndex(
 function rowKey(row: NutritionRow): string {
   return row.label.trim().toLowerCase();
 }
+
+/** Which value of a row is the better one. */
+export type Preference = "lower" | "higher";
+
+/**
+ * Nutrients where less is better (energy, fat, sugars, salt) or more is better
+ * (protein, fibre), by words in the row label in Dutch, German, French and
+ * English. Carbohydrates and other rows have no better value.
+ */
+const LOWER_IS_BETTER = [
+  "energie",
+  "énergie",
+  "energy",
+  "kcal",
+  "kj",
+  "vet",
+  "fett",
+  "graisse",
+  "matières grasses",
+  "fat",
+  "verzadigd",
+  "gesättigt",
+  "saturé",
+  "saturated",
+  "suiker",
+  "zucker",
+  "sucre",
+  "sugar",
+  "zout",
+  "salz",
+  "sel",
+  "salt",
+];
+const HIGHER_IS_BETTER = [
+  "eiwit",
+  "eiweiß",
+  "eiweiss",
+  "protéine",
+  "protein",
+  "vezel",
+  "ballaststoff",
+  "fibre",
+  "fiber",
+];
+
+/** Whether less or more of a nutrient is better, or null when neither is. */
+export function nutritionPreference(label: string): Preference | null {
+  const text = label.toLowerCase();
+  if (HIGHER_IS_BETTER.some((word) => text.includes(word))) return "higher";
+  if (LOWER_IS_BETTER.some((word) => text.includes(word))) return "lower";
+  return null;
+}
+
+/** The first number in a nutrition value: "206 kJ /" → 206, "4,8g" → 4.8, "<0,5 g" → 0.5. */
+export function parseNutritionNumber(value: string): number | null {
+  const match = /\d+(?:[.,]\d+)?/.exec(value);
+  return match ? Number(match[0].replace(",", ".")) : null;
+}
+
+/**
+ * The columns with the best value: the lowest or highest number. Empty when
+ * fewer than two columns have a value, or when they are all the same, so a
+ * row only lights up when it tells the products apart.
+ */
+export function bestIndexes(values: (number | null)[], preference: Preference): Set<number> {
+  const known = values.flatMap((value, index) => (value === null ? [] : [{ value, index }]));
+  if (known.length < 2) return new Set();
+  const numbers = known.map(({ value }) => value);
+  const best = preference === "lower" ? Math.min(...numbers) : Math.max(...numbers);
+  if (numbers.every((value) => value === best)) return new Set();
+  return new Set(known.filter(({ value }) => value === best).map(({ index }) => index));
+}

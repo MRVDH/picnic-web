@@ -48,6 +48,8 @@ export const nl = {
   compareRowContains: "Bevat",
   compareRowMayContain: "Bevat mogelijk",
   compareRowNutrition: "Voedingswaarde",
+  compareBestHint:
+    "Groen is per regel de betere waarde: lager voor prijs, allergenen, energie, vet, suiker en zout, hoger voor eiwit en vezels.",
 
   // Login page
   loginTitle: "Inloggen",
