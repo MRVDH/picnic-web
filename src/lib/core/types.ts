@@ -363,6 +363,8 @@ export type ProductDetail = {
   unitQuantity: string;
   /** Unit price description (e.g. "€4.81/l"). Null if not available. */
   unitPrice: string | null;
+  /** The price per kg, litre or piece from picnic-api, or null when the package size has none. */
+  comparisonPrice: ComparisonPrice | null;
   /** Tags after the unit price (e.g. "Diepvries"), with their color or null for the default. */
   tags: { text: string; color: string | null }[];
   /** Selling price in euro cents. */

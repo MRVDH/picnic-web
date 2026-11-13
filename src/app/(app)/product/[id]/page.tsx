@@ -5,6 +5,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { AllergenBadges } from "@/components/product/allergen-badges";
+import { CompareButton } from "@/components/product/compare-button";
 import { NutritionTable } from "@/components/product/nutrition-table";
 import { ProductDescription } from "@/components/product/product-description";
 import { ProductGallery } from "@/components/product/product-gallery";
@@ -181,6 +182,9 @@ function ProductDetailView({ product }: { product: ProductDetail }) {
             onDecrement={() => removeProduct(product.id)}
             onSetQuantity={handleSetQuantity}
           />
+
+          {/* Add to the side-by-side comparison */}
+          <CompareButton productId={product.id} />
 
           {/* Description */}
           <ProductDescription description={product.description} />

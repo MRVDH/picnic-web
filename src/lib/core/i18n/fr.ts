@@ -27,6 +27,25 @@ export const fr = {
   comparisonUnitHeader: "Au {unit}",
   noComparisonPrice: "Sans prix au kg/l",
 
+  // Product comparison
+  compareAdd: "Comparer",
+  compareAdded: "Dans la comparaison",
+  compareFull: "Tu compares déjà {count} produits. Retires-en un d'abord.",
+  compareBar: "Comparer ({count})",
+  compareTitle: "Comparer des produits",
+  compareEmpty: 'Rien à comparer pour l\'instant. Choisis "Comparer" sur une page produit.',
+  compareAddMore: "Choisis encore un produit à comparer.",
+  compareRemove: "Retirer de la comparaison",
+  compareClear: "Vider la liste",
+  compareLoadError: "Impossible de charger ce produit.",
+  compareRowPrice: "Prix",
+  compareRowComparisonPrice: "Prix au kg/l",
+  compareRowUnitQuantity: "Contenance",
+  compareRowLabels: "Caractéristiques",
+  compareRowContains: "Contient",
+  compareRowMayContain: "Peut contenir",
+  compareRowNutrition: "Valeurs nutritionnelles",
+
   // Login page
   loginTitle: "Connexion",
   sessionExpired: "Votre session a expiré. Veuillez vous reconnecter.",
