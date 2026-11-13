@@ -11,7 +11,8 @@ export type ComparisonGroup = {
 
 /**
  * Groups products by the unit of their comparison price and sorts each group
- * from cheap to expensive, by the price of one package. Groups with more products come first;
+ * from cheap to expensive, by the price of one package; unavailable products
+ * go to the end of their group. Groups with more products come first;
  * products without a comparison price come last, in their original order.
  * Each product appears once.
  */
@@ -33,7 +34,12 @@ export function sortByComparisonPrice(products: Product[]): ComparisonGroup[] {
     .sort(([, a], [, b]) => b.length - a.length)
     .map(([unit, group]) => ({
       unit,
-      products: [...group].sort((a, b) => comparisonValue(a) - comparisonValue(b)),
+      // Products that can't be ordered now go last, so the first one is the cheapest to buy.
+      products: [...group].sort(
+        (a, b) =>
+          Number(a.isUnavailable) - Number(b.isUnavailable) ||
+          comparisonValue(a) - comparisonValue(b)
+      ),
     }));
   return withoutPrice.length > 0 ? [...sorted, { unit: null, products: withoutPrice }] : sorted;
 }

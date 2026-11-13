@@ -56,6 +56,14 @@ describe("sortByComparisonPrice", () => {
   });
 });
 
+describe("sortByComparisonPrice with unavailable products", () => {
+  it("puts them last in their group", () => {
+    const unavailable = { ...product("a", perKg(500)), isUnavailable: true };
+    const groups = sortByComparisonPrice([unavailable, product("b", perKg(900))]);
+    expect(groups[0].products.map((p) => p.id)).toEqual(["b", "a"]);
+  });
+});
+
 describe("canSortByComparisonPrice", () => {
   it("needs two products with a comparison price", () => {
     expect(canSortByComparisonPrice([product("a", perKg(100)), product("b", null)])).toBe(false);

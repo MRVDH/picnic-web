@@ -94,7 +94,12 @@ function ComparisonGrid({ products }: { products: Product[] }) {
                 key={product.id}
                 product={product}
                 href={`/product/${product.id}`}
-                isCheapestPerUnit={group.unit !== null && index === 0 && group.products.length > 1}
+                isCheapestPerUnit={
+                  group.unit !== null &&
+                  index === 0 &&
+                  !product.isUnavailable &&
+                  group.products.length > 1
+                }
               />
             ))}
           </div>
