@@ -17,6 +17,16 @@ export const de = {
   resultSingular: "Ergebnis",
   resultPlural: "Ergebnisse",
 
+  // Comparison prices
+  perPieceUnit: "Stück",
+  sortRelevance: "Relevanz",
+  sortComparisonPrice: "Preis pro kg/l",
+  sortByLabel: "Sortieren",
+  cheapestPerUnit: "Am günstigsten pro {unit}",
+  comparisonPriceFrom: "{price} ab {quantity}",
+  comparisonUnitHeader: "Pro {unit}",
+  noComparisonPrice: "Ohne Preis pro kg/l",
+
   // Login page
   loginTitle: "Anmelden",
   sessionExpired: "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",

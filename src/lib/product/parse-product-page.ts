@@ -80,6 +80,8 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     originalPrice: hasDiscount ? originalPrice : null,
     displayPriceColor: extractDisplayPriceColor(stackChildren, su.display_price),
     unitQuantity: su.unit_quantity,
+    // Picnic has no unit price on these tiles; picnic-api computes it for the tiles it reads.
+    comparisonPrice: null,
     maxCount: su.max_count,
     priceRanges: parsePriceRangesFromRaw(su.price_ranges),
     badges,

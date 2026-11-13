@@ -58,6 +58,7 @@ export function mapProductTile(
     originalPrice: tile.originalPrice,
     displayPriceColor: null,
     unitQuantity: tile.unitQuantity,
+    comparisonPrice: tile.comparisonPrice,
     maxCount: DEFAULT_MAX_COUNT,
     priceRanges: mapPriceRanges(tile.priceRanges),
     badges: [],

@@ -17,6 +17,16 @@ export const fr = {
   resultSingular: "résultat",
   resultPlural: "résultats",
 
+  // Comparison prices
+  perPieceUnit: "pièce",
+  sortRelevance: "Pertinence",
+  sortComparisonPrice: "Prix au kg/l",
+  sortByLabel: "Trier",
+  cheapestPerUnit: "Le moins cher au {unit}",
+  comparisonPriceFrom: "{price} dès {quantity}",
+  comparisonUnitHeader: "Au {unit}",
+  noComparisonPrice: "Sans prix au kg/l",
+
   // Login page
   loginTitle: "Connexion",
   sessionExpired: "Votre session a expiré. Veuillez vous reconnecter.",
