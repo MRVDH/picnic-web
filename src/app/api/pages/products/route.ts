@@ -4,17 +4,15 @@ import { isApiAuthError } from "@/lib/core/api-error";
 import { readAuthToken, readCountryCode } from "@/lib/core/auth";
 import { buildPicnicClient } from "@/lib/core/picnic-client";
 import type { ApiErrorResponse, CategoryProductsApiResponse } from "@/lib/core/types";
-import { extractPageTitle } from "@/lib/pml/pml-helpers";
-import { parseProductPage } from "@/lib/product/parse-product-page";
+import { mapProductSections } from "@/lib/product/map-product-tile";
 
 /**
  * GET /api/pages/products?pageId=...
  *
- * Fetches an arbitrary Picnic page by its full page ID (as extracted
- * from a deep-link target) and returns any products found in the PML
- * tree, such as theme pages and shop pages. Pages Picnic
- * serves as React Server Components come back as `rscPage` instead, for the
- * RSC renderer.
+ * Fetches a page that lists products by its full page ID (as extracted
+ * from a deep-link target), such as theme pages and shop pages, with
+ * picnic-api's catalog.getProductPage. Pages Picnic serves as React Server
+ * Components come back as `rscPage` instead, for the RSC renderer.
  */
 export async function GET(
   request: NextRequest
@@ -38,14 +36,15 @@ export async function GET(
 
   try {
     const client = buildPicnicClient(token, countryCode);
-    const page = await client.app.getPage(pageId);
+    const page = await client.catalog.getProductPage(pageId);
     if (page.format === "rsc") {
       return NextResponse.json({ title: null, products: [], sections: [], rscPage: page.content });
     }
-    const title = extractPageTitle(page.page);
-    const { sections, products } = parseProductPage(page.page);
+    // Rows without a header render without one; a page without any header lists its products flat.
+    const { products, sections } = mapProductSections(page.sections);
+    const hasHeaders = sections.some((section) => section.title !== "");
 
-    return NextResponse.json({ title, products, sections });
+    return NextResponse.json({ title: page.title, products, sections: hasHeaders ? sections : [] });
   } catch (error) {
     if (isApiAuthError(error)) {
       return NextResponse.json(

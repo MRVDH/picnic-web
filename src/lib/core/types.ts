@@ -88,6 +88,18 @@ export type SubtitleIcon = {
 
 // ─── Product ─────────────────────────────────────────────────────────────────
 
+/** The base unit of a comparison price: per kilogram, per litre or per piece. */
+export type ComparisonUnit = "kg" | "l" | "piece";
+
+/** The price per kilogram, litre or piece, to compare products of different package sizes. */
+export type ComparisonPrice = {
+  unit: ComparisonUnit;
+  /** Cents per unit, e.g. 299 for €2.99/kg. */
+  price: number;
+  /** Cents per unit at the cheapest price tier, when buying more costs less per package. */
+  lowestPrice: { price: number; fromQuantity: number } | null;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -122,6 +134,8 @@ export type Product = {
   displayPriceColor: string | null;
   /** Human-readable unit/quantity string (e.g. "500 g", "6 x 300 ml"). */
   unitQuantity: string;
+  /** The price per kg, litre or piece from picnic-api, or null when the package size has none. */
+  comparisonPrice: ComparisonPrice | null;
   /** Maximum number of units a user can order. */
   maxCount: number;
   /** Bundle price ranges from the API, or null if no bundle. */
@@ -295,6 +309,8 @@ export type SliderProduct = {
   displayPrice: number;
   /** Unit quantity description (e.g. "6 x 330 ml"). */
   unitQuantity: string;
+  /** The price per kg, litre or piece from picnic-api, or null when the package size has none. */
+  comparisonPrice: ComparisonPrice | null;
   /** Maximum cart quantity. */
   maxCount: number;
   /** Deposit amount in cents, if applicable. */

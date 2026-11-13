@@ -10,6 +10,7 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCart } from "@/contexts/cart-context";
 import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import { formatComparisonPrice, unitLabel } from "@/lib/core/format-price";
 import { buildImageUrl } from "@/lib/core/image-url";
 import type { BundleProgress, Product } from "@/lib/core/types";
 
@@ -20,10 +21,13 @@ type ProductCardProps = {
   product: Product;
   /** When provided, wraps the card in a Link for client-side navigation. */
   href?: string;
+  /** Marks the product as the cheapest per kg, litre or piece in the list. */
+  isCheapestPerUnit?: boolean;
 };
 
-export function ProductCard({ product, href }: ProductCardProps) {
+export function ProductCard({ product, href, isCheapestPerUnit = false }: ProductCardProps) {
   const countryCode = useCountryCode();
+  const t = useTranslations();
   const [imageSrc, setImageSrc] = useState(
     product.imageId ? buildImageUrl(product.imageId, countryCode) : PLACEHOLDER_IMAGE
   );
@@ -47,6 +51,23 @@ export function ProductCard({ product, href }: ProductCardProps) {
     bundleUnitPrice !== null && bundleUnitPrice < product.displayPrice
       ? product.displayPrice
       : null;
+
+  // The price per kg follows the price shown, including an active bundle price.
+  const comparison = product.comparisonPrice;
+  const comparisonText = comparison
+    ? formatComparisonPrice(
+        product.displayPrice > 0
+          ? Math.round((comparison.price * effectiveDisplayPrice) / product.displayPrice)
+          : comparison.price,
+        comparison.unit,
+        t
+      )
+    : null;
+  const comparisonTitle = comparison?.lowestPrice
+    ? t.comparisonPriceFrom
+        .replace("{price}", formatComparisonPrice(comparison.lowestPrice.price, comparison.unit, t))
+        .replace("{quantity}", String(comparison.lowestPrice.fromQuantity))
+    : null;
 
   const cardContent = (
     <div
@@ -155,6 +176,18 @@ export function ProductCard({ product, href }: ProductCardProps) {
             <p className="text-text-muted text-xs">{product.unitQuantity}</p>
           )}
         </div>
+      )}
+
+      {comparisonText && (
+        <p className="text-text-muted text-xs" title={comparisonTitle ?? undefined}>
+          {comparisonText}
+        </p>
+      )}
+
+      {isCheapestPerUnit && product.comparisonPrice && (
+        <p className="text-text-bio-green mt-0.5 text-xs font-semibold">
+          {t.cheapestPerUnit.replace("{unit}", unitLabel(product.comparisonPrice.unit, t))}
+        </p>
       )}
 
       {/* Bottom-anchored: price */}

@@ -20,6 +20,16 @@ export const nl = {
   resultSingular: "resultaat",
   resultPlural: "resultaten",
 
+  // Comparison prices
+  perPieceUnit: "stuk",
+  sortRelevance: "Relevant",
+  sortComparisonPrice: "Prijs per kg/l",
+  sortByLabel: "Sorteer",
+  cheapestPerUnit: "Goedkoopst per {unit}",
+  comparisonPriceFrom: "{price} vanaf {quantity}",
+  comparisonUnitHeader: "Per {unit}",
+  noComparisonPrice: "Zonder prijs per kg/l",
+
   // Login page
   loginTitle: "Inloggen",
   sessionExpired: "Je sessie is verlopen. Log opnieuw in.",
