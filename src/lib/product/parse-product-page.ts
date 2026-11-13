@@ -1,6 +1,8 @@
 // Reads Picnic's Fusion pages that list product tiles, such as theme pages and shop pages
 // (`fresh-market-wineshop`). Pages served as RSC go through the RSC renderer instead, and the
 // promotions page goes through picnic-api's catalog.getPromotions.
+import PicnicClient from "picnic-api";
+
 import type { Badge, BundleThreshold, Product, SearchSection } from "@/lib/core/types";
 import type { PmlNode, SellingUnitTileContainer } from "@/lib/pml/pml-helpers";
 import {
@@ -80,8 +82,12 @@ export function containerToProduct(container: SellingUnitTileContainer): Product
     originalPrice: hasDiscount ? originalPrice : null,
     displayPriceColor: extractDisplayPriceColor(stackChildren, su.display_price),
     unitQuantity: su.unit_quantity,
-    // Picnic has no unit price on these tiles; picnic-api computes it for the tiles it reads.
-    comparisonPrice: null,
+    // Picnic has no unit price on these tiles; picnic-api computes it from the package size.
+    comparisonPrice: PicnicClient.getComparisonPrice(
+      su.display_price,
+      su.unit_quantity,
+      (su.price_ranges ?? []) as PicnicClient.Types.fusion.PriceRange[]
+    ),
     maxCount: su.max_count,
     priceRanges: parsePriceRangesFromRaw(su.price_ranges),
     badges,

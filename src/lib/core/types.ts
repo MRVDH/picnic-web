@@ -309,6 +309,8 @@ export type SliderProduct = {
   displayPrice: number;
   /** Unit quantity description (e.g. "6 x 330 ml"). */
   unitQuantity: string;
+  /** The price per kg, litre or piece from picnic-api, or null when the package size has none. */
+  comparisonPrice: ComparisonPrice | null;
   /** Maximum cart quantity. */
   maxCount: number;
   /** Deposit amount in cents, if applicable. */

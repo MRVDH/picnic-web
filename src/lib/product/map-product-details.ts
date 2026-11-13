@@ -42,6 +42,7 @@ export function mapProductDetails(product: ProductDetails): ProductDetail {
       imageId: similar.imageId,
       displayPrice: similar.displayPrice,
       unitQuantity: similar.unitQuantity,
+      comparisonPrice: similar.comparisonPrice,
       maxCount: similar.maxCount,
       ...(similar.deposit !== undefined ? { deposit: similar.deposit } : {}),
     })),

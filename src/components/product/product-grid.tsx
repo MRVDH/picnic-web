@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState } from "react";
 
 import { ProductCard } from "@/components/product/product-card";
 import { useTranslations } from "@/contexts/country-context";
@@ -18,8 +18,6 @@ type ProductGridProps =
 
 type SortOrder = "relevance" | "comparison";
 
-/** The sort order is a per-browser preference, so it carries over between lists. */
-const SORT_STORAGE_KEY = "picnic-web:product-sort";
 const GRID_CLASS = "grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
 
 export function ProductGrid(props: ProductGridProps) {
@@ -27,7 +25,7 @@ export function ProductGrid(props: ProductGridProps) {
   const products = sections
     ? sections.flatMap((section) => section.products)
     : (props.products ?? []);
-  const [sortOrder, setSortOrder] = useSortOrder();
+  const [sortOrder, setSortOrder] = useState<SortOrder>("relevance");
   const sortable = canSortByComparisonPrice(products);
 
   if (products.length === 0) return null;
@@ -139,46 +137,4 @@ function SortToggle({
       ))}
     </div>
   );
-}
-
-/** Lists showing a grid re-render when the sort order changes. */
-const sortListeners = new Set<() => void>();
-/** The order when localStorage is blocked: kept for this page load. */
-let memorySortOrder: SortOrder = "relevance";
-
-function readSortOrder(): SortOrder {
-  try {
-    return window.localStorage.getItem(SORT_STORAGE_KEY) === "comparison"
-      ? "comparison"
-      : "relevance";
-  } catch {
-    return memorySortOrder;
-  }
-}
-
-function writeSortOrder(value: SortOrder) {
-  memorySortOrder = value;
-  try {
-    window.localStorage.setItem(SORT_STORAGE_KEY, value);
-  } catch {
-    // Storage can be blocked; the choice then lasts until the page reloads.
-  }
-  sortListeners.forEach((listener) => listener());
-}
-
-function subscribeToSortOrder(listener: () => void) {
-  sortListeners.add(listener);
-  return () => {
-    sortListeners.delete(listener);
-  };
-}
-
-/** The sort order, shared by every grid and remembered in localStorage when the browser allows it. */
-function useSortOrder(): [SortOrder, (value: SortOrder) => void] {
-  const sortOrder = useSyncExternalStore<SortOrder>(
-    subscribeToSortOrder,
-    readSortOrder,
-    () => "relevance"
-  );
-  return [sortOrder, writeSortOrder];
 }

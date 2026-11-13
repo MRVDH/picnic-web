@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { useCountryCode } from "@/contexts/country-context";
-import { formatPrice } from "@/lib/core/format-price";
+import { useCountryCode, useTranslations } from "@/contexts/country-context";
+import { formatComparisonPrice, formatPrice } from "@/lib/core/format-price";
 import { buildImageUrl } from "@/lib/core/image-url";
 import type { SliderProduct } from "@/lib/core/types";
 
@@ -15,6 +15,7 @@ type ProductSliderCardProps = {
 
 export function ProductSliderCard({ product, href }: ProductSliderCardProps) {
   const countryCode = useCountryCode();
+  const t = useTranslations();
   return (
     <Link
       href={href}
@@ -36,6 +37,11 @@ export function ProductSliderCard({ product, href }: ProductSliderCardProps) {
       </p>
 
       <p className="mt-0.5 text-xs text-gray-500">{product.unitQuantity}</p>
+      {product.comparisonPrice && (
+        <p className="text-xs text-gray-500">
+          {formatComparisonPrice(product.comparisonPrice.price, product.comparisonPrice.unit, t)}
+        </p>
+      )}
 
       <p className="text-foreground mt-auto pt-1 text-sm font-bold">
         {formatPrice(product.displayPrice)}
