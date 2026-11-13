@@ -29,6 +29,14 @@ export const nl = {
   comparisonPriceFrom: "{price} vanaf {quantity}",
   comparisonUnitHeader: "Per {unit}",
   noComparisonPrice: "Zonder prijs per kg/l",
+  findCheaperAlternative: "Goedkoper alternatief?",
+  hideCheaperAlternatives: "Verberg alternatieven",
+  noCheaperAlternative: "Geen vergelijkbaar product dat per {unit} minder kost.",
+  cheaperAlternativesError: "Alternatieven laden mislukt.",
+  cheaperBy: "{price} goedkoper",
+  replaceInCart: "Vervang",
+  replaceInCartAriaLabel: "Vervang door {name}",
+  replaceInCartError: "Vervangen mislukt. Probeer het opnieuw.",
 
   // Login page
   loginTitle: "Inloggen",

@@ -26,6 +26,14 @@ export const fr = {
   comparisonPriceFrom: "{price} dès {quantity}",
   comparisonUnitHeader: "Au {unit}",
   noComparisonPrice: "Sans prix au kg/l",
+  findCheaperAlternative: "Alternative moins chère ?",
+  hideCheaperAlternatives: "Masquer les alternatives",
+  noCheaperAlternative: "Aucun produit similaire moins cher au {unit}.",
+  cheaperAlternativesError: "Impossible de charger les alternatives.",
+  cheaperBy: "{price} de moins",
+  replaceInCart: "Remplacer",
+  replaceInCartAriaLabel: "Remplacer par {name}",
+  replaceInCartError: "Le remplacement a échoué. Veuillez réessayer.",
 
   // Login page
   loginTitle: "Connexion",
