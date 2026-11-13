@@ -35,6 +35,27 @@ export const fr = {
   replaceInCartAriaLabel: "Remplacer par {name}",
   replaceInCartError: "Le remplacement a échoué. Veuillez réessayer.",
 
+  // Product comparison
+  compareAdd: "Comparer",
+  compareAdded: "Dans la comparaison",
+  compareFull: "Vous comparez déjà {count} produits. Retirez-en un d'abord.",
+  compareBar: "Comparer ({count})",
+  compareTitle: "Comparer des produits",
+  compareEmpty: 'Rien à comparer pour l\'instant. Choisissez "Comparer" sur une page produit.',
+  compareAddMore: "Choisissez encore un produit à comparer.",
+  compareRemove: "Retirer de la comparaison",
+  compareClear: "Vider la liste",
+  compareLoadError: "Impossible de charger ce produit.",
+  compareRowPrice: "Prix",
+  compareRowComparisonPrice: "Prix au kg/l",
+  compareRowUnitQuantity: "Contenance",
+  compareRowLabels: "Caractéristiques",
+  compareRowContains: "Contient",
+  compareRowMayContain: "Peut contenir",
+  compareRowNutrition: "Valeurs nutritionnelles",
+  compareBestHint:
+    "En vert, la meilleure valeur de chaque ligne : plus bas pour le prix, les allergènes, l'énergie, les graisses, le sucre et le sel, plus haut pour les protéines et les fibres.",
+
   // Login page
   loginTitle: "Connexion",
   sessionExpired: "Votre session a expiré. Veuillez vous reconnecter.",

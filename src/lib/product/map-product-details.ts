@@ -13,6 +13,7 @@ export function mapProductDetails(product: ProductDetails): ProductDetail {
     quantityBadges: product.quantityBadges,
     unitQuantity: product.unitQuantity,
     unitPrice: product.unitPrice,
+    comparisonPrice: product.comparisonPrice,
     tags: product.tags,
     displayPrice: product.displayPrice,
     originalPrice: product.originalPrice,

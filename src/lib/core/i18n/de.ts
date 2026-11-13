@@ -35,6 +35,27 @@ export const de = {
   replaceInCartAriaLabel: "Durch {name} ersetzen",
   replaceInCartError: "Ersetzen fehlgeschlagen. Bitte versuche es erneut.",
 
+  // Product comparison
+  compareAdd: "Vergleichen",
+  compareAdded: "Im Vergleich",
+  compareFull: "Du vergleichst schon {count} Produkte. Entferne zuerst eins.",
+  compareBar: "Vergleichen ({count})",
+  compareTitle: "Produkte vergleichen",
+  compareEmpty: 'Noch nichts zu vergleichen. Wähle "Vergleichen" auf einer Produktseite.',
+  compareAddMore: "Wähle noch ein Produkt zum Vergleichen.",
+  compareRemove: "Aus dem Vergleich entfernen",
+  compareClear: "Liste leeren",
+  compareLoadError: "Dieses Produkt konnte nicht geladen werden.",
+  compareRowPrice: "Preis",
+  compareRowComparisonPrice: "Preis pro kg/l",
+  compareRowUnitQuantity: "Inhalt",
+  compareRowLabels: "Merkmale",
+  compareRowContains: "Enthält",
+  compareRowMayContain: "Kann enthalten",
+  compareRowNutrition: "Nährwerte",
+  compareBestHint:
+    "Grün ist pro Zeile der bessere Wert: niedriger bei Preis, Allergenen, Energie, Fett, Zucker und Salz, höher bei Eiweiß und Ballaststoffen.",
+
   // Login page
   loginTitle: "Anmelden",
   sessionExpired: "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",

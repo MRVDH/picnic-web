@@ -1,3 +1,4 @@
+import { CompareBar } from "@/components/layout/compare-bar";
 import { NavigationTracker } from "@/components/layout/navigation-tracker";
 import { SharedHeader } from "@/components/layout/shared-header";
 import { HeaderSectionsProvider } from "@/contexts/header-sections-context";
@@ -13,6 +14,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <NavigationTracker />
       <SharedHeader />
       {children}
+      <CompareBar />
     </HeaderSectionsProvider>
   );
 }

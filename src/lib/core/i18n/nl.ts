@@ -38,6 +38,27 @@ export const nl = {
   replaceInCartAriaLabel: "Vervang door {name}",
   replaceInCartError: "Vervangen mislukt. Probeer het opnieuw.",
 
+  // Product comparison
+  compareAdd: "Vergelijk",
+  compareAdded: "In vergelijking",
+  compareFull: "Je vergelijkt al {count} producten. Haal er eerst een weg.",
+  compareBar: "Vergelijk ({count})",
+  compareTitle: "Producten vergelijken",
+  compareEmpty: 'Nog niets om te vergelijken. Kies "Vergelijk" op een productpagina.',
+  compareAddMore: "Kies nog een product om mee te vergelijken.",
+  compareRemove: "Verwijder uit vergelijking",
+  compareClear: "Leeg de lijst",
+  compareLoadError: "Dit product kon niet geladen worden.",
+  compareRowPrice: "Prijs",
+  compareRowComparisonPrice: "Prijs per kg/l",
+  compareRowUnitQuantity: "Inhoud",
+  compareRowLabels: "Kenmerken",
+  compareRowContains: "Bevat",
+  compareRowMayContain: "Bevat mogelijk",
+  compareRowNutrition: "Voedingswaarde",
+  compareBestHint:
+    "Groen is per regel de betere waarde: lager voor prijs, allergenen, energie, vet, suiker en zout, hoger voor eiwit en vezels.",
+
   // Login page
   loginTitle: "Inloggen",
   sessionExpired: "Je sessie is verlopen. Log opnieuw in.",
