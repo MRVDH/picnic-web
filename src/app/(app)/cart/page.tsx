@@ -240,13 +240,24 @@ export default function CartPage() {
     [enqueueMutation, pageState]
   );
 
-  // Swap a line for a cheaper alternative: remove all of it, then add as many of the alternative.
+  // Swap a line for a cheaper alternative. The alternative goes in first, so a refused add leaves the
+  // line as it was. Picnic can add fewer than asked (picnic-api doesn't know the alternative's limit),
+  // so the line loses as many as were added.
   const handleReplace = useCallback(
     async (item: CartItem, alternative: CheaperAlternative) => {
-      const count = Math.min(item.quantity, alternative.maxCount);
+      const quantityIn = (cart: CartData | null, productId: string) =>
+        (cart?.items ?? [])
+          .filter((line) => line.productId === productId)
+          .reduce((sum, line) => sum + line.quantity, 0);
       try {
-        await postCartMutation(item.productId, "remove", item.quantity);
-        reconcileFromServer(await postCartMutation(alternative.id, "add", count));
+        const before = quantityIn(confirmedCartRef.current, alternative.id);
+        const count = Math.min(item.quantity, alternative.maxCount);
+        const added =
+          quantityIn(await postCartMutation(alternative.id, "add", count), alternative.id) - before;
+        if (added <= 0) throw new Error("Picnic added none of the alternative");
+        reconcileFromServer(
+          await postCartMutation(item.productId, "remove", Math.min(item.quantity, added))
+        );
       } catch {
         setToastMessage(t.replaceInCartError);
         // Show what the cart holds now, whichever step failed.
