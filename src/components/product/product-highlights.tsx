@@ -1,12 +1,42 @@
-import { renderPmlMarkdown } from "@/lib/pml/parse-pml-markdown";
 import type { ProductHighlightItem } from "@/lib/core/types";
+import { renderPmlMarkdown } from "@/lib/pml/parse-pml-markdown";
 
 type ProductHighlightsProps = {
   highlights: ProductHighlightItem[];
 };
 
-/** Map known PML icon keys to simple emoji/unicode fallbacks. */
+/**
+ * Map known icon keys to simple emoji/unicode fallbacks: the icon names of the RSC product page
+ * (`STARS`), then the PML icon keys of the Fusion page (`starsOutlined`).
+ */
 const ICON_MAP: Record<string, string> = {
+  ALCOHOL: "\ud83c\udf77",
+  APPLE: "\ud83c\udf4e",
+  AWARD: "\ud83c\udfc6",
+  BABY_BOTTLE: "\ud83c\udf7c",
+  CHECKBOX: "\u2705",
+  CHECKLIST: "\ud83d\udccb",
+  CHEF_HAT: "\ud83c\udf73",
+  CLOCK: "\ud83d\udd52",
+  COFFEE_BEAN: "\u2615",
+  FLAG_DE: "\ud83c\udde9\ud83c\uddea",
+  GRAIN: "\ud83c\udf3e",
+  GRAIN_CROP: "\ud83c\udf3e",
+  GREEN_LEAF: "\ud83c\udf3f",
+  HEART: "\u2764\ufe0f",
+  INFO: "\u2139\ufe0f",
+  LAUREL_LEAVES: "\ud83c\udfc5",
+  LEAF: "\ud83c\udf3f",
+  LIST: "\ud83d\udccb",
+  OVEN: "\ud83d\udd25",
+  PAIR: "\ud83c\udf7d\ufe0f",
+  PEOPLE: "\ud83d\udc65",
+  PIN: "\ud83d\udccc",
+  STARS: "\u2728",
+  STORAGE: "\ud83d\udce6",
+  SUSTAINABLE: "\u267b\ufe0f",
+  WHISK: "\ud83c\udf75",
+  WINDMILL: "\ud83c\udf2c\ufe0f",
   starsOutlined: "\u2728",
   pin: "\uD83D\uDCCC",
   snowflake: "\u2744\uFE0F",
